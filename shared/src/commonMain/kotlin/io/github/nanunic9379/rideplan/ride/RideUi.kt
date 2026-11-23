@@ -131,6 +131,9 @@ class RideScreenState {
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
+    /** Giro ricevuto con un link e non ancora salvato (#48): niente salvataggio automatico. */
+    val isPreview: Boolean get() = ride?.source == Ride.Source.RIDEPLAN_LINK && savedId == null
+
     /** Mostra il giro o l'errore. Un giro nuovo non è ancora tra quelli salvati. */
     fun show(result: Result<Ride>) {
         busy = false

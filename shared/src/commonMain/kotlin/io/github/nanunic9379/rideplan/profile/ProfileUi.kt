@@ -49,6 +49,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.card_saved
+import io.github.nanunic9379.rideplan.resources.preview_received
+import io.github.nanunic9379.rideplan.resources.preview_save
 import io.github.nanunic9379.rideplan.resources.date_format
 import io.github.nanunic9379.rideplan.resources.done_title
 import io.github.nanunic9379.rideplan.resources.home_add_profile
@@ -307,11 +309,24 @@ private fun doneText(saved: SavedRide): String {
 }
 
 /**
- * Sotto la scheda del giro sulla mappa: già salvato, con "Rinomina" e "L'ho fatto".
+ * Sotto al giro aperto: già salvato (Rinomina, L'ho fatto) oppure, per un giro ricevuto
+ * con un link (#48), il pulsante per tenerlo. [onSave]: null se non c'è niente da salvare.
  * [onRename] cambia il nome del giro mostrato: il salvataggio automatico fa il resto.
  */
 @Composable
-fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onRename: (String) -> Unit) {
+fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave: (() -> Unit)? = null, onRename: (String) -> Unit) {
+    if (savedId == null && onSave != null) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(Res.string.preview_received),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            FilledTonalButton(onClick = onSave) { Text(stringResource(Res.string.preview_save)) }
+        }
+        return
+    }
     if (savedId == null) return
     val saved = store.data.rides.firstOrNull { it.id == savedId } ?: return
     var rename by remember { mutableStateOf(false) }

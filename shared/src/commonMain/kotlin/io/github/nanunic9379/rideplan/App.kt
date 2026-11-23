@@ -62,8 +62,9 @@ fun App(
         val snackbar = remember { SnackbarHostState() }
         val ride = rides.ride
         // Ogni giro aperto finisce in "I tuoi giri" e resta aggiornato (percorso, preferenze, nome).
+        // Un giro ricevuto con un link resta in anteprima finché non lo salvi tu (#48).
         LaunchedEffect(ride) {
-            if (ride != null && store != null) {
+            if (ride != null && store != null && !rides.isPreview) {
                 store.update { d ->
                     val (fresh, id) = d.save(ride, rides.savedId, store.time())
                     rides.savedId = id
@@ -113,7 +114,12 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
             routeActions,
             saved = {
                 if (store != null) {
-                    SavedRow(store, rides.savedId, rides.ride?.name) { name ->
+                    SavedRow(
+                        store,
+                        rides.savedId,
+                        rides.ride?.name,
+                        onSave = if (rides.isPreview) ({ rides.ride?.let { r -> store.update { d -> d.save(r, null, store.time()).also { rides.savedId = it.second }.first } } }) else null,
+                    ) { name ->
                         rides.ride = rides.ride?.copy(name = name.trim().ifEmpty { null })
                     }
                 }

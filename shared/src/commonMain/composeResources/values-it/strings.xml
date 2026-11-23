@@ -128,6 +128,8 @@
     <string name="snack_undo">Annulla</string>
     <string name="snack_done">Segnato come fatto</string>
     <string name="card_saved">Salvato nei tuoi giri</string>
+    <string name="preview_received">Giro ricevuto: non è ancora tra i tuoi giri</string>
+    <string name="preview_save">Salva nei miei giri</string>
     <string name="rename_title">Nome del giro</string>
     <string name="save">Salva</string>
     <string name="done_title">Quando l’hai fatto?</string>

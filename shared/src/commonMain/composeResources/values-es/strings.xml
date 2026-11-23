@@ -129,6 +129,8 @@
     <string name="snack_undo">Deshacer</string>
     <string name="snack_done">Marcada como hecha</string>
     <string name="card_saved">Guardada en tus rutas</string>
+    <string name="preview_received">Ruta recibida: aún no está en tus rutas</string>
+    <string name="preview_save">Guardar en mis rutas</string>
     <string name="rename_title">Nombre de la ruta</string>
     <string name="save">Guardar</string>
     <string name="done_title">¿Cuándo la hiciste?</string>
