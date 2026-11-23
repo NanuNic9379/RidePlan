@@ -17,15 +17,15 @@ import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 
 /**
- * Una zona di dati stradali (Release "routing-data", #3).
- * [bbox]: lon min, lat min, lon max, lat max. [file]: tar di Valhalla compresso con gzip.
+ * A region of road data (Release "routing-data", #3).
+ * [bbox]: lon min, lat min, lon max, lat max. [file]: Valhalla tar compressed with gzip.
  */
 data class RoutingRegion(
     val id: String,
     val bbox: List<Double>,
     val file: String,
     val bytes: Long,
-    /** Spazio occupato sul telefono, decompresso. */
+    /** Space used on the phone, uncompressed. */
     val tarBytes: Long,
     val sha256: String,
     val osmDate: String,
@@ -36,14 +36,14 @@ data class RoutingRegion(
     private val area: Double get() = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
 
     companion object {
-        /** Il manifest regions.json pubblicato da routing-data.yml. */
+        /** The regions.json manifest published by routing-data.yml (before #45). */
         fun parseManifest(json: String): List<RoutingRegion> {
             val root = Json.parseToJsonElement(json).jsonObject
-            require(root["format"]?.jsonPrimitive?.int == 1) { "Formato dei dati non supportato" }
+            require(root["format"]?.jsonPrimitive?.int == 1) { "Unsupported data format" }
             return root.getValue("regions").jsonArray.map { it.jsonObject.toRegion() }
         }
 
-        /** La zona più piccola che contiene tutti i punti; null se nessuna basta. */
+        /** The smallest region containing all points; null if none is enough. */
         fun bestFor(regions: List<RoutingRegion>, points: List<LatLon>): RoutingRegion? =
             regions.filter { r -> points.all(r::contains) }.minByOrNull { it.area }
 
@@ -76,8 +76,8 @@ data class RoutingRegion(
 }
 
 /**
- * Il carattere del percorso scelto da chi guida (#4).
- * Lo sterrato si evita sempre: non è un interruttore.
+ * The route character chosen by the rider (#4).
+ * Unpaved roads are always avoided: it is not a toggle.
  */
 data class RouteOptions(
     val curves: Curves = Curves.NORMAL,
@@ -86,8 +86,8 @@ data class RouteOptions(
 )
 
 /**
- * Quanto cercare le curve: `use_curvature` di Valhalla (sopra 0,5 preferisce le strade tortuose).
- * Sul giro di prova San Basilio → Padula (#10): 0,75 allunga di circa il 14%, 1 del 24%.
+ * How much to seek curves: Valhalla's `use_curvature` (above 0.5 it prefers winding roads).
+ * On the San Basilio → Padula test ride (#10): 0.75 makes it about 14% longer, 1 about 24%.
  */
 enum class Curves(val curvature: Double?) {
     NORMAL(null),
@@ -96,7 +96,7 @@ enum class Curves(val curvature: Double?) {
     MAX(1.0),
 }
 
-/** Come è stato calcolato il percorso: serve a ripetere lo stesso calcolo (stessi dati, stesso motore). */
+/** How the route was computed: needed to repeat the same computation (same data, same engine). */
 data class RouteInfo(
     val km: Double,
     val seconds: Double,
@@ -104,30 +104,30 @@ data class RouteInfo(
     val osmDate: String,
     val engine: String,
     val options: RouteOptions = RouteOptions(),
-    /** Il percorso senza preferenza per le curve, per dire quanto si allunga il giro. */
+    /** The route without curve preference, to tell how much longer the ride gets. */
     val baseline: Baseline? = null,
 ) {
     data class Baseline(val km: Double, val seconds: Double)
 
-    /** Strada in più dovuta alle curve, in percentuale (0,18 = +18%). Null se non confrontabile. */
+    /** Extra distance due to curves, as a share (0.18 = +18%). Null if not comparable. */
     val extraShare: Double? get() = baseline?.takeIf { it.km > 0 }?.let { km / it.km - 1 }
 
     companion object {
-        /** Sopra questa soglia l'avviso si vede bene: il giro cambia davvero. */
+        /** Above this threshold the warning stands out: the ride really changes. */
         const val LONG_DETOUR = 0.20
     }
 }
 
-/** Richiesta e risposta di Valhalla, uguali su ogni piattaforma. */
+/** Valhalla request and response, the same on every platform. */
 object ValhallaRoute {
-    /** Quanto lontano dal centro del paese può passare la strada. Il motore deve accettarlo (max_radius). */
+    /** How far from the town centre the road may pass. The engine must accept it (max_radius). */
     const val PASS_RADIUS_M = 2500
 
     /**
-     * Profilo moto con i valori predefiniti: il più vicino al giro disegnato su Google.
-     * Le soste sono "break"; punti trascinati e paesi sono "through", dove non si fa inversione.
-     * Per un paese basta una strada entro [PASS_RADIUS_M]: così il percorso può girargli
-     * intorno invece di entrare in centro (#29). Partenza e arrivo sono sempre soste.
+     * Motorcycle profile with default values: the closest to the ride drawn on Google.
+     * Stops are "break"; dragged points and towns are "through", where no U-turn is made.
+     * For a town any road within [PASS_RADIUS_M] is enough: so the route can go around it
+     * instead of entering the centre (#29). Start and finish are always stops.
      */
     fun request(stops: List<Stop>, options: RouteOptions = RouteOptions()): String = buildJsonObject {
         put("locations", buildJsonArray {
@@ -172,12 +172,12 @@ object ValhallaRoute {
         )
     }
 
-    /** Ogni tratto ripete l'ultimo punto del precedente. */
+    /** Each leg repeats the last point of the previous one. */
     private fun dropRepeated(points: List<LatLon>): List<LatLon> =
         points.filterIndexed { i, p -> i == 0 || p != points[i - 1] }
 }
 
-/** Polyline di Google con precisione 5 o 6 (Valhalla usa 6). */
+/** Google polyline with precision 5 or 6 (Valhalla uses 6). */
 object Polyline {
     fun encode(points: List<LatLon>, precision: Int): String {
         var factor = 1.0
@@ -231,22 +231,50 @@ object Polyline {
     }
 }
 
-/** Il giro con la strada calcolata al posto delle linee dritte. */
+/** Which data the route is computed with: a whole region (before #45) or the grid cells around the ride. */
+sealed interface RoutingData {
+    /** To repeat the same computation: the region or the build of the grid cells. */
+    val dataId: String
+    val osmDate: String
+    val valhalla: String
+
+    data class Region(val region: RoutingRegion) : RoutingData {
+        override val dataId get() = region.id
+        override val osmDate get() = region.osmDate
+        override val valhalla get() = region.valhalla
+    }
+
+    data class Cells(val cells: RoutingCells) : RoutingData {
+        override val dataId get() = "cells-${cells.build}"
+        override val osmDate get() = cells.osmDate
+        override val valhalla get() = cells.valhalla
+    }
+}
+
+/** The ride with the computed road instead of straight lines. */
 fun Ride.routed(
     result: ValhallaRoute.Result,
-    region: RoutingRegion,
+    data: RoutingData,
     options: RouteOptions = RouteOptions(),
     baseline: ValhallaRoute.Result? = null,
 ): Ride = copy(
     track = result.shape,
     route = RouteInfo(
-        result.km, result.seconds, region.id, region.osmDate, "valhalla ${region.valhalla}", options,
+        result.km, result.seconds, data.dataId, data.osmDate, "valhalla ${data.valhalla}", options,
         baseline?.let { RouteInfo.Baseline(it.km, it.seconds) },
     ),
 )
 
-/** Il giro com'era prima del calcolo, per ricalcolarlo con altre preferenze. */
+fun Ride.routed(
+    result: ValhallaRoute.Result,
+    region: RoutingRegion,
+    options: RouteOptions = RouteOptions(),
+    baseline: ValhallaRoute.Result? = null,
+): Ride = routed(result, RoutingData.Region(region), options, baseline)
+
+/** The ride as it was before routing, to route it again with other preferences. */
 fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null) else this
 
-/** Ricalcolabile: un giro di sole tappe, già calcolato o ancora da calcolare (non una traccia GPX). */
+/** Re-routable: a ride made only of stops, already routed or not yet (not a GPX track). */
+
 val Ride.routable: Boolean get() = stops.size >= 2 && (route != null || straightLines)

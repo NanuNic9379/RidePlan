@@ -1,0 +1,5 @@
+{
+  "comment": "Data for on-phone routing (#3, #45). Built once for the whole covered area and split into 1-degree grid cells. bbox = lon min, lat min, lon max, lat max: only a sanity check, every cell must fall inside it. Source: OpenStreetMap Italy (openstreetmap.fr mirror, much faster than Geofabrik from GitHub runners).",
+  "source": "https://download.openstreetmap.fr/extracts/europe/italy-latest.osm.pbf",
+  "bbox": [6.0, 35.0, 19.0, 48.0]
+}

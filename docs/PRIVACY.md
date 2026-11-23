@@ -14,7 +14,7 @@ ogni pagina web, l'indirizzo IP del telefono e l'ora della richiesta.
 |---|---|---|
 | Mostri la mappa | OpenFreeMap (`tiles.openfreemap.org`) | La zona di mappa da disegnare |
 | Importi un link di Google Maps | Google (`maps.app.goo.gl`, `google.com`) | Il link che hai incollato o condiviso |
-| Scarichi i dati stradali di una zona | GitHub (Release `routing-data` di questo repository) | Il nome del file della zona |
+| Scarichi i dati stradali attorno a un giro | GitHub (Release `routing-data` di questo repository) | I nomi dei file dei quadrati di circa 100 km che servono (dicono la zona, non le tappe) |
 | Controllo degli aggiornamenti (solo versione da GitHub) | GitHub (`api.github.com`) | Nessun dato oltre alla richiesta dell'ultima versione |
 
 Il calcolo del percorso avviene **sul telefono**: le tappe non vengono inviate a nessun server.
@@ -44,7 +44,7 @@ scrivi tramite la scheda Security del repository.
 
 RidePlan **collects no data**: no accounts, ads, analytics or crash reporting. Rides, stops and
 settings stay on the phone. Internet is used only to: load map tiles from OpenFreeMap; resolve a
-Google Maps link you import; download the road data of an area from this repository's
+Google Maps link you import; download the road data around a ride (squares of about 100 km, which reveal the area but not the stops) from this repository's
 `routing-data` Release on GitHub; and (GitHub build only) check GitHub for a newer version. Those
 servers see the phone's IP address and the time, like any web request. Routes are computed **on the
 phone**: stops are never sent to a server. The only permission is `INTERNET`. When you share a GPX

@@ -30,6 +30,10 @@ import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.unrouted
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.RoutingRegion
+import io.github.nanunic9379.rideplan.route.RoutingData
+import io.github.nanunic9379.rideplan.route.CellsDownload
+import io.github.nanunic9379.rideplan.route.DataDownload
+import io.github.nanunic9379.rideplan.route.RegionDownload
 import io.github.nanunic9379.rideplan.route.routed
 import io.github.nanunic9379.rideplan.route.toggledStop
 import io.github.nanunic9379.rideplan.update.UpdateOverlay
@@ -47,7 +51,7 @@ class MainActivity : ComponentActivity() {
     private var routeJob: Job? = null
     private lateinit var store: ProfileStore
 
-    /** Copia di sicurezza (#43): l'utente sceglie dove salvarla (Download, Drive, ...). */
+    /** Backup (#43): the user chooses where to save it (Downloads, Drive, ...). */
     private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) backupIo {
             contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.backupText().toByteArray()) }
@@ -108,7 +112,7 @@ class MainActivity : ComponentActivity() {
         handle(intent)
     }
 
-    /** "Condividi" da Google Maps (testo con il link) o apertura di un file GPX/KML/KMZ. */
+    /** "Share" from Google Maps (text with the link) or opening a GPX/KML/KMZ file. */
     private fun handle(intent: Intent?) {
         intent ?: return
         when (intent.action) {
@@ -128,8 +132,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Indietro dalla mappa o dal profilo torna alla schermata iniziale (#41);
-     * dalla schermata iniziale fa quello che fa sempre Android.
+     * Back from the map or the profile returns to the home screen (#41);
+     * from the home screen it does what Android always does.
      */
     private val backToHome = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -145,8 +149,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Profilo e giri salvati in un file dell'app (#41): restano sul telefono.
-     * Si scrive in un file temporaneo e poi lo si rinomina: un'interruzione non rovina niente.
+     * Profile and saved rides in an app file (#41): they stay on the phone.
+     * Written to a temporary file and then renamed: an interruption cannot corrupt anything.
      */
     private fun profileStore(): ProfileStore {
         val file = File(filesDir, "profile.json")
@@ -162,7 +166,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    /** Un giro da "I tuoi giri": subito sulla mappa, il percorso si ricalcola se serve. */
+    /** A ride from "Your rides": straight onto the map, routed again if needed. */
     private fun openRide(ride: Ride) {
         routeJob?.cancel()
         rides.options = loadOptions()
@@ -176,10 +180,10 @@ class MainActivity : ComponentActivity() {
         else intent.getParcelableExtra(Intent.EXTRA_STREAM)
 
     /**
-     * GPX nella cache dell'app, passato con il menu "Condividi" di Android (Garmin, WhatsApp,
-     * Drive...). Solo il file del giro è leggibile da fuori, e solo dall'app scelta.
+     * GPX in the app cache, handed over through Android's "Share" menu (Garmin, WhatsApp,
+     * Drive...). Only the ride file is readable from outside, and only by the chosen app.
      */
-    /** Il link del giro (#6) a una chat o alla mail. */
+    /** The ride link (#6) to a chat or an email. */
     private fun shareText(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
         startActivity(Intent.createChooser(send, null))
@@ -228,8 +232,9 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Percorso su strada per un giro fatto solo di tappe (#3): con i dati già scaricati parte
-     * subito, altrimenti propone di scaricare la zona giusta.
+     * Road route for a ride made only of stops (#3): with the data already downloaded it starts
+     * right away, otherwise it offers to download the grid cells around the ride (#45). Whole
+     * regions downloaded earlier still work; they are offered only while the cells are not published.
      */
     private fun planRoute(ride: Ride) {
         routeJob?.cancel()
@@ -237,34 +242,53 @@ class MainActivity : ComponentActivity() {
             rides.route = RouteState.Checking
             routeStep(ride) {
                 val points = ride.stops.map { it.point }
-                val local = withContext(Dispatchers.IO) { RoutingRegion.bestFor(router.installed(), points) }
+                val local: RoutingData? = withContext(Dispatchers.IO) {
+                    val cells = router.localCells()
+                    if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), points)) RoutingData.Cells(cells)
+                    else RoutingRegion.bestFor(router.installed(), points)?.let { RoutingData.Region(it) }
+                }
                 if (local != null) {
                     compute(ride, local)
                 } else {
-                    val region = withContext(Dispatchers.IO) { RoutingRegion.bestFor(router.published(), points) }
-                    rides.route = if (region == null) RouteState.NotCovered else RouteState.NeedsData(region)
+                    val download: DataDownload? = withContext(Dispatchers.IO) {
+                        val published = router.publishedCells()
+                        if (published != null) CellsDownload.plan(published, router.localCells(), router.installedPacks(), points)
+                        else RoutingRegion.bestFor(router.published(), points)?.let(::RegionDownload)
+                    }
+                    when {
+                        download == null -> rides.route = RouteState.NotCovered
+                        download is CellsDownload && download.packs.isEmpty() -> compute(ride, RoutingData.Cells(download.cells))
+                        else -> rides.route = RouteState.NeedsData(download)
+                    }
                 }
             }
         }
     }
 
-    private fun download(region: RoutingRegion) {
+    private fun download(data: DataDownload) {
         val ride = rides.ride ?: return
         routeJob?.cancel()
         routeJob = lifecycleScope.launch {
-            rides.route = RouteState.Downloading(region, 0)
+            rides.route = RouteState.Downloading(data, 0)
             routeStep(ride) {
-                withContext(Dispatchers.IO) {
-                    router.download(region, isActive = { isActive }) { done -> rides.route = RouteState.Downloading(region, done) }
+                val progress = { done: Long -> rides.route = RouteState.Downloading(data, done) }
+                when (data) {
+                    is RegionDownload -> {
+                        withContext(Dispatchers.IO) { router.download(data.region, isActive = { isActive }, progress) }
+                        compute(ride, RoutingData.Region(data.region))
+                    }
+                    is CellsDownload -> {
+                        withContext(Dispatchers.IO) { router.download(data, isActive = { isActive }, progress) }
+                        compute(ride, RoutingData.Cells(data.cells))
+                    }
                 }
-                compute(ride, region)
             }
         }
     }
 
     /**
-     * Nuove preferenze (#4): restano per i prossimi giri e il giro sullo schermo si ricalcola.
-     * Durante un download non si interrompe niente: il calcolo dopo il download le usa già.
+     * New preferences (#4): they stay for the next rides and the ride on screen is routed again.
+     * During a download nothing is interrupted: the routing after the download already uses them.
      */
     private fun changeOptions(options: RouteOptions) {
         rides.options = options
@@ -276,7 +300,7 @@ class MainActivity : ComponentActivity() {
         rides.ride?.let { reroute(it.unrouted()) }
     }
 
-    /** Giro cambiato (preferenze o tappe): si ricalcola, se si può già. */
+    /** Ride changed (preferences or stops): route it again, if possible already. */
     private fun reroute(fresh: Ride) {
         rides.ride = fresh
         if (fresh.routable && rides.route !is RouteState.Downloading && rides.route !is RouteState.NeedsData) planRoute(fresh)
@@ -294,27 +318,28 @@ class MainActivity : ComponentActivity() {
     private fun cancelRoute() {
         routeJob?.cancel()
         val state = rides.route
-        rides.route = if (state is RouteState.Downloading) RouteState.NeedsData(state.region) else RouteState.Idle
+        rides.route = if (state is RouteState.Downloading) RouteState.NeedsData(state.download) else RouteState.Idle
     }
 
-    private suspend fun compute(ride: Ride, region: RoutingRegion) {
+    private suspend fun compute(ride: Ride, data: RoutingData) {
         rides.route = RouteState.Computing
         val options = rides.options
         val (result, baseline) = withContext(Dispatchers.Default) {
-            val main = router.route(ride, region, options)
-            // Con le curve calcolo anche il percorso normale, per dire quanto si allunga il giro.
-            // Se il confronto fallisce non importa: il giro resta valido.
+            val main = router.route(ride, data, options)
+            // With curves, also compute the normal route, to tell how much longer the ride gets.
+            // If the comparison fails it does not matter: the ride stays valid.
             val base = if (options.curves == Curves.NORMAL) null
-            else runCatching { router.route(ride, region, options.copy(curves = Curves.NORMAL)) }.getOrNull()
+            else runCatching { router.route(ride, data, options.copy(curves = Curves.NORMAL)) }.getOrNull()
             main to base
         }
         if (rides.ride === ride) {
-            rides.ride = ride.routed(result, region, options, baseline)
+            rides.ride = ride.routed(result, data, options, baseline)
             rides.route = RouteState.Idle
         }
     }
 
-    /** Errori del percorso nella scheda del giro, solo se si guarda ancora lo stesso giro. */
+    /** Routing errors in the ride card, only if the same ride is still on screen. */
+
     private suspend fun routeStep(ride: Ride, block: suspend () -> Unit) {
         try {
             block()

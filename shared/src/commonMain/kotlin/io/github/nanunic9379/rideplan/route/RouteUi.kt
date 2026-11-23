@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.region_around_ride
 import io.github.nanunic9379.rideplan.resources.region_it_calabria_sicilia
 import io.github.nanunic9379.rideplan.resources.region_it_centro
 import io.github.nanunic9379.rideplan.resources.region_it_nord_est
@@ -55,12 +56,12 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-/** A che punto è il calcolo del percorso del giro sullo schermo. */
+/** Where the routing of the ride on screen stands. */
 sealed interface RouteState {
     data object Idle : RouteState
     data object Checking : RouteState
-    data class NeedsData(val region: RoutingRegion) : RouteState
-    data class Downloading(val region: RoutingRegion, val done: Long) : RouteState
+    data class NeedsData(val download: DataDownload) : RouteState
+    data class Downloading(val download: DataDownload, val done: Long) : RouteState
     data object Computing : RouteState
     data object NotCovered : RouteState
     data class Failed(val error: RouteError, val detail: String? = null) : RouteState
@@ -71,20 +72,20 @@ enum class RouteError { NETWORK, CHECKSUM, NO_SPACE, NO_ROUTE, ENGINE }
 class RouteException(val error: RouteError, val detail: String? = null) :
     Exception(error.name + (detail?.let { ": $it" } ?: ""))
 
-/** Cosa può fare l'utente; lo esegue la piattaforma. */
+/** What the user can do; the platform carries it out. */
 class RouteActions(
-    val download: (RoutingRegion) -> Unit,
+    val download: (DataDownload) -> Unit,
     val cancel: () -> Unit,
     val retry: () -> Unit,
-    /** Preferenze cambiate: la piattaforma le ricorda e ricalcola il giro (#4). */
+    /** Preferences changed: the platform remembers them and routes the ride again (#4). */
     val changeOptions: (RouteOptions) -> Unit = {},
-    /** Una tappa passa da sosta a "passa vicino" o viceversa: si ricalcola (#29). */
+    /** A stop switches between "stop" and "pass near" or back: route again (#29). */
     val toggleStop: (index: Int) -> Unit = {},
 )
 
 /**
- * Carattere del percorso: livello delle curve e strade da evitare.
- * Tutto alto 48 dp: si tocca anche con i guanti.
+ * Route character: curve level and roads to avoid.
+ * Everything is 48 dp tall: usable with gloves on.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -111,8 +112,8 @@ fun RouteOptionsRow(options: RouteOptions, enabled: Boolean, onChange: (RouteOpt
 }
 
 /**
- * Quanto costano le curve scelte, misurato sul giro vero contro il percorso normale.
- * Sotto il 5% non si dice niente; dal 20% in su l'avviso è in evidenza.
+ * What the chosen curves cost, measured on the real ride against the normal route.
+ * Below 5% nothing is said; from 20% up the warning is highlighted.
  */
 @Composable
 fun DetourNote(info: RouteInfo) {
@@ -153,7 +154,7 @@ private fun OptionChip(label: String, selected: Boolean, enabled: Boolean, onTog
     )
 }
 
-/** Riga della scheda del giro dedicata al percorso. */
+/** Row of the ride card dedicated to the route. */
 @Composable
 fun RouteSection(state: RouteState, actions: RouteActions?) {
     val small = MaterialTheme.typography.bodySmall
@@ -165,12 +166,12 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
         RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = small, color = muted)
         is RouteState.NeedsData -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                stringResource(Res.string.route_needs_data, regionName(state.region.id), formatBytes(state.region.bytes)),
+                stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
                 style = small,
             )
             if (actions != null) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Button(onClick = { actions.download(state.region) }) { Text(stringResource(Res.string.route_download)) }
+                    Button(onClick = { actions.download(state.download) }) { Text(stringResource(Res.string.route_download)) }
                 }
             }
         }
@@ -178,14 +179,14 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
             Text(
                 stringResource(
                     Res.string.route_downloading,
-                    regionName(state.region.id),
+                    dataName(state.download),
                     formatBytes(state.done),
-                    formatBytes(state.region.bytes),
+                    formatBytes(state.download.bytes),
                 ),
                 style = small,
             )
             LinearProgressIndicator(
-                progress = { (state.done.toFloat() / state.region.bytes.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                progress = { (state.done.toFloat() / state.download.bytes.coerceAtLeast(1)).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth(),
             )
             if (actions != null) {
@@ -213,7 +214,7 @@ private fun Waiting(text: String) {
     }
 }
 
-/** Nota sotto un giro calcolato: con quali dati. */
+/** Note under a routed ride: which data was used. */
 @Composable
 fun routeDoneNote(info: RouteInfo): String = stringResource(Res.string.route_done_note, info.osmDate.take(10))
 
@@ -234,6 +235,12 @@ private fun failureText(state: RouteState.Failed): String = when (state.error) {
 }
 
 @Composable
+private fun dataName(download: DataDownload): String = when (download) {
+    is RegionDownload -> regionName(download.region.id)
+    is CellsDownload -> stringResource(Res.string.region_around_ride)
+}
+
+@Composable
 private fun regionName(id: String): String = when (id) {
     "it-nord-ovest" -> stringResource(Res.string.region_it_nord_ovest)
     "it-nord-est" -> stringResource(Res.string.region_it_nord_est)
@@ -244,7 +251,8 @@ private fun regionName(id: String): String = when (id) {
     else -> id
 }
 
-/** "410 MB", "1,2 GB": a colpo d'occhio, non al byte. */
+/** "410 MB", "1.2 GB": at a glance, not to the byte. */
+
 internal fun formatBytes(bytes: Long): String {
     val mb = bytes / 1_000_000.0
     return if (mb < 1000) "${mb.roundToLong()} MB" else "${(mb / 100).roundToLong() / 10.0} GB"
