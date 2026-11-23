@@ -128,6 +128,8 @@
     <string name="snack_undo">Rückgängig</string>
     <string name="snack_done">Als gefahren markiert</string>
     <string name="card_saved">In deinen Touren gespeichert</string>
+    <string name="card_collapse">Weniger</string>
+    <string name="card_expand">Details</string>
     <string name="preview_received">Tour erhalten: noch nicht in deinen Touren</string>
     <string name="preview_save">In meinen Touren speichern</string>
     <string name="rename_title">Name der Tour</string>

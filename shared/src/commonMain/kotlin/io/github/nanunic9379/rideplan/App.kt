@@ -98,7 +98,7 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
     ) {
         if (ride != null) RideLayers(ride)
     }
-    LaunchedEffect(ride) { if (ride != null) state.fitRide(ride) }
+    LaunchedEffect(ride, rides.panelOpen) { if (ride != null) state.fitRide(ride, rides.panelOpen) }
 
     Box(Modifier.fillMaxSize()) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)

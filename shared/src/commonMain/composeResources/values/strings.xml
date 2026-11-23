@@ -129,6 +129,8 @@
     <string name="snack_undo">Undo</string>
     <string name="snack_done">Marked as ridden</string>
     <string name="card_saved">Saved in your rides</string>
+    <string name="card_collapse">Less</string>
+    <string name="card_expand">Details</string>
     <string name="preview_received">Ride received: not in your rides yet</string>
     <string name="preview_save">Save to my rides</string>
     <string name="rename_title">Ride name</string>

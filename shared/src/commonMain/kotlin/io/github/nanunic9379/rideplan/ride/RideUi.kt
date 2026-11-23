@@ -2,6 +2,9 @@ package io.github.nanunic9379.rideplan.ride
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -39,6 +43,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.resources.card_collapse
+import io.github.nanunic9379.rideplan.resources.card_expand
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.close
 import io.github.nanunic9379.rideplan.resources.err_file_too_big
@@ -128,6 +134,8 @@ class RideScreenState {
     var page by mutableStateOf(Page.HOME)
     /** Il giro mostrato è in "I tuoi giri" con questo id: ogni modifica lo aggiorna. */
     var savedId by mutableStateOf<String?>(null)
+    /** Scheda del giro aperta (impostazioni) o ridotta a nome e km, per vedere il percorso. */
+    var panelOpen by mutableStateOf(true)
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
@@ -137,7 +145,7 @@ class RideScreenState {
     /** Mostra il giro o l'errore. Un giro nuovo non è ancora tra quelli salvati. */
     fun show(result: Result<Ride>) {
         busy = false
-        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null }.onFailure { error = it }
+        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true }.onFailure { error = it }
     }
 
     /** Torna alla schermata iniziale; il giro è già salvato. */
@@ -191,15 +199,16 @@ fun RideLayers(ride: Ride) {
 /**
  * Inquadra tutto il giro, con margine ai lati e spazio in basso per la scheda.
  * Il margine si aggiunge ai limiti invece che in pixel: funziona uguale su ogni schermo.
+ * [panelOpen]: la scheda aperta copre circa metà schermo, ridotta molto meno.
  */
-suspend fun MapState.fitRide(ride: Ride) {
+suspend fun MapState.fitRide(ride: Ride, panelOpen: Boolean = true) {
     val (sw, ne) = ride.bounds()
     val dLon = (ne.lon - sw.lon).coerceAtLeast(0.01)
     val dLat = (ne.lat - sw.lat).coerceAtLeast(0.01)
     animateCameraToBounds(
         BoundingBox(
             sw.lon - dLon * 0.15,
-            sw.lat - dLat * 0.9,
+            sw.lat - dLat * (if (panelOpen) 0.9 else 0.3),
             ne.lon + dLon * 0.15,
             ne.lat + dLat * 0.25,
         ),
@@ -235,6 +244,8 @@ fun BoxScope.RidePanel(
                 actions = actions,
                 onLink = { linkDialog = true },
                 saved = saved,
+                open = state.panelOpen,
+                onToggle = { state.panelOpen = !state.panelOpen },
             )
         } else if (actions != null && !state.busy) {
             ImportMenu(actions, onLink = { linkDialog = true }) { open ->
@@ -291,17 +302,29 @@ private fun RideCard(
     actions: ImportActions?,
     onLink: () -> Unit,
     saved: @Composable () -> Unit,
+    open: Boolean = true,
+    onToggle: () -> Unit = {},
 ) {
     val title = ride.name ?: defaultName(ride) ?: stringResource(Res.string.ride_default_name)
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(summary(ride), style = MaterialTheme.typography.bodyMedium)
+    // Mai più alta di metà schermo circa: il resto scorre, e la mappa resta visibile.
+    Card(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Chiusa mostra solo nome, km e tempo: tutto il percorso si vede sulla mappa.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f).clickable(onClick = onToggle)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(summary(ride), style = MaterialTheme.typography.bodyMedium)
+                }
+                TextButton(onClick = onToggle) {
+                    Text(if (open) "▾ " + stringResource(Res.string.card_collapse) else "▴ " + stringResource(Res.string.card_expand))
+                }
+            }
+            if (!open) return@Column
             val names = ride.stops.mapNotNull { it.name }
             if (names.isNotEmpty()) {
                 Text(names.joinToString(" → "), style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)

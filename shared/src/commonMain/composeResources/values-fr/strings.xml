@@ -129,6 +129,8 @@
     <string name="snack_undo">Annuler</string>
     <string name="snack_done">Marquée comme faite</string>
     <string name="card_saved">Enregistrée dans tes balades</string>
+    <string name="card_collapse">Réduire</string>
+    <string name="card_expand">Détails</string>
     <string name="preview_received">Balade reçue : pas encore dans tes balades</string>
     <string name="preview_save">Enregistrer dans mes balades</string>
     <string name="rename_title">Nom de la balade</string>
