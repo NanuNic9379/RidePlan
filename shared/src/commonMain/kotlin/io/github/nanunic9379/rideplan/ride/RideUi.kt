@@ -179,10 +179,13 @@ private val RouteCasing = Color(0xFF7A3300)
 private val StopFill = Color(0xFFFFFFFF)
 private val StopStroke = Color(0xFF1C1B26)
 
-/** Track and stops on the map. */
+/**
+ * Track and stops on the map. Only a real road or recorded track is drawn: while the route is
+ * being calculated (or cannot be) the stops are shown alone, never joined by straight lines.
+ */
 @Composable
 fun RideLayers(ride: Ride) {
-    val line = rememberGeoJsonSource(GeoJsonData.JsonString(lineJson(ride.line)))
+    val line = rememberGeoJsonSource(GeoJsonData.JsonString(roadJson(ride)))
     val stops = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(ride.stops.map { it.point })))
     LineLayer(id = "ride-casing", source = line, color = const(RouteCasing), width = const(7.dp))
     LineLayer(id = "ride-line", source = line, color = const(RouteColor), width = const(4.dp))
@@ -511,6 +514,12 @@ internal fun importErrorText(error: ImportError): StringResource = when (error) 
 }
 
 /** Hand-made GeoJSON: numbers only, no text to escape. */
+/** The ride's road as GeoJSON; an empty collection while only straight lines between stops are known. */
+internal fun roadJson(ride: Ride): String =
+    if (ride.straightLines) EMPTY_FEATURES else lineJson(ride.track)
+
+internal const val EMPTY_FEATURES = """{"type":"FeatureCollection","features":[]}"""
+
 internal fun lineJson(points: List<LatLon>): String =
     points.joinToString(",", """{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[""", "]}}") {
         "[${it.lon},${it.lat}]"
