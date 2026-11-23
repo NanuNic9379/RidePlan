@@ -12,6 +12,9 @@ batteria del telefono, il gruppo che aspetta al bar.
 3. **Formati aperti.** Il percorso è un GPX: entra ed esce verso qualsiasi navigatore.
 4. **Niente dati raccolti.** Nessuna statistica d'uso, nessuna pubblicità.
 5. **Open source** GPL-3.0: chi lo migliora lo rende a tutti.
+6. **Globale.** Funziona in tutto il mondo, non solo in Italia: dati per qualsiasi paese,
+   interfaccia in più lingue (inglese di base, italiano dal primo giorno, traduzioni dalla
+   comunità), unità km o miglia, regole per paese (es. limiti di cilindrata in autostrada).
 
 ## Architettura (proposta, da verificare nella prima fase)
 | Parte | Scelta | Perché |
@@ -34,13 +37,15 @@ modificarlo senza che la firma salti. La firma però dice *quale chiave* ha firm
 ### Limiti noti
 - **iPhone:** si compila solo su un Mac con Xcode (o con una compilazione automatica su macOS).
 - **iPhone sul telefono vero:** installazione, TestFlight e App Store richiedono l'Apple Developer Program (99 $/anno).
-- **Calcolo offline:** i dati stradali pesano molto (l'Italia intera circa 2,4 GB): si scaricano per macro-regione,
-  da pacchetti costruiti con GitHub Actions e pubblicati nelle Release, con mirror configurabile.
+- **Calcolo offline:** i dati stradali pesano molto (l'Italia intera circa 2,4 GB): si scaricano per zona
+  (regioni Geofabrik in tutto il mondo), da pacchetti costruiti con GitHub Actions e pubblicati nelle
+  Release, con mirror configurabile. La mappa (PMTiles) si può ritagliare per zona direttamente dalle
+  build mondiali pubbliche di Protomaps, senza ospitare nulla.
 - **Nostr:** non esiste un formato standard per i percorsi; va definito da noi (evento sostituibile).
 
 ## Prime tappe
 1. Scheletro dell'app Kotlin Multiplatform (Android + iPhone) con schermata mappa.
-2. Mappa OpenStreetMap offline di una regione.
+2. Mappa OpenStreetMap offline di una zona, ovunque nel mondo.
 3. Percorso tra due punti con profilo moto (verifica Valhalla su Android e iPhone).
 4. Punti di passaggio trascinabili, preferenza curve / evita autostrade.
 5. Esportazione e importazione GPX.
