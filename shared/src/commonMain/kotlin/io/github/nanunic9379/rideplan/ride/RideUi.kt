@@ -134,7 +134,7 @@ class RideScreenState {
     var page by mutableStateOf(Page.HOME)
     /** The shown ride is in "Your rides" with this id: every change updates it. */
     var savedId by mutableStateOf<String?>(null)
-    /** Scheda del giro aperta (impostazioni) o ridotta a nome e km, per vedere il percorso. */
+    /** Ride card open (settings) or collapsed to name and km, to see the route. */
     var panelOpen by mutableStateOf(true)
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
@@ -305,10 +305,10 @@ private fun RideCard(
     onToggle: () -> Unit = {},
 ) {
     val title = ride.name ?: defaultName(ride) ?: stringResource(Res.string.ride_default_name)
-    // Mai più alta di metà schermo circa: il resto scorre, e la mappa resta visibile.
+    // Never taller than about half the screen: the rest scrolls and the map stays visible.
     Card(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            // Chiusa mostra solo nome, km e tempo: tutto il percorso si vede sulla mappa.
+            // Collapsed it shows only name, km and time: the whole route is visible on the map.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f).clickable(onClick = onToggle)) {
                     Text(
