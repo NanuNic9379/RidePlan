@@ -223,8 +223,8 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { runCatching(block) }
             routeJob?.cancel()
-            // Un giro ricevuto con un link si calcola come l'ha preparato chi l'ha mandato (#50);
-            // le tue preferenze salvate non cambiano e tornano col giro successivo.
+            // A ride received by link is calculated the way the sender set it up (#50);
+            // your saved preferences do not change and come back with the next ride.
             result.getOrNull()?.let { rides.options = it.sharedOptions ?: loadOptions() }
             rides.show(result)
             result.getOrNull()?.takeIf { it.needsRoute }?.let(::planRoute)
