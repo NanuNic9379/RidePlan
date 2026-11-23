@@ -22,6 +22,8 @@ Progetti il giro, lo condividi con chi vuoi, senza account e senza un'azienda in
 ## Documentazione
 - [Progetto e architettura](docs/PROGETTO.md)
 - [Come contribuire](CONTRIBUTING.md)
+- [Privacy](docs/PRIVACY.md): nessun dato raccolto, cosa si collega a internet e perché.
+- [Sicurezza](SECURITY.md): come segnalare una falla e verificare la firma dell'APK.
 
 ## Licenza
 GPL-3.0 (vedi [LICENSE](LICENSE)), con un permesso aggiuntivo per la distribuzione sugli store
