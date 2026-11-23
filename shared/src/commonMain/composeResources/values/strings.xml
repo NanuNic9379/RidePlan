@@ -88,6 +88,12 @@
     <string name="route_stops_hint">Tap to choose: stop (you go there) or pass by (without riding into town).</string>
     <string name="route_stop_stop">Stop: %1$s</string>
     <string name="route_stop_pass">Pass by: %1$s</string>
+    <string name="stop_edit_hint">Long-press the map to add a stop. Drag a stop to move it, tap it to remove it or change its order.</string>
+    <string name="stop_edit_title">Stop %1$d of %2$d</string>
+    <string name="stop_edit_earlier">Earlier</string>
+    <string name="stop_edit_later">Later</string>
+    <string name="stop_edit_remove">Remove</string>
+    <string name="stop_edit_done">Done</string>
     <string name="route_cancel">Cancel</string>
     <string name="route_err_network">Network error: the road data was not downloaded.</string>
     <string name="route_err_checksum">The downloaded data does not match the published data, so it was deleted.</string>

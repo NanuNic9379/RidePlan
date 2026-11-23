@@ -52,6 +52,7 @@ import io.github.nanunic9379.rideplan.resources.route_opt_curves
 import io.github.nanunic9379.rideplan.resources.route_opt_no_highways
 import io.github.nanunic9379.rideplan.resources.route_opt_no_tolls
 import io.github.nanunic9379.rideplan.resources.route_retry
+import io.github.nanunic9379.rideplan.ride.Ride
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -81,6 +82,8 @@ class RouteActions(
     val changeOptions: (RouteOptions) -> Unit = {},
     /** A stop switches between "stop" and "pass near" or back: route again (#29). */
     val toggleStop: (index: Int) -> Unit = {},
+    /** The stops were edited on the map (#2): show the new ride and route it again. */
+    val editStops: (Ride) -> Unit = {},
 )
 
 /**

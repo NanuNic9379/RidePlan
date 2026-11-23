@@ -87,6 +87,12 @@
     <string name="route_stops_hint">Tippen zum Wählen: Halt (du fährst hin) oder vorbei (ohne durch den Ort zu fahren).</string>
     <string name="route_stop_stop">Halt: %1$s</string>
     <string name="route_stop_pass">Vorbei: %1$s</string>
+    <string name="stop_edit_hint">Lange auf die Karte drücken, um einen Halt hinzuzufügen. Einen Halt ziehen, um ihn zu verschieben, antippen, um ihn zu entfernen oder die Reihenfolge zu ändern.</string>
+    <string name="stop_edit_title">Halt %1$d von %2$d</string>
+    <string name="stop_edit_earlier">Früher</string>
+    <string name="stop_edit_later">Später</string>
+    <string name="stop_edit_remove">Entfernen</string>
+    <string name="stop_edit_done">Fertig</string>
     <string name="route_cancel">Abbrechen</string>
     <string name="route_err_network">Netzwerkfehler: Die Straßendaten wurden nicht heruntergeladen.</string>
     <string name="route_err_checksum">Die heruntergeladenen Daten stimmen nicht mit den veröffentlichten überein und wurden gelöscht.</string>
