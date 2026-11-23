@@ -87,6 +87,12 @@
     <string name="route_stops_hint">Touche pour choisir : arrêt (tu y vas) ou passer à côté (sans traverser le village).</string>
     <string name="route_stop_stop">Arrêt : %1$s</string>
     <string name="route_stop_pass">Passer à côté : %1$s</string>
+    <string name="stop_edit_hint">Appuyez longuement sur la carte pour ajouter une étape. Faites glisser une étape pour la déplacer, touchez-la pour la retirer ou changer son ordre.</string>
+    <string name="stop_edit_title">Étape %1$d sur %2$d</string>
+    <string name="stop_edit_earlier">Avant</string>
+    <string name="stop_edit_later">Après</string>
+    <string name="stop_edit_remove">Retirer</string>
+    <string name="stop_edit_done">Terminé</string>
     <string name="route_cancel">Annuler</string>
     <string name="route_err_network">Erreur réseau : les données routières n’ont pas été téléchargées.</string>
     <string name="route_err_checksum">Les données téléchargées ne correspondent pas à celles publiées : elles ont été supprimées.</string>

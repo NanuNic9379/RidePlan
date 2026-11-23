@@ -94,6 +94,7 @@ import io.github.nanunic9379.rideplan.resources.ride_source_gpx
 import io.github.nanunic9379.rideplan.resources.ride_source_kml
 import io.github.nanunic9379.rideplan.resources.ride_stops
 import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
+import io.github.nanunic9379.rideplan.resources.stop_edit_hint
 import io.github.nanunic9379.rideplan.route.DetourNote
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteOptions
@@ -136,6 +137,8 @@ class RideScreenState {
     var savedId by mutableStateOf<String?>(null)
     /** Ride card open (settings) or collapsed to name and km, to see the route. */
     var panelOpen by mutableStateOf(true)
+    /** The stops were edited on the map (#2): the camera stops re-framing the ride at every change. */
+    var stopsEdited by mutableStateOf(false)
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
@@ -145,7 +148,7 @@ class RideScreenState {
     /** Shows the ride or the error. A new ride is not among the saved ones yet. */
     fun show(result: Result<Ride>) {
         busy = false
-        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true }.onFailure { error = it }
+        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false }.onFailure { error = it }
     }
 
     /** Back to the home screen; the ride is already saved. */
@@ -154,6 +157,7 @@ class RideScreenState {
         route = RouteState.Idle
         savedId = null
         page = Page.HOME
+        stopsEdited = false
     }
 }
 
@@ -341,6 +345,9 @@ private fun RideCard(
                 val busy = route == RouteState.Checking || route == RouteState.Computing || route is RouteState.Downloading
                 RouteOptionsRow(options, enabled = !busy, onChange = routeActions.changeOptions)
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
+                if (ride.stopsEditable) {
+                    Text(stringResource(Res.string.stop_edit_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             RouteSection(route, routeActions)
             saved()

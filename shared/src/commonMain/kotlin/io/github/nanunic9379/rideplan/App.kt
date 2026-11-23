@@ -15,7 +15,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,12 +33,24 @@ import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.Page
 import io.github.nanunic9379.rideplan.ride.RideLayers
 import io.github.nanunic9379.rideplan.ride.RidePanel
+import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
+import io.github.nanunic9379.rideplan.ride.StopHandles
+import io.github.nanunic9379.rideplan.ride.StopToolbar
+import io.github.nanunic9379.rideplan.ride.rememberStopInteractions
+import io.github.nanunic9379.rideplan.ride.stopsEditable
+import io.github.nanunic9379.rideplan.ride.withStopAdded
+import io.github.nanunic9379.rideplan.ride.withStopMoved
+import io.github.nanunic9379.rideplan.ride.withStopRemoved
+import io.github.nanunic9379.rideplan.ride.withStopReordered
 import io.github.nanunic9379.rideplan.ride.fitRide
 import io.github.nanunic9379.rideplan.route.RouteActions
+import io.github.nanunic9379.rideplan.route.RouteState
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
+import org.maplibre.compose.overlay.MapOverlay
+import org.maplibre.compose.overlay.include
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 
@@ -98,10 +113,48 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
     ) {
         if (ride != null) RideLayers(ride)
     }
-    LaunchedEffect(ride, rides.panelOpen) { if (ride != null) state.fitRide(ride, rides.panelOpen) }
+    // After an edit on the map the camera stays where the rider is working.
+    LaunchedEffect(ride, rides.panelOpen) { if (ride != null && !rides.stopsEdited) state.fitRide(ride, rides.panelOpen) }
+
+    // Editing the stops on the map (#2): only rides made of stops, and not while data is downloading.
+    val editable = ride != null && routeActions != null && ride.stopsEditable && rides.route !is RouteState.Downloading
+    var selected by remember { mutableStateOf<Int?>(null) }
+    val selectedStop = selected?.takeIf { editable && ride != null && it in ride.stops.indices }
+    fun edit(change: (Ride) -> Ride) {
+        val current = rides.ride ?: return
+        val fresh = change(current)
+        if (fresh === current) return
+        rides.stopsEdited = true
+        routeActions?.editStops?.invoke(fresh)
+    }
+    val interactions = rememberStopInteractions(
+        onAdd = if (editable) ({ point -> selected = null; edit { it.withStopAdded(point) } }) else null,
+        onTapMap = { if (selected != null) { selected = null; true } else false },
+    )
 
     Box(Modifier.fillMaxSize()) {
-        MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
+        MaplibreMap(modifier = Modifier.fillMaxSize(), state = state, interactions = interactions) {
+            include(MapOverlay.Default)
+            if (editable && ride != null) {
+                StopHandles(
+                    ride.stops,
+                    selectedStop,
+                    state,
+                    onSelect = { selected = it },
+                    onMove = { i, point -> selected = i; edit { it.withStopMoved(i, point) } },
+                )
+            }
+        }
+        if (ride != null && selectedStop != null) {
+            StopToolbar(
+                ride,
+                selectedStop,
+                onReorder = { from, to -> selected = to; edit { it.withStopReordered(from, to) } },
+                onRemove = { i -> selected = null; edit { it.withStopRemoved(i) } },
+                onDone = { selected = null },
+                modifier = Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(start = 72.dp, top = 12.dp, end = 12.dp),
+            )
+        }
         if (store != null) {
             HomeButton(
                 onClick = { routeActions?.cancel?.invoke(); rides.goHome() },
