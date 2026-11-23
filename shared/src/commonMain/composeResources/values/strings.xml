@@ -164,4 +164,26 @@
     <string name="backup_saved">Copy saved.</string>
     <string name="backup_restored">Copy restored. New rides: %1$d.</string>
     <string name="backup_failed">This file is not a RidePlan backup.</string>
+    <string name="share_hide_zones">Hide my private zones (%1$d)</string>
+    <string name="share_no_zones">Tip: add your home as a private zone in the profile, it will be hidden from every shared ride.</string>
+    <string name="share_preview_summary">What leaves the phone: %1$s km, %2$d stops</string>
+    <string name="share_preview_moved">Start moved by %1$s km, finish by %2$s km</string>
+    <string name="share_preview_hidden">%1$d stops hidden</string>
+    <string name="share_preview_empty">The whole ride is inside your private zones: there is nothing to share.</string>
+    <string name="zones_title">Private zones</string>
+    <string name="zones_text">Places like home or the garage. They are cut out of every ride you share (GPX file, QR and link): stops and track inside them never leave the phone.</string>
+    <string name="zones_empty">No private zones yet: shared rides can show where you live.</string>
+    <string name="zones_add">Add a private zone</string>
+    <string name="zones_delete">Delete</string>
+    <string name="zones_radius">%1$d m</string>
+    <string name="zones_suggested">Where your rides start or finish:</string>
+    <string name="zones_candidate">Start or finish of “%1$s” (%2$d rides)</string>
+    <string name="zones_candidate_unnamed">Start or finish of a ride (%1$d rides)</string>
+    <string name="zones_other_place">Another place</string>
+    <string name="zones_coords">Coordinates (lat, lon)</string>
+    <string name="zones_coords_help">Long press the place in a map app and copy its coordinates.</string>
+    <string name="zones_coords_invalid">These are not coordinates: write them like 40.6667, 16.6043.</string>
+    <string name="zones_name">Name</string>
+    <string name="zones_name_default">Home</string>
+    <string name="zones_save">Save</string>
 </resources>

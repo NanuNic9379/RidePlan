@@ -164,4 +164,26 @@
     <string name="backup_saved">Copia guardada.</string>
     <string name="backup_restored">Copia restaurada. Rutas nuevas: %1$d.</string>
     <string name="backup_failed">Este archivo no es una copia de RidePlan.</string>
+    <string name="share_hide_zones">Ocultar mis zonas privadas (%1$d)</string>
+    <string name="share_no_zones">Consejo: añade tu casa como zona privada en el perfil y se ocultará en cada ruta compartida.</string>
+    <string name="share_preview_summary">Lo que sale del teléfono: %1$s km, %2$d paradas</string>
+    <string name="share_preview_moved">Salida desplazada %1$s km, llegada %2$s km</string>
+    <string name="share_preview_hidden">%1$d paradas ocultas</string>
+    <string name="share_preview_empty">Toda la ruta está dentro de tus zonas privadas: no hay nada que compartir.</string>
+    <string name="zones_title">Zonas privadas</string>
+    <string name="zones_text">Lugares como tu casa o el garaje. Se recortan de cada ruta que compartes (archivo GPX, QR y enlace): las paradas y el trazado dentro de ellas nunca salen del teléfono.</string>
+    <string name="zones_empty">Aún no hay zonas privadas: las rutas compartidas pueden mostrar dónde vives.</string>
+    <string name="zones_add">Añadir una zona privada</string>
+    <string name="zones_delete">Eliminar</string>
+    <string name="zones_radius">%1$d m</string>
+    <string name="zones_suggested">Donde empiezan o terminan tus rutas:</string>
+    <string name="zones_candidate">Salida o llegada de «%1$s» (%2$d rutas)</string>
+    <string name="zones_candidate_unnamed">Salida o llegada de una ruta (%1$d rutas)</string>
+    <string name="zones_other_place">Otro lugar</string>
+    <string name="zones_coords">Coordenadas (lat, lon)</string>
+    <string name="zones_coords_help">Mantén pulsado el lugar en una app de mapas y copia sus coordenadas.</string>
+    <string name="zones_coords_invalid">Esto no son coordenadas: escríbelas como 40.6667, 16.6043.</string>
+    <string name="zones_name">Nombre</string>
+    <string name="zones_name_default">Casa</string>
+    <string name="zones_save">Guardar</string>
 </resources>

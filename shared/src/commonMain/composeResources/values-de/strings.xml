@@ -163,4 +163,26 @@
     <string name="backup_saved">Kopie gespeichert.</string>
     <string name="backup_restored">Kopie wiederhergestellt. Neue Touren: %1$d.</string>
     <string name="backup_failed">Diese Datei ist keine RidePlan-Sicherung.</string>
+    <string name="share_hide_zones">Meine Privatzonen ausblenden (%1$d)</string>
+    <string name="share_no_zones">Tipp: Füge dein Zuhause im Profil als Privatzone hinzu, dann wird es aus jeder geteilten Tour ausgeblendet.</string>
+    <string name="share_preview_summary">Was das Handy verlässt: %1$s km, %2$d Stopps</string>
+    <string name="share_preview_moved">Start um %1$s km verschoben, Ziel um %2$s km</string>
+    <string name="share_preview_hidden">%1$d Stopps ausgeblendet</string>
+    <string name="share_preview_empty">Die ganze Tour liegt in deinen Privatzonen: Es gibt nichts zu teilen.</string>
+    <string name="zones_title">Privatzonen</string>
+    <string name="zones_text">Orte wie dein Zuhause oder die Garage. Sie werden aus jeder geteilten Tour herausgeschnitten (GPX-Datei, QR und Link): Stopps und Strecke darin verlassen nie das Handy.</string>
+    <string name="zones_empty">Noch keine Privatzonen: Geteilte Touren können zeigen, wo du wohnst.</string>
+    <string name="zones_add">Privatzone hinzufügen</string>
+    <string name="zones_delete">Löschen</string>
+    <string name="zones_radius">%1$d m</string>
+    <string name="zones_suggested">Wo deine Touren beginnen oder enden:</string>
+    <string name="zones_candidate">Start oder Ziel von „%1$s“ (%2$d Touren)</string>
+    <string name="zones_candidate_unnamed">Start oder Ziel einer Tour (%1$d Touren)</string>
+    <string name="zones_other_place">Ein anderer Ort</string>
+    <string name="zones_coords">Koordinaten (Breite, Länge)</string>
+    <string name="zones_coords_help">Halte den Ort in einer Karten-App gedrückt und kopiere die Koordinaten.</string>
+    <string name="zones_coords_invalid">Das sind keine Koordinaten: Schreibe sie wie 40.6667, 16.6043.</string>
+    <string name="zones_name">Name</string>
+    <string name="zones_name_default">Zuhause</string>
+    <string name="zones_save">Speichern</string>
 </resources>

@@ -1,6 +1,7 @@
 package io.github.nanunic9379.rideplan.profile
 
 import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.ride.PrivateZone
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.Stop
 import kotlinx.serialization.Serializable
@@ -72,6 +73,8 @@ data class ProfileData(
     val version: Int = 1,
     val profile: Profile,
     val rides: List<SavedRide> = emptyList(),
+    /** Places cut out of every shared ride (#6). */
+    val privateZones: List<PrivateZone> = emptyList(),
 ) {
     val stats: Stats get() = Stats(
         saved = rides.size,
@@ -101,11 +104,16 @@ data class ProfileData(
 
     fun delete(id: String): ProfileData = copy(rides = rides.filter { it.id != id })
 
+    fun addZone(zone: PrivateZone): ProfileData = copy(privateZones = privateZones + zone)
+
+    fun deleteZone(id: String): ProfileData = copy(privateZones = privateZones.filter { it.id != id })
+
     /**
      * Restore from a backup (#43): it merges, it does not replace, so nothing you already
      * have on this phone is lost. The same ride (same id) is not duplicated: the version
      * saved last wins and the outings add up without duplicates.
      * The backup's name and bike are used only if they are still empty here.
+     * Private zones (#6) add up too: a zone is never lost by restoring.
      * Also returns how many new rides arrived.
      */
     fun merge(other: ProfileData): Pair<ProfileData, Int> {
@@ -123,7 +131,7 @@ data class ProfileData(
             welcomed = true,
             createdAt = minOf(profile.createdAt, other.profile.createdAt),
         )
-        return copy(profile = p, rides = merged.values.sortedByDescending { it.savedAt }) to added
+        return copy(profile = p, rides = merged.values.sortedByDescending { it.savedAt }, privateZones = (privateZones + other.privateZones).distinctBy { it.id }) to added
     }
 
     companion object {

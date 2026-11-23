@@ -381,6 +381,7 @@ fun ProfileScreen(store: ProfileStore, onBack: () -> Unit, backup: BackupActions
                 Stat(stringResource(Res.string.stat_longest), stats.longestKm?.let { formatKm(it) } ?: "–", Modifier.weight(1f))
             }
         }
+        PrivateZonesSection(store)
         if (backup != null) BackupSection(store, backup)
         Spacer(Modifier.heightIn(min = 8.dp))
         Text(stringResource(Res.string.profile_local), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
