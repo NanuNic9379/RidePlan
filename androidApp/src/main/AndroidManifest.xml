@@ -29,6 +29,20 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
+            <!-- Link di un giro RidePlan (#6), anche da un QR inquadrato con la fotocamera. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="nanunic9379.github.io" android:pathPrefix="/RidePlan/r" />
+            </intent-filter>
+            <!-- Lo stesso giro passato dal pulsante "Apri in RidePlan" della pagina web. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="rideplan" android:host="r" />
+            </intent-filter>
             <!-- File GPX, KML, KMZ condivisi o aperti da un'altra app, #27. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -44,5 +58,15 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
+        <!-- Il GPX da condividere (#5): solo la cartella cache/shared, solo in lettura e solo per l'app scelta. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/shared_files" />
+        </provider>
     </application>
 </manifest>

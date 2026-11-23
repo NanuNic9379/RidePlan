@@ -1,0 +1,164 @@
+name: Routing data
+
+# Dati stradali per il calcolo del percorso sul telefono (#3): una zona per file,
+# costruiti da OpenStreetMap con Valhalla e pubblicati nella Release "routing-data".
+# L'app li scarica solo quando l'utente lo chiede, mostrando prima il peso.
+# Si lancia a mano (o quando cambiano le zone); non tocca le Release dell'app.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/routing-data.yml
+      - data/routing-regions.json
+      - data/routing_data.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: routing-data
+  cancel-in-progress: true
+
+env:
+  # Stessa versione del motore dentro l'app (valhalla-mobile 0.6.6 = Valhalla 3.9.2).
+  VALHALLA_VERSION: 3.9.2
+
+jobs:
+  prepare:
+    name: Strade OpenStreetMap per zona
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      regions: ${{ steps.regions.outputs.list }}
+      osm_date: ${{ steps.osm.outputs.date }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: regions
+        run: echo "list=$(python3 data/routing_data.py matrix data/routing-regions.json)" >> "$GITHUB_OUTPUT"
+      - name: Strumenti
+        run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+      - name: OpenStreetMap Italia (openstreetmap.fr)
+        run: |
+          mkdir -p osm
+          url=$(python3 -c "import json;print(json.load(open('data/routing-regions.json'))['source'])")
+          curl -sSfL --retry 3 -o osm/all.osm.pbf "$url"
+          ls -la osm
+      - id: osm
+        name: Data dei dati
+        run: |
+          d=$(osmium fileinfo -g header.option.osmosis_replication_timestamp osm/all.osm.pbf || true)
+          [ -n "$d" ] || d=$(osmium fileinfo -g header.option.timestamp osm/all.osm.pbf || true)
+          echo "date=${d:-unknown}" >> "$GITHUB_OUTPUT"
+          echo "Dati OpenStreetMap del $d"
+      # L'Italia intera non sta comoda nella memoria della macchina di GitHub: il filtro la
+      # esauriva e la macchina si spegneva. Liberiamo il disco e aggiungiamo memoria di riserva.
+      - name: Spazio e memoria di riserva
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo swapoff -a || true
+          S=/mnt/rideplan.swap; sudo fallocate -l 12G $S || { S=/rideplan.swap; sudo fallocate -l 12G $S; }
+          sudo chmod 600 $S
+          sudo mkswap $S
+          sudo swapon $S
+          free -h
+          df -h
+      - name: Solo strade, traghetti, divieti di svolta e confini
+        run: |
+          /usr/bin/time -v osmium tags-filter osm/all.osm.pbf \
+            w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,living_street,service,track,road \
+            w/route=ferry r/route=ferry r/type=restriction r/boundary=administrative \
+            -o osm/roads.osm.pbf
+          rm osm/all.osm.pbf
+          python3 data/routing_data.py extract data/routing-regions.json "$PWD/osm/regions" > extract.json
+          mkdir -p osm/regions
+          /usr/bin/time -v osmium extract -c extract.json osm/roads.osm.pbf
+          ls -la osm/regions
+      - uses: actions/upload-artifact@v4
+        with:
+          name: osm-regions
+          path: osm/regions/
+          retention-days: 2
+          compression-level: 0
+
+  tiles:
+    name: Dati Valhalla ${{ matrix.region }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        region: ${{ fromJson(needs.prepare.outputs.regions) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: osm-regions
+          path: osm
+      - name: Costruzione
+        env:
+          REGION: ${{ matrix.region }}
+        run: |
+          mkdir -p data-build
+          cp "osm/$REGION.osm.pbf" data-build/region.osm.pbf
+          docker run --rm -v "$PWD/data-build:/data" "ghcr.io/valhalla/valhalla:$VALHALLA_VERSION" bash -c '
+            set -e
+            valhalla_build_config --mjolnir-tile-dir /data/tiles --mjolnir-tile-extract /data/tiles.tar \
+              --mjolnir-admin /data/admins.sqlite \
+              --mjolnir-include-pedestrian False --mjolnir-include-bicycle False \
+              --mjolnir-include-driveways False > /data/valhalla.json
+            valhalla_build_admins -c /data/valhalla.json /data/region.osm.pbf
+            valhalla_build_tiles -c /data/valhalla.json /data/region.osm.pbf
+            valhalla_build_extract -c /data/valhalla.json -v'
+          mkdir -p out
+          gzip -9 -c data-build/tiles.tar > "out/$REGION.tar.gz"
+          ls -la data-build/tiles.tar out
+      - name: Scheda della zona
+        env:
+          REGION: ${{ matrix.region }}
+        run: |
+          bbox=$(python3 -c "import json,sys;print(json.dumps(next(r['bbox'] for r in json.load(open('data/routing-regions.json'))['regions'] if r['id']==sys.argv[1])))" "$REGION")
+          python3 data/routing_data.py fragment "$REGION" "$bbox" "out/$REGION.tar.gz" data-build/tiles.tar \
+            "${{ needs.prepare.outputs.osm_date }}" "$VALHALLA_VERSION" "out/$REGION.json"
+          cat "out/$REGION.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiles-${{ matrix.region }}
+          path: out/
+          retention-days: 2
+          compression-level: 0
+
+  publish:
+    name: Release routing-data
+    needs: tiles
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tiles-*
+          path: built
+      - name: Manifest
+        run: |
+          python3 data/routing_data.py manifest built regions.json
+          cat regions.json
+      - name: Pubblica
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view routing-data >/dev/null 2>&1; then
+            {
+              echo "Dati stradali per il calcolo del percorso sul telefono, una zona per file."
+              echo "L'app li scarica da sola quando serve: non vanno installati a mano."
+              echo
+              echo "Dati © OpenStreetMap contributors, licenza ODbL (https://www.openstreetmap.org/copyright)."
+            } > notes.md
+            gh release create routing-data --target main --prerelease --latest=false \
+              --title "Dati per il calcolo del percorso" --notes-file notes.md
+          fi
+          gh release upload routing-data built/*/*.tar.gz --clobber
+          # Il manifest per ultimo: l'app vede una zona solo quando il suo file c'è già.
+          gh release upload routing-data regions.json --clobber

@@ -32,6 +32,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      - name: NDK per togliere i simboli di debug dal motore di percorso (133 MB -> 8 MB)
+        run: |
+          # Stessa versione che si aspetta AGP 9.5 (android.ndkVersion predefinito).
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" > /dev/null
 
       - name: Chiave di firma
         id: key
@@ -68,6 +72,9 @@ jobs:
             cp "$f" "out/RidePlan-$VERSION-$abi.apk"
           done
           ls -la out
+          # Senza strip l'APK supera i 150 MB: meglio nessuna Release che una enorme.
+          big=$(find out -name '*.apk' -size +60M)
+          if [ -n "$big" ]; then echo "::error::APK troppo grandi (simboli non tolti?): $big"; exit 1; fi
           {
             echo "$(git log -1 --format=%s)"
             echo

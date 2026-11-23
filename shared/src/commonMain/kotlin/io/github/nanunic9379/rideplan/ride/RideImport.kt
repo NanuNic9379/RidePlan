@@ -5,6 +5,7 @@ enum class ImportError {
     UNKNOWN_FORMAT, GPX_EMPTY, KML_EMPTY, NOT_GOOGLE_MAPS, NO_STOPS, SINGLE_PLACE,
     STOP_WITHOUT_COORDS, LINK_NAMES_WITHOUT_COORDS, INVALID_COORDS,
     FILE_TOO_BIG, FILE_UNREADABLE, ZIP_WITHOUT_RIDE, LINK_NO_ROUTE, LINK_TOO_MANY_REDIRECTS, NETWORK,
+    LINK_BROKEN,
 }
 
 /** Errore di importazione. [detail]: dato tecnico facoltativo (es. codice HTTP), non tradotto. */
@@ -32,6 +33,7 @@ object RideImport {
         return when {
             trimmed.contains("<gpx", ignoreCase = true) -> Gpx.parse(trimmed)
             trimmed.contains("<kml", ignoreCase = true) -> Kml.parse(trimmed)
+            RideLink.isLink(trimmed) -> RideLink.decode(trimmed).ride
             url != null -> GoogleMapsLink.parse(url)
             else -> throw ImportException(ImportError.UNKNOWN_FORMAT)
         }
@@ -82,7 +84,7 @@ internal object Gpx {
             // Solo il <name> del giro: tolgo prima i punti, che hanno il loro <name>.
             Xml.elements(xml, tag).firstOrNull()?.body?.let { body -> Xml.text(withoutPoints(body), "name") }
         }
-        return Ride(name, track, stops, Ride.Source.GPX)
+        return Ride(name, track, Stop.guessKinds(stops, towns = false), Ride.Source.GPX)
     }
 
     private val points = Regex("""<(trkseg|trkpt|rtept|wpt)\b.*?</\1\s*>""", RegexOption.DOT_MATCHES_ALL)
@@ -120,7 +122,7 @@ internal object Kml {
         val name = Xml.elements(xml, "Document").firstOrNull()?.body?.let { body ->
             Regex("""^\s*<name>(.*?)</name>""", RegexOption.DOT_MATCHES_ALL).find(body)?.groupValues?.get(1)?.let(Xml::decode)?.trim()
         }
-        return Ride(name?.ifEmpty { null }, track, stops, Ride.Source.KML)
+        return Ride(name?.ifEmpty { null }, track, Stop.guessKinds(stops, towns = false), Ride.Source.KML)
     }
 
     /** "lon,lat[,alt] lon,lat[,alt] ..." */
@@ -162,7 +164,7 @@ internal object GoogleMapsLink {
         }
         if (stops.isEmpty()) throw ImportException(ImportError.NO_STOPS)
         if (stops.size == 1) throw ImportException(ImportError.SINGLE_PLACE)
-        return Ride(null, emptyList(), stops, Ride.Source.GOOGLE_LINK)
+        return Ride(null, emptyList(), Stop.guessKinds(stops, towns = true), Ride.Source.GOOGLE_LINK)
     }
 
     private fun directions(path: String): List<Stop> {

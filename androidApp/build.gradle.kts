@@ -7,6 +7,8 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.foundation)
+    implementation(libs.valhalla.mobile)
+    implementation(libs.valhalla.models.config)
     runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)
 }
 
@@ -36,6 +38,8 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = commitCount
         versionName = "0.1.$commitCount"
+        // Dati stradali per il calcolo del percorso (#3), Release "routing-data" di routing-data.yml
+        buildConfigField("String", "ROUTING_DATA_URL", "\"https://github.com/NanuNic9379/RidePlan/releases/download/routing-data/\"")
     }
 
     buildFeatures { buildConfig = true }
