@@ -1,6 +1,8 @@
 package io.github.nanunic9379.rideplan
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -16,9 +18,12 @@ import org.maplibre.spatialk.geojson.Position
 /**
  * Schermata iniziale: solo la mappa, subito, senza benvenuto ne' permessi (issue #1).
  * Lo stile online e' provvisorio: la mappa offline arriva con la #2.
+ *
+ * [overlay]: elementi della singola piattaforma sopra la mappa (es. l'avviso di aggiornamento
+ * della beta Android, #30). Su iPhone resta vuoto.
  */
 @Composable
-fun App() {
+fun App(overlay: @Composable BoxScope.() -> Unit = {}) {
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         val state = rememberMapState(
             baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
@@ -27,7 +32,10 @@ fun App() {
                 zoom = MapDefaults.START_ZOOM,
             ),
         )
-        MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
+        Box(Modifier.fillMaxSize()) {
+            MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
+            overlay()
+        }
     }
 }
 

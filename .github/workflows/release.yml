@@ -1,0 +1,83 @@
+name: Release
+
+# A ogni merge su main: APK firmati, uno per processore, pubblicati come Release "v0.1.N"
+# (N = numero di commit). Si scaricano direttamente, senza login, e l'app li usa
+# per aggiornarsi (#30).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: APK firmati nella Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # serve tutta la storia per contare i commit
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Chiave di firma
+        id: key
+        env:
+          KEYSTORE_B64: ${{ secrets.RIDEPLAN_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::Secret RIDEPLAN_KEYSTORE_B64 mancante: nessuna Release pubblicata."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release
+        if: steps.key.outputs.ok == 'true'
+        env:
+          RIDEPLAN_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          RIDEPLAN_KEYSTORE_PASSWORD: ${{ secrets.RIDEPLAN_KEYSTORE_PASSWORD }}
+          RIDEPLAN_KEY_ALIAS: ${{ secrets.RIDEPLAN_KEY_ALIAS }}
+          RIDEPLAN_KEY_PASSWORD: ${{ secrets.RIDEPLAN_KEY_PASSWORD }}
+        run: ./gradlew --console=plain :androidApp:assembleGithubRelease
+
+      - name: Pubblica la Release
+        if: steps.key.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -f "$RUNNER_TEMP/release.jks"
+          VERSION="0.1.$(git rev-list --count HEAD)"
+          mkdir -p out
+          for f in androidApp/build/outputs/apk/github/release/*.apk; do
+            abi=$(basename "$f" | sed -E 's/^androidApp-github-(.*)-release\.apk$/\1/')
+            cp "$f" "out/RidePlan-$VERSION-$abi.apk"
+          done
+          ls -la out
+          {
+            echo "$(git log -1 --format=%s)"
+            echo
+            echo "**Quale APK scaricare**"
+            echo "- \`arm64-v8a\`: quasi tutti i telefoni Android dal 2017 in poi."
+            echo "- \`armeabi-v7a\`: telefoni vecchi a 32 bit."
+            echo "- \`x86_64\`: emulatori e pochi tablet."
+            echo
+            echo "Se RidePlan e' gia' installato da una Release, l'app propone da sola l'aggiornamento."
+          } > notes.md
+          gh release create "v$VERSION" out/*.apk \
+            --target "$GITHUB_SHA" \
+            --title "RidePlan $VERSION (beta)" \
+            --notes-file notes.md \
+            --latest
