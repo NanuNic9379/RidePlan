@@ -3,6 +3,8 @@
 **Motorcycle routes, from rider to rider.**
 Plan the ride, share it with whoever you want, no account and no company in between.
 
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-nanunic9379-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/nanunic9379)
+
 > Status: newborn beta. For now the app only shows the map.
 > Android APK in the [Releases](https://github.com/NanuNic9379/RidePlan/releases): pick `arm64-v8a`.
 
@@ -50,3 +52,7 @@ Without those secrets the release build is signed with the debug key.
 
 The iPhone app (`iosApp/`) builds only on macOS with Xcode; the pipeline builds it on every PR
 for the simulator, unsigned.
+
+## Support
+RidePlan is free, open source and built in spare time. If it helped you find a better road,
+you can [buy me a coffee](https://buymeacoffee.com/nanunic9379). Thank you!
