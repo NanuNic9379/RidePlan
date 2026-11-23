@@ -5,11 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -20,23 +23,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.SelectableDates
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,14 +54,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.backup_failed
+import io.github.nanunic9379.rideplan.resources.backup_restore
+import io.github.nanunic9379.rideplan.resources.backup_restored
+import io.github.nanunic9379.rideplan.resources.backup_save
+import io.github.nanunic9379.rideplan.resources.backup_saved
+import io.github.nanunic9379.rideplan.resources.backup_text
+import io.github.nanunic9379.rideplan.resources.backup_title
 import io.github.nanunic9379.rideplan.resources.card_saved
-import io.github.nanunic9379.rideplan.resources.preview_received
-import io.github.nanunic9379.rideplan.resources.preview_save
 import io.github.nanunic9379.rideplan.resources.date_format
 import io.github.nanunic9379.rideplan.resources.done_title
+import io.github.nanunic9379.rideplan.resources.home_add_bike
 import io.github.nanunic9379.rideplan.resources.home_add_profile
 import io.github.nanunic9379.rideplan.resources.home_back
 import io.github.nanunic9379.rideplan.resources.home_empty_text
@@ -61,23 +79,22 @@ import io.github.nanunic9379.rideplan.resources.home_explore
 import io.github.nanunic9379.rideplan.resources.home_hello
 import io.github.nanunic9379.rideplan.resources.home_hello_anon
 import io.github.nanunic9379.rideplan.resources.home_km_ridden
+import io.github.nanunic9379.rideplan.resources.home_new_ride
 import io.github.nanunic9379.rideplan.resources.home_open_file
 import io.github.nanunic9379.rideplan.resources.home_paste_link
 import io.github.nanunic9379.rideplan.resources.home_rides
 import io.github.nanunic9379.rideplan.resources.menu_delete
 import io.github.nanunic9379.rideplan.resources.menu_done
+import io.github.nanunic9379.rideplan.resources.menu_more
 import io.github.nanunic9379.rideplan.resources.menu_rename
 import io.github.nanunic9379.rideplan.resources.menu_undo_done
+import io.github.nanunic9379.rideplan.resources.nav_back
+import io.github.nanunic9379.rideplan.resources.preview_received
+import io.github.nanunic9379.rideplan.resources.preview_save
 import io.github.nanunic9379.rideplan.resources.profile_bike
 import io.github.nanunic9379.rideplan.resources.profile_local
-import io.github.nanunic9379.rideplan.resources.backup_failed
-import io.github.nanunic9379.rideplan.resources.backup_restore
-import io.github.nanunic9379.rideplan.resources.backup_restored
-import io.github.nanunic9379.rideplan.resources.backup_save
-import io.github.nanunic9379.rideplan.resources.backup_saved
-import io.github.nanunic9379.rideplan.resources.backup_text
-import io.github.nanunic9379.rideplan.resources.backup_title
 import io.github.nanunic9379.rideplan.resources.profile_name
+import io.github.nanunic9379.rideplan.resources.profile_stats
 import io.github.nanunic9379.rideplan.resources.profile_title
 import io.github.nanunic9379.rideplan.resources.rename_title
 import io.github.nanunic9379.rideplan.resources.ride_default_name
@@ -108,17 +125,19 @@ import io.github.nanunic9379.rideplan.ride.Page
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.formatKm
 import io.github.nanunic9379.rideplan.route.durationText
+import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-
-/** Minimum button height: they are also used with gloves. */
-private val Touch = 56.dp
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Home screen (#41): who you are, the actions for a new ride and your rides.
- * The map opens only when needed.
+ * The map opens only when needed. One primary action (paste a link), two tonal ones,
+ * then the list: every row is a 56 dp+ target and the overflow menu has a label.
  */
 @Composable
 fun HomeScreen(store: ProfileStore, rides: RideScreenState, actions: ImportActions?, snackbar: SnackbarHostState) {
@@ -129,47 +148,29 @@ fun HomeScreen(store: ProfileStore, rides: RideScreenState, actions: ImportActio
 
     LazyColumn(
         Modifier.fillMaxSize().safeDrawingPadding(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Greeting(data, onClick = { rides.page = Page.PROFILE }) }
         item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { ImportStatus(rides) } }
         if (actions != null) {
+            item { SectionTitle(stringResource(Res.string.home_new_ride), Modifier.padding(top = 4.dp)) }
             item {
                 Button(onClick = { linkDialog = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+                    Icon(AppIcons.Link, contentDescription = null)
+                    Spacer(Modifier.size(12.dp))
                     Text(stringResource(Res.string.home_paste_link), style = MaterialTheme.typography.titleMedium)
                 }
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FilledTonalButton(onClick = actions.openFile, modifier = Modifier.weight(1f).heightIn(min = Touch)) {
-                        Text(stringResource(Res.string.home_open_file))
-                    }
-                    FilledTonalButton(onClick = { rides.page = Page.MAP }, modifier = Modifier.weight(1f).heightIn(min = Touch)) {
-                        Text(stringResource(Res.string.home_explore))
-                    }
+                    TonalAction(AppIcons.File, stringResource(Res.string.home_open_file), actions.openFile, Modifier.weight(1f))
+                    TonalAction(AppIcons.Map, stringResource(Res.string.home_explore), { rides.page = Page.MAP }, Modifier.weight(1f))
                 }
             }
         }
-        item {
-            Text(
-                stringResource(Res.string.home_rides),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(top = 12.dp),
-            )
-        }
-        if (data.rides.isEmpty()) {
-            item {
-                Column(Modifier.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(Res.string.home_empty_title), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        stringResource(Res.string.home_empty_text),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+        item { SectionTitle(stringResource(Res.string.home_rides), Modifier.padding(top = 12.dp)) }
+        if (data.rides.isEmpty()) item { EmptyRides() }
         items(data.rides, key = { it.id }) { saved ->
             SavedRideCard(
                 saved,
@@ -202,11 +203,55 @@ fun HomeScreen(store: ProfileStore, rides: RideScreenState, actions: ImportActio
 }
 
 @Composable
+private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.titleLarge, modifier = modifier.semantics { heading() })
+}
+
+@Composable
+private fun TonalAction(icon: ImageVector, text: String, onClick: () -> Unit, modifier: Modifier) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = Touch.Glove),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun EmptyRides() {
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            Modifier.size(72.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(AppIcons.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(36.dp))
+        }
+        Text(stringResource(Res.string.home_empty_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(Res.string.home_empty_text),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun Greeting(data: ProfileData, onClick: () -> Unit) {
     val p = data.profile
     val stats = data.stats
     Row(
-        Modifier.fillMaxWidth().heightIn(min = Touch).clickable(onClick = onClick).padding(vertical = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .clickable(onClickLabel = stringResource(Res.string.profile_title), onClick = onClick)
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -214,16 +259,17 @@ private fun Greeting(data: ProfileData, onClick: () -> Unit) {
             Modifier.size(56.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                p.name.trim().firstOrNull()?.uppercase() ?: "?",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+            val initial = p.name.trim().firstOrNull()?.uppercase()
+            if (initial != null) {
+                Text(initial, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            } else {
+                Icon(AppIcons.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
         }
         Column(Modifier.weight(1f)) {
             Text(
                 if (p.name.isBlank()) stringResource(Res.string.home_hello_anon) else stringResource(Res.string.home_hello, p.name.trim()),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -231,10 +277,18 @@ private fun Greeting(data: ProfileData, onClick: () -> Unit) {
                 p.bike.trim().ifEmpty { null },
                 if (stats.ridden > 0) stringResource(Res.string.home_km_ridden, formatKm(stats.kmRidden)) else null,
             ).joinToString(" · ")
+            // Ask only for what is missing: with a name set, "add your name" was misleading.
+            val hint = when {
+                p.name.isBlank() -> stringResource(Res.string.home_add_profile)
+                p.bike.isBlank() -> stringResource(Res.string.home_add_bike)
+                else -> null
+            }
             Text(
-                sub.ifEmpty { stringResource(Res.string.home_add_profile) },
+                sub.ifEmpty { hint.orEmpty() },
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (sub.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -254,41 +308,69 @@ private fun SavedRideCard(
     var pickDay by remember { mutableStateOf(false) }
     if (rename) RenameDialog(saved.name.orEmpty(), onDismiss = { rename = false }, onSave = { rename = false; onRename(it) })
     if (pickDay) DayPicker(onDismiss = { pickDay = false }, onPick = { pickDay = false; onDone(it) })
+    val ridden = saved.ridden.isNotEmpty()
 
-    ElevatedCard(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(onClick = onOpen).padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
+            Modifier.fillMaxWidth().heightIn(min = 80.dp).clickable(onClick = onOpen).padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .background(
+                        if (ridden) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (ridden) AppIcons.Check else AppIcons.Route,
+                    contentDescription = null,
+                    tint = if (ridden) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title(saved), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title(saved), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 val parts = buildList {
                     add(stringResource(Res.string.ride_km, formatKm(saved.km)))
                     saved.seconds?.let { add(durationText(it.toDouble())) }
                     if (saved.stops.isNotEmpty()) add(pluralStringResource(Res.plurals.ride_stops, saved.stops.size, saved.stops.size))
                 }
-                Text(parts.joinToString(" · "), style = MaterialTheme.typography.bodyMedium)
+                Text(parts.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
                     doneText(saved),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (saved.ridden.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                    color = if (ridden) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Box {
-                TextButton(onClick = { menu = true }, modifier = Modifier.size(Touch)) {
-                    Text("⋮", style = MaterialTheme.typography.titleLarge)
+                IconButton(onClick = { menu = true }, modifier = Modifier.size(Touch.Glove)) {
+                    Icon(AppIcons.More, contentDescription = stringResource(Res.string.menu_more))
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.menu_done)) }, onClick = { menu = false; pickDay = true })
-                    if (saved.ridden.isNotEmpty()) {
-                        DropdownMenuItem(text = { Text(stringResource(Res.string.menu_undo_done)) }, onClick = { menu = false; onUndoDone() })
-                    }
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.menu_rename)) }, onClick = { menu = false; rename = true })
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.menu_delete)) }, onClick = { menu = false; onDelete() })
+                    MenuItem(AppIcons.Check, stringResource(Res.string.menu_done)) { menu = false; pickDay = true }
+                    if (ridden) MenuItem(null, stringResource(Res.string.menu_undo_done)) { menu = false; onUndoDone() }
+                    MenuItem(AppIcons.Edit, stringResource(Res.string.menu_rename)) { menu = false; rename = true }
+                    MenuItem(AppIcons.Delete, stringResource(Res.string.menu_delete)) { menu = false; onDelete() }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun MenuItem(icon: ImageVector?, text: String, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text, style = MaterialTheme.typography.bodyLarge) },
+        onClick = onClick,
+        leadingIcon = icon?.let { { Icon(it, contentDescription = null) } },
+        modifier = Modifier.heightIn(min = Touch.Glove),
+    )
 }
 
 @Composable
@@ -316,14 +398,17 @@ private fun doneText(saved: SavedRide): String {
 @Composable
 fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave: (() -> Unit)? = null, onRename: (String) -> Unit) {
     if (savedId == null && onSave != null) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 stringResource(Res.string.preview_received),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
             )
-            FilledTonalButton(onClick = onSave) { Text(stringResource(Res.string.preview_save)) }
+            Button(onClick = onSave, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(Res.string.preview_save))
+            }
         }
         return
     }
@@ -333,80 +418,96 @@ fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave
     var pickDay by remember { mutableStateOf(false) }
     if (rename) RenameDialog(currentName.orEmpty(), onDismiss = { rename = false }, onSave = { rename = false; onRename(it) })
     if (pickDay) DayPicker(onDismiss = { pickDay = false }, onPick = { day -> pickDay = false; store.update { it.markRidden(savedId, day) } })
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            "✓ " + stringResource(Res.string.card_saved) + if (saved.ridden.isEmpty()) "" else " · " + doneText(saved),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = { rename = true }) { Text(stringResource(Res.string.menu_rename)) }
-        TextButton(onClick = { pickDay = true }) { Text(stringResource(Res.string.menu_done)) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(AppIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Text(
+                stringResource(Res.string.card_saved) + if (saved.ridden.isEmpty()) "" else " · " + doneText(saved),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TonalAction(AppIcons.Edit, stringResource(Res.string.menu_rename), { rename = true }, Modifier.weight(1f))
+            TonalAction(AppIcons.Check, stringResource(Res.string.menu_done), { pickDay = true }, Modifier.weight(1f))
+        }
     }
 }
 
 /** Profile page: name, bike and statistics. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(store: ProfileStore, onBack: () -> Unit, backup: BackupActions? = null) {
     val data = store.data
     val stats = data.stats
-    Column(
-        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = Touch)) { Text("←", style = MaterialTheme.typography.titleLarge) }
-            Text(stringResource(Res.string.profile_title), style = MaterialTheme.typography.headlineSmall)
-        }
-        OutlinedTextField(
-            value = data.profile.name,
-            onValueChange = { v -> store.update { it.copy(profile = it.profile.copy(name = v.take(40))) } },
-            label = { Text(stringResource(Res.string.profile_name)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+    Column(Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text(stringResource(Res.string.profile_title)) },
+            navigationIcon = {
+                IconButton(onClick = onBack, modifier = Modifier.size(Touch.Glove)) {
+                    Icon(AppIcons.Back, contentDescription = stringResource(Res.string.nav_back))
+                }
+            },
         )
-        OutlinedTextField(
-            value = data.profile.bike,
-            onValueChange = { v -> store.update { it.copy(profile = it.profile.copy(bike = v.take(60))) } },
-            label = { Text(stringResource(Res.string.profile_bike)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        if (stats.ridden == 0) {
-            Text(stringResource(Res.string.stats_empty), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Stat(stringResource(Res.string.stat_ridden), stats.ridden.toString(), Modifier.weight(1f))
-                Stat(stringResource(Res.string.stat_km), formatKm(stats.kmRidden), Modifier.weight(1f))
-                Stat(stringResource(Res.string.stat_longest), stats.longestKm?.let { formatKm(it) } ?: "–", Modifier.weight(1f))
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().imePadding().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            OutlinedTextField(
+                value = data.profile.name,
+                onValueChange = { v -> store.update { it.copy(profile = it.profile.copy(name = v.take(40))) } },
+                label = { Text(stringResource(Res.string.profile_name)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = data.profile.bike,
+                onValueChange = { v -> store.update { it.copy(profile = it.profile.copy(bike = v.take(60))) } },
+                label = { Text(stringResource(Res.string.profile_bike)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            SectionTitle(stringResource(Res.string.profile_stats), Modifier.padding(top = 8.dp))
+            if (stats.ridden == 0) {
+                Text(stringResource(Res.string.stats_empty), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Stat(stringResource(Res.string.stat_ridden), stats.ridden.toString(), Modifier.weight(1f))
+                    Stat(stringResource(Res.string.stat_km), formatKm(stats.kmRidden), Modifier.weight(1f))
+                    Stat(stringResource(Res.string.stat_longest), stats.longestKm?.let { formatKm(it) } ?: "–", Modifier.weight(1f))
+                }
+            }
+            PrivateZonesSection(store)
+            if (backup != null) BackupSection(store, backup)
+            Row(
+                Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(AppIcons.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                Text(stringResource(Res.string.profile_local), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        PrivateZonesSection(store)
-        if (backup != null) BackupSection(store, backup)
-        Spacer(Modifier.heightIn(min = 8.dp))
-        Text(stringResource(Res.string.profile_local), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 /** Profile backup (#43): a file to keep or carry to another phone. */
 @Composable
 private fun BackupSection(store: ProfileStore, backup: BackupActions) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(Res.string.backup_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(Res.string.backup_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FilledTonalButton(onClick = backup.save, modifier = Modifier.weight(1f).heightIn(min = Touch)) {
-                Text(stringResource(Res.string.backup_save))
+    OutlinedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(Res.string.backup_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            Text(stringResource(Res.string.backup_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TonalAction(AppIcons.Upload, stringResource(Res.string.backup_save), backup.save, Modifier.weight(1f))
+                TonalAction(AppIcons.Download, stringResource(Res.string.backup_restore), backup.restore, Modifier.weight(1f))
             }
-            FilledTonalButton(onClick = backup.restore, modifier = Modifier.weight(1f).heightIn(min = Touch)) {
-                Text(stringResource(Res.string.backup_restore))
+            when (val n = store.backupNotice) {
+                null -> {}
+                BackupNotice.Saved -> Text(stringResource(Res.string.backup_saved), style = MaterialTheme.typography.bodyMedium)
+                is BackupNotice.Restored -> Text(stringResource(Res.string.backup_restored, n.added), style = MaterialTheme.typography.bodyMedium)
+                BackupNotice.Failed -> Text(stringResource(Res.string.backup_failed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             }
-        }
-        when (val n = store.backupNotice) {
-            null -> {}
-            BackupNotice.Saved -> Text(stringResource(Res.string.backup_saved), style = MaterialTheme.typography.bodyMedium)
-            is BackupNotice.Restored -> Text(stringResource(Res.string.backup_restored, n.added), style = MaterialTheme.typography.bodyMedium)
-            BackupNotice.Failed -> Text(stringResource(Res.string.backup_failed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -415,7 +516,7 @@ private fun BackupSection(store: ProfileStore, backup: BackupActions) {
 private fun Stat(label: String, value: String, modifier: Modifier) {
     ElevatedCard(modifier) {
         Column(Modifier.padding(12.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineMedium, maxLines = 1)
+            Text(value, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1)
             Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -426,12 +527,19 @@ private fun Stat(label: String, value: String, modifier: Modifier) {
 fun WelcomeScreen(store: ProfileStore) {
     var name by remember { mutableStateOf(store.data.profile.name) }
     var bike by remember { mutableStateOf(store.data.profile.bike) }
+    val finish = { store.update { it.copy(profile = it.profile.copy(name = name.trim(), bike = bike.trim(), welcomed = true)) } }
     Column(
         Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.headlineMedium)
-        Text(stringResource(Res.string.welcome_text), style = MaterialTheme.typography.bodyLarge)
+        Box(
+            Modifier.size(72.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(AppIcons.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(40.dp))
+        }
+        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
+        Text(stringResource(Res.string.welcome_text), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = name,
             onValueChange = { name = it.take(40) },
@@ -446,24 +554,30 @@ fun WelcomeScreen(store: ProfileStore) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Button(
-            onClick = { store.update { it.copy(profile = it.profile.copy(name = name.trim(), bike = bike.trim(), welcomed = true)) } },
-            modifier = Modifier.fillMaxWidth().heightIn(min = Touch),
-        ) { Text(stringResource(Res.string.welcome_start)) }
-        TextButton(
-            // "Skip" also keeps what you already typed: with the keyboard open the buttons move.
-            onClick = { store.update { it.copy(profile = it.profile.copy(name = name.trim(), bike = bike.trim(), welcomed = true)) } },
-            modifier = Modifier.fillMaxWidth().heightIn(min = Touch),
-        ) { Text(stringResource(Res.string.welcome_skip)) }
+        Button(onClick = finish, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+            Text(stringResource(Res.string.welcome_start), style = MaterialTheme.typography.titleMedium)
+        }
+        // "Skip" also keeps what you already typed: with the keyboard open the buttons move.
+        TextButton(onClick = finish, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+            Text(stringResource(Res.string.welcome_skip))
+        }
     }
 }
 
-/** Button at the top of the map to go back to the home screen. */
+/**
+ * Button at the top of the map to go back to the home screen: a surface-coloured
+ * extended FAB, so it reads on any map tile and is big enough for a gloved thumb.
+ */
 @Composable
 fun HomeButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FilledTonalButton(onClick = onClick, modifier = modifier.heightIn(min = Touch)) {
-        Text(stringResource(Res.string.home_back))
-    }
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = Touch.Glove),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        icon = { Icon(AppIcons.Back, contentDescription = null) },
+        text = { Text(stringResource(Res.string.home_back), style = MaterialTheme.typography.labelLarge) },
+    )
 }
 
 @Composable
@@ -471,12 +585,13 @@ private fun RenameDialog(initial: String, onDismiss: () -> Unit, onSave: (String
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { Icon(AppIcons.Edit, contentDescription = null) },
         title = { Text(stringResource(Res.string.rename_title)) },
         text = {
             OutlinedTextField(value = text, onValueChange = { text = it.take(80) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         },
-        confirmButton = { Button(onClick = { onSave(text) }) { Text(stringResource(Res.string.save)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.route_cancel)) } },
+        confirmButton = { Button(onClick = { onSave(text) }, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) } },
     )
 }
 

@@ -122,7 +122,7 @@
     <string name="home_rides">Your rides</string>
     <string name="home_empty_title">No rides yet</string>
     <string name="home_empty_text">Paste a Google Maps link or open a GPX file: you’ll find it here, ready to reopen.</string>
-    <string name="home_back">← Your rides</string>
+    <string name="home_back">Your rides</string>
     <string name="ride_todo">to do</string>
     <string name="ride_done_once">✓ %1$s</string>
     <string name="ride_done_many">✓ %1$s · %2$d times</string>
@@ -212,4 +212,11 @@
     <string name="nav_say_stop_unnamed">You have reached the stop.</string>
     <string name="nav_say_finish">You have arrived. End of the ride.</string>
     <string name="nav_say_follow_track">Follow the track for %1$s.</string>
+    <!-- UX redesign -->
+    <string name="nav_back">Back</string>
+    <string name="home_new_ride">New ride</string>
+    <string name="home_add_bike">Add your bike</string>
+    <string name="route_prefs_title">Route preferences</string>
+    <string name="profile_stats">Your stats</string>
+    <string name="ride_sheet_label">Ride details</string>
 </resources>

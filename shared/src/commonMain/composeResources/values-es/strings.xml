@@ -122,7 +122,7 @@
     <string name="home_rides">Tus rutas</string>
     <string name="home_empty_title">Aún no hay rutas</string>
     <string name="home_empty_text">Pega un enlace de Google Maps o abre un archivo GPX: lo encontrarás aquí, listo para volver a abrir.</string>
-    <string name="home_back">← Tus rutas</string>
+    <string name="home_back">Tus rutas</string>
     <string name="ride_todo">pendiente</string>
     <string name="ride_done_once">✓ %1$s</string>
     <string name="ride_done_many">✓ %1$s · %2$d veces</string>
@@ -212,4 +212,11 @@
     <string name="nav_say_stop_unnamed">Has llegado a la parada.</string>
     <string name="nav_say_finish">Has llegado. Fin de la ruta.</string>
     <string name="nav_say_follow_track">Sigue el track durante %1$s.</string>
+    <!-- UX redesign -->
+    <string name="nav_back">Atrás</string>
+    <string name="home_new_ride">Nueva ruta</string>
+    <string name="home_add_bike">Añade tu moto</string>
+    <string name="route_prefs_title">Preferencias de la ruta</string>
+    <string name="profile_stats">Tus estadísticas</string>
+    <string name="ride_sheet_label">Detalles de la ruta</string>
 </resources>

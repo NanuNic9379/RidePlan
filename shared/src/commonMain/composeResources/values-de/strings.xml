@@ -121,7 +121,7 @@
     <string name="home_rides">Deine Touren</string>
     <string name="home_empty_title">Noch keine Tour</string>
     <string name="home_empty_text">Füge einen Google-Maps-Link ein oder öffne eine GPX-Datei: Hier findest du sie wieder.</string>
-    <string name="home_back">← Deine Touren</string>
+    <string name="home_back">Deine Touren</string>
     <string name="ride_todo">geplant</string>
     <string name="ride_done_once">✓ %1$s</string>
     <string name="ride_done_many">✓ %1$s · %2$d-mal</string>
@@ -211,4 +211,11 @@
     <string name="nav_say_stop_unnamed">Du hast den Halt erreicht.</string>
     <string name="nav_say_finish">Du bist angekommen. Ende der Tour.</string>
     <string name="nav_say_follow_track">Folge dem Track für %1$s.</string>
+    <!-- UX redesign -->
+    <string name="nav_back">Zurück</string>
+    <string name="home_new_ride">Neue Tour</string>
+    <string name="home_add_bike">Füge dein Motorrad hinzu</string>
+    <string name="route_prefs_title">Routeneinstellungen</string>
+    <string name="profile_stats">Deine Statistik</string>
+    <string name="ride_sheet_label">Tourdetails</string>
 </resources>
