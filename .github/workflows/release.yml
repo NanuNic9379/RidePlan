@@ -1,7 +1,7 @@
 name: Release
 
 # A ogni merge su main: APK firmati, uno per processore, pubblicati come Release "v0.1.N"
-# (N = numero di commit). Si scaricano direttamente, senza login, e l'app li usa
+# (N = numero di commit + 100). Si scaricano direttamente, senza login, e l'app li usa
 # per aggiornarsi (#30).
 
 on:
@@ -57,6 +57,7 @@ jobs:
           RIDEPLAN_KEYSTORE_PASSWORD: ${{ secrets.RIDEPLAN_KEYSTORE_PASSWORD }}
           RIDEPLAN_KEY_ALIAS: ${{ secrets.RIDEPLAN_KEY_ALIAS }}
           RIDEPLAN_KEY_PASSWORD: ${{ secrets.RIDEPLAN_KEY_PASSWORD }}
+          RIDEPLAN_OFFICIAL_RELEASE: "true"
         run: ./gradlew --console=plain :androidApp:assembleGithubRelease
 
       - name: Pubblica la Release
@@ -65,7 +66,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           rm -f "$RUNNER_TEMP/release.jks"
-          VERSION="0.1.$(git rev-list --count HEAD)"
+          # Stesso numero dell'app: commit su main + 100 (vedi androidApp/build.gradle.kts, #46).
+          VERSION="0.1.$(( $(git rev-list --count HEAD) + 100 ))"
           mkdir -p out
           for f in androidApp/build/outputs/apk/github/release/*.apk; do
             abi=$(basename "$f" | sed -E 's/^androidApp-github-(.*)-release\.apk$/\1/')

@@ -2,7 +2,7 @@ package io.github.nanunic9379.rideplan.update
 
 /**
  * Regole dell'aggiornamento dalle Release di GitHub (#30), senza codice di piattaforma.
- * Tag delle Release: "v0.1.N", con N = versionCode = numero di commit su main.
+ * Tag delle Release: "v0.1.N", con N = versionCode = numero di commit su main + 100 (#46).
  * APK: "RidePlan-0.1.N-<abi>.apk".
  */
 object UpdateRules {

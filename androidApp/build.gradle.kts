@@ -23,6 +23,14 @@ val commitCount: Int = runCatching {
 }.getOrDefault(1)
 
 /**
+ * Le Release ufficiali (pipeline, #46) partono da 100 in su: così sono sempre "più nuove"
+ * di qualunque APK di prova compilato su un ramo di lavoro, che ha solo [commitCount]
+ * (sui rami i commit sono di più che su main, dove le PR diventano un commit solo).
+ */
+val officialOffset: Int = if (providers.environmentVariable("RIDEPLAN_OFFICIAL_RELEASE").orNull == "true") 100 else 0
+val appVersionCode: Int = commitCount + officialOffset
+
+/**
  * Chiave di firma delle Release: arriva solo da variabili d'ambiente (secret della pipeline).
  * Mai nel repo. Senza, la release si firma con la chiave debug e non si aggiorna dalle Release.
  */
@@ -36,8 +44,8 @@ android {
         applicationId = "io.github.nanunic9379.rideplan"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = commitCount
-        versionName = "0.1.$commitCount"
+        versionCode = appVersionCode
+        versionName = "0.1.$appVersionCode"
         // Dati stradali per il calcolo del percorso (#3), Release "routing-data" di routing-data.yml
         buildConfigField("String", "ROUTING_DATA_URL", "\"https://github.com/NanuNic9379/RidePlan/releases/download/routing-data/\"")
     }
