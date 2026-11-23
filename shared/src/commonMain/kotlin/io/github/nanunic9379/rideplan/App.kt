@@ -8,7 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import io.github.nanunic9379.rideplan.ride.ImportActions
+import io.github.nanunic9379.rideplan.ride.RideLayers
+import io.github.nanunic9379.rideplan.ride.RidePanel
+import io.github.nanunic9379.rideplan.ride.RideScreenState
+import io.github.nanunic9379.rideplan.ride.fitRide
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
@@ -16,24 +23,36 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 
 /**
- * Schermata iniziale: solo la mappa, subito, senza benvenuto ne' permessi (issue #1).
+ * Schermata iniziale: la mappa, subito, senza benvenuto ne' permessi (issue #1).
  * Lo stile online e' provvisorio: la mappa offline arriva con la #2.
  *
+ * [rides]: giro importato da file o link (#27, #5), gestito dalla piattaforma.
+ * [importActions]: come importare su questa piattaforma; null = pulsante nascosto.
  * [overlay]: elementi della singola piattaforma sopra la mappa (es. l'avviso di aggiornamento
- * della beta Android, #30). Su iPhone resta vuoto.
+ * della beta Android, #30).
  */
 @Composable
-fun App(overlay: @Composable BoxScope.() -> Unit = {}) {
+fun App(
+    rides: RideScreenState = remember { RideScreenState() },
+    importActions: ImportActions? = null,
+    overlay: @Composable BoxScope.() -> Unit = {},
+) {
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+        val ride = rides.ride
         val state = rememberMapState(
             baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
             initialCameraPosition = CameraPosition(
                 center = Position(latitude = MapDefaults.START_LAT, longitude = MapDefaults.START_LON),
                 zoom = MapDefaults.START_ZOOM,
             ),
-        )
+        ) {
+            if (ride != null) RideLayers(ride)
+        }
+        LaunchedEffect(ride) { if (ride != null) state.fitRide(ride) }
+
         Box(Modifier.fillMaxSize()) {
             MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
+            RidePanel(rides, importActions)
             overlay()
         }
     }
