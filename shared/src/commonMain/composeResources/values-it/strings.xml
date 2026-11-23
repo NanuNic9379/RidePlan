@@ -87,6 +87,12 @@
     <string name="route_stops_hint">Tocca per scegliere: sosta (ci arrivi) o passa vicino (senza entrare in paese).</string>
     <string name="route_stop_stop">Sosta: %1$s</string>
     <string name="route_stop_pass">Passa vicino: %1$s</string>
+    <string name="stop_edit_hint">Tieni premuto sulla mappa per aggiungere una tappa. Trascina una tappa per spostarla, toccala per toglierla o cambiarne l’ordine.</string>
+    <string name="stop_edit_title">Tappa %1$d di %2$d</string>
+    <string name="stop_edit_earlier">Prima</string>
+    <string name="stop_edit_later">Dopo</string>
+    <string name="stop_edit_remove">Togli</string>
+    <string name="stop_edit_done">Fatto</string>
     <string name="route_cancel">Annulla</string>
     <string name="route_err_network">Errore di rete: i dati stradali non sono stati scaricati.</string>
     <string name="route_err_checksum">I dati scaricati non corrispondono a quelli pubblicati: li ho cancellati.</string>

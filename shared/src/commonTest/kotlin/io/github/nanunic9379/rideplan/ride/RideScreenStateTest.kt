@@ -21,4 +21,18 @@ class RideScreenStateTest {
         s.show(Result.success(ride(Ride.Source.GOOGLE_LINK)))
         assertFalse(s.isPreview)
     }
+
+    /** #2: after an edit on the map the camera stays put, until another ride is shown. */
+    @Test
+    fun stopsEditedResetsWithANewRide() {
+        val s = RideScreenState()
+        s.show(Result.success(ride(Ride.Source.GOOGLE_LINK)))
+        assertFalse(s.stopsEdited)
+        s.stopsEdited = true
+        s.show(Result.success(ride(Ride.Source.GPX)))
+        assertFalse(s.stopsEdited)
+        s.stopsEdited = true
+        s.goHome()
+        assertFalse(s.stopsEdited)
+    }
 }

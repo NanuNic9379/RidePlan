@@ -87,6 +87,12 @@
     <string name="route_stops_hint">Toca para elegir: parada (vas allí) o pasar cerca (sin entrar en el pueblo).</string>
     <string name="route_stop_stop">Parada: %1$s</string>
     <string name="route_stop_pass">Pasar cerca: %1$s</string>
+    <string name="stop_edit_hint">Mantén pulsado el mapa para añadir una parada. Arrastra una parada para moverla, tócala para quitarla o cambiar su orden.</string>
+    <string name="stop_edit_title">Parada %1$d de %2$d</string>
+    <string name="stop_edit_earlier">Antes</string>
+    <string name="stop_edit_later">Después</string>
+    <string name="stop_edit_remove">Quitar</string>
+    <string name="stop_edit_done">Listo</string>
     <string name="route_cancel">Cancelar</string>
     <string name="route_err_network">Error de red: no se descargaron los datos de carreteras.</string>
     <string name="route_err_checksum">Los datos descargados no coinciden con los publicados: se han borrado.</string>

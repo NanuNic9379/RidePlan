@@ -95,6 +95,7 @@ class MainActivity : ComponentActivity() {
             retry = { rides.ride?.let(::planRoute) },
             changeOptions = ::changeOptions,
             toggleStop = { i -> rides.ride?.let { reroute(it.toggledStop(i)) } },
+            editStops = ::editStops,
         )
         rides.options = loadOptions()
         store = profileStore()
@@ -304,6 +305,15 @@ class MainActivity : ComponentActivity() {
     private fun reroute(fresh: Ride) {
         rides.ride = fresh
         if (fresh.routable && rides.route !is RouteState.Downloading && rides.route !is RouteState.NeedsData) planRoute(fresh)
+    }
+
+    /**
+     * Stops edited on the map (#2): route the new ride right away. A pending data offer is
+     * planned again, since the new stops may need other cells.
+     */
+    private fun editStops(fresh: Ride) {
+        rides.ride = fresh
+        if (fresh.routable && rides.route !is RouteState.Downloading) planRoute(fresh)
     }
 
     private fun loadOptions(): RouteOptions {
