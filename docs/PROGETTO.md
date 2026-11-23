@@ -27,11 +27,16 @@ batteria del telefono, il gruppo che aspetta al bar.
 ### Perché non una rete solo telefono-telefono
 Su rete mobile i telefoni non si raggiungono direttamente (NAT degli operatori) e i sistemi bloccano
 le app in sottofondo: una rete "pura" non regge. I relay Nostr sono server, ma di terzi, intercambiabili
-e senza account: il percorso resta firmato da chi l'ha creato e nessuno può alterarlo.
+e senza account: il percorso è firmato dalla chiave di chi lo pubblica, quindi nessuno può
+modificarlo senza che la firma salti. La firma però dice *quale chiave* ha firmato, non *chi*
+è la persona: chiunque può ripubblicare una copia con la propria chiave.
 
 ### Limiti noti
 - **iPhone:** si compila solo su un Mac con Xcode (o con una compilazione automatica su macOS).
-- **Calcolo offline:** i dati stradali di una regione pesano centinaia di MB; si scaricano per zona.
+- **iPhone sul telefono vero:** installazione, TestFlight e App Store richiedono l'Apple Developer Program (99 $/anno).
+- **Calcolo offline:** i dati stradali pesano molto (l'Italia intera circa 2,4 GB): si scaricano per macro-regione,
+  da pacchetti costruiti con GitHub Actions e pubblicati nelle Release, con mirror configurabile.
+- **Nostr:** non esiste un formato standard per i percorsi; va definito da noi (evento sostituibile).
 
 ## Prime tappe
 1. Scheletro dell'app Kotlin Multiplatform (Android + iPhone) con schermata mappa.
@@ -41,3 +46,8 @@ e senza account: il percorso resta firmato da chi l'ha creato e nessuno può alt
 5. Esportazione e importazione GPX.
 6. Condivisione con QR code e link.
 7. Identità a chiave e pubblicazione / ricerca percorsi su Nostr.
+
+Dall'analisi iniziale ([ANALISI.md](ANALISI.md)) sono arrivate altre tappe, tutte come issue:
+verifica delle curve, seguire il giro in sella, zona privata, autonomia e distributori,
+profilo veicolo (cilindrata), sterrato e fondo, soste e ritrovi, aggiornamento versionato
+del giro, viaggio a tappe, chiusure stagionali dei passi.
