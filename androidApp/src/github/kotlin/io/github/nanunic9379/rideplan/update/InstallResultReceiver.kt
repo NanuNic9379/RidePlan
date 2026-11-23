@@ -21,13 +21,11 @@ class InstallResultReceiver : BroadcastReceiver() {
             }
             // Se va bene, Android chiude e sostituisce l'app: non c'e' altro da fare.
             PackageInstaller.STATUS_SUCCESS -> UpdateStore.ui = null
-            PackageInstaller.STATUS_FAILURE_ABORTED -> UpdateStore.ui = UpdateUi.Failed("Installazione annullata.")
-            PackageInstaller.STATUS_FAILURE_CONFLICT -> UpdateStore.ui = UpdateUi.Failed(
-                "La versione installata e' firmata in modo diverso (es. una build di prova). " +
-                    "Disinstallala e installa a mano l'APK dalla pagina Release.",
-            )
+            PackageInstaller.STATUS_FAILURE_ABORTED -> UpdateStore.ui = UpdateUi.Failed(UpdateError.ABORTED)
+            PackageInstaller.STATUS_FAILURE_CONFLICT -> UpdateStore.ui = UpdateUi.Failed(UpdateError.SIGNATURE_CONFLICT)
             else -> UpdateStore.ui = UpdateUi.Failed(
-                intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "Errore sconosciuto.",
+                UpdateError.OTHER,
+                intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE),
             )
         }
     }

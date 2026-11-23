@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun load(block: () -> Ride) {
-        rides.message = null
+        rides.error = null
         rides.busy = true
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { runCatching(block) }

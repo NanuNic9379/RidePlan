@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Base language. Every key here must exist in the other values-xx folders (checked by StringsTest). -->
+<resources>
+    <string name="import_button">Import a ride</string>
+    <string name="import_open_file">Open GPX or KML file</string>
+    <string name="import_paste_link">Paste Google Maps link</string>
+    <string name="import_loading">Opening the ride…</string>
+    <string name="import_another">Import another</string>
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+    <string name="ride_default_name">Imported ride</string>
+    <string name="ride_km">%1$s km</string>
+    <string name="ride_km_straight">%1$s km as the crow flies</string>
+    <string name="ride_source_gpx">from GPX</string>
+    <string name="ride_source_kml">from KML</string>
+    <string name="ride_source_google">from Google Maps</string>
+    <string name="ride_straight_lines_note">Google only shares the stops, not the road: for now they are joined with straight lines. The real road comes with route planning.</string>
+    <string name="link_dialog_title">Google Maps link</string>
+    <string name="link_dialog_help">In Google Maps, build the route with its stops, tap Share and copy the link. Then paste it here.</string>
+    <string name="link_dialog_label">Route link</string>
+    <string name="link_dialog_import">Import</string>
+    <string name="link_dialog_paste">Paste</string>
+    <string name="err_unknown_format">Unknown format. GPX or KML files and Google Maps links work.</string>
+    <string name="err_gpx_empty">The GPX file has no track and fewer than two stops.</string>
+    <string name="err_kml_empty">The KML file has no line and fewer than two points.</string>
+    <string name="err_not_google_maps">This is not a Google Maps link.</string>
+    <string name="err_no_stops">No stops found in the Google Maps link.</string>
+    <string name="err_single_place">The link has a single place: a route needs at least a start and a finish.</string>
+    <string name="err_stop_without_coords">The Google Maps link has stops without coordinates (e.g. “Your location”). Pick exact places and share again.</string>
+    <string name="err_link_names_without_coords">The link uses names without coordinates: open it in Google Maps and share it again from there.</string>
+    <string name="err_invalid_coords">Invalid coordinates in the link.</string>
+    <string name="err_file_too_big">The file is too big (over 30 MB).</string>
+    <string name="err_file_unreadable">The file cannot be opened.</string>
+    <string name="err_zip_without_ride">The compressed file contains neither a KML nor a GPX.</string>
+    <string name="err_link_no_route">The Google link does not lead to a route.</string>
+    <string name="err_link_too_many_redirects">The Google link goes through too many steps: open it in Google Maps and share it again.</string>
+    <string name="err_network">No connection: opening a short Google link needs the internet.</string>
+    <string name="err_unexpected">The ride cannot be opened: %1$s</string>
+    <string name="update_available_title">New version %1$s</string>
+    <string name="update_available_text">It is downloaded from the project’s Releases page and Android asks you to confirm.</string>
+    <string name="update_action">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_downloading">Downloading the update…</string>
+    <string name="update_permission_title">A permission is needed</string>
+    <string name="update_permission_text">In the settings, turn on “Allow from this source” for RidePlan, then come back and tap Update again.</string>
+    <string name="update_open_settings">Open settings</string>
+    <string name="update_installing_title">Installing</string>
+    <string name="update_installing_text">Confirm in the Android window. Then reopen RidePlan.</string>
+    <string name="update_failed_title">Update failed</string>
+    <string name="update_retry">Retry</string>
+    <string name="update_err_network">Network error.</string>
+    <string name="update_err_download">Download failed.</string>
+    <string name="update_err_checksum">The downloaded file does not match the published one. It was not installed.</string>
+    <string name="update_err_aborted">Installation cancelled.</string>
+    <string name="update_err_signature">The installed version is signed differently (e.g. a test build). Uninstall it and install the APK from the Releases page by hand.</string>
+    <string name="update_err_other">Unknown error.</string>
+    <plurals name="ride_stops">
+        <item quantity="one">%1$d stop</item>
+        <item quantity="other">%1$d stops</item>
+    </plurals>
+</resources>

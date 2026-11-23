@@ -60,7 +60,7 @@ object GithubUpdater {
         val digest = MessageDigest.getInstance("SHA-256")
         val conn = open(release.apkUrl)
         try {
-            if (conn.responseCode != HttpURLConnection.HTTP_OK) throw IOException("Download non riuscito (HTTP ${conn.responseCode})")
+            if (conn.responseCode != HttpURLConnection.HTTP_OK) throw UpdateException(UpdateError.DOWNLOAD_HTTP, "HTTP ${conn.responseCode}")
             val total = conn.contentLengthLong.takeIf { it > 0 } ?: release.size
             var done = 0L
             conn.inputStream.use { input ->
@@ -82,7 +82,7 @@ object GithubUpdater {
         val actual = digest.digest().joinToString("") { "%02x".format(it) }
         if (actual != release.sha256) {
             file.delete()
-            throw IOException("Il file scaricato non corrisponde a quello pubblicato. Non l'ho installato.")
+            throw UpdateException(UpdateError.CHECKSUM)
         }
         return file
     }

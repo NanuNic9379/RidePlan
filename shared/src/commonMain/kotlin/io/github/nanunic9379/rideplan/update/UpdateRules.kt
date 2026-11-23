@@ -38,5 +38,12 @@ sealed interface UpdateUi {
     /** Android chiede il permesso "installa app sconosciute" per RidePlan. */
     data object NeedsPermission : UpdateUi
     data object Installing : UpdateUi
-    data class Failed(val message: String) : UpdateUi
+    /** [detail]: dato tecnico non tradotto (codice HTTP, messaggio di sistema). */
+    data class Failed(val reason: UpdateError, val detail: String? = null) : UpdateUi
 }
+
+/** Perche' l'aggiornamento non e' riuscito. Il testo tradotto lo sceglie [UpdateBanner] (#33). */
+enum class UpdateError { NETWORK, DOWNLOAD_HTTP, CHECKSUM, ABORTED, SIGNATURE_CONFLICT, OTHER }
+
+/** Errore dell'aggiornamento con il suo motivo. */
+class UpdateException(val reason: UpdateError, val detail: String? = null) : Exception("$reason${detail?.let { ": $it" } ?: ""}")

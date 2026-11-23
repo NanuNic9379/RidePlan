@@ -2,6 +2,7 @@ package io.github.nanunic9379.rideplan
 
 import android.content.Context
 import android.net.Uri
+import io.github.nanunic9379.rideplan.ride.ImportError
 import io.github.nanunic9379.rideplan.ride.ImportException
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideImport
@@ -21,23 +22,35 @@ object RideIntake {
     private const val MAX_REDIRECTS = 6
 
     fun fromUri(context: Context, uri: Uri): Ride {
-        val bytes = context.contentResolver.openInputStream(uri)?.use { input ->
+        val bytes = try {
+            read(context, uri)
+        } catch (e: java.io.IOException) {
+            throw ImportException(ImportError.FILE_UNREADABLE, e.javaClass.simpleName)
+        } catch (e: SecurityException) {
+            throw ImportException(ImportError.FILE_UNREADABLE, e.javaClass.simpleName)
+        }
+        return RideImport.parse(text(bytes))
+    }
+
+    private fun read(context: Context, uri: Uri): ByteArray =
+        context.contentResolver.openInputStream(uri)?.use { input ->
             val out = java.io.ByteArrayOutputStream()
             val buf = ByteArray(64 * 1024)
             while (true) {
                 val n = input.read(buf)
                 if (n < 0) break
                 out.write(buf, 0, n)
-                if (out.size() > MAX_BYTES) throw ImportException("Il file è troppo grande (oltre 30 MB).")
+                if (out.size() > MAX_BYTES) throw ImportException(ImportError.FILE_TOO_BIG)
             }
             out.toByteArray()
-        } ?: throw ImportException("Non riesco ad aprire il file.")
-        return RideImport.parse(text(bytes))
-    }
+        } ?: throw ImportException(ImportError.FILE_UNREADABLE)
 
     fun fromText(shared: String): Ride {
         val url = RideImport.findUrl(shared) ?: return RideImport.parse(shared)
-        return RideImport.parse(if (RideImport.isShortLink(url)) resolve(url) else url)
+        val full = if (RideImport.isShortLink(url)) {
+            try { resolve(url) } catch (e: java.io.IOException) { throw ImportException(ImportError.NETWORK, e.javaClass.simpleName) }
+        } else url
+        return RideImport.parse(full)
     }
 
     /** KMZ = zip con dentro un KML (export di Google My Maps). */
@@ -48,11 +61,11 @@ object RideIntake {
             while (true) {
                 val entry = zip.nextEntry ?: break
                 if (entry.name.endsWith(".kml", ignoreCase = true) || entry.name.endsWith(".gpx", ignoreCase = true)) {
-                    return zip.readBytes().also { if (it.size > MAX_BYTES) throw ImportException("Il file è troppo grande.") }.decodeToString()
+                    return zip.readBytes().also { if (it.size > MAX_BYTES) throw ImportException(ImportError.FILE_TOO_BIG) }.decodeToString()
                 }
             }
         }
-        throw ImportException("Nel file compresso non c'è né un KML né un GPX.")
+        throw ImportException(ImportError.ZIP_WITHOUT_RIDE)
     }
 
     /** Segue i redirect del link corto finché non arriva al link completo di Google Maps. */
@@ -69,7 +82,7 @@ object RideIntake {
             try {
                 val location = conn.getHeaderField("Location")
                 if (conn.responseCode !in 300..399 || location == null) {
-                    throw ImportException("Il link di Google non porta a un percorso (risposta ${conn.responseCode}).")
+                    throw ImportException(ImportError.LINK_NO_ROUTE, "HTTP ${conn.responseCode}")
                 }
                 url = consentTarget(URL(URL(url), location).toString())
             } finally {
@@ -77,7 +90,7 @@ object RideIntake {
             }
         }
         if (url.contains("/maps")) return url
-        throw ImportException("Il link di Google fa troppi passaggi: aprilo in Google Maps e ricondividilo.")
+        throw ImportException(ImportError.LINK_TOO_MANY_REDIRECTS)
     }
 
     /** In Europa Google può passare dalla pagina dei cookie: il link vero è nel parametro "continue". */

@@ -15,6 +15,26 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.update_action
+import io.github.nanunic9379.rideplan.resources.update_available_text
+import io.github.nanunic9379.rideplan.resources.update_available_title
+import io.github.nanunic9379.rideplan.resources.update_downloading
+import io.github.nanunic9379.rideplan.resources.update_err_aborted
+import io.github.nanunic9379.rideplan.resources.update_err_checksum
+import io.github.nanunic9379.rideplan.resources.update_err_download
+import io.github.nanunic9379.rideplan.resources.update_err_network
+import io.github.nanunic9379.rideplan.resources.update_err_other
+import io.github.nanunic9379.rideplan.resources.update_err_signature
+import io.github.nanunic9379.rideplan.resources.update_failed_title
+import io.github.nanunic9379.rideplan.resources.update_installing_text
+import io.github.nanunic9379.rideplan.resources.update_installing_title
+import io.github.nanunic9379.rideplan.resources.update_later
+import io.github.nanunic9379.rideplan.resources.update_open_settings
+import io.github.nanunic9379.rideplan.resources.update_permission_text
+import io.github.nanunic9379.rideplan.resources.update_permission_title
+import io.github.nanunic9379.rideplan.resources.update_retry
+import org.jetbrains.compose.resources.stringResource
 
 /** Avviso in alto sopra la mappa. Non blocca: "Dopo" lo chiude fino al prossimo avvio. */
 @Composable
@@ -29,12 +49,12 @@ fun UpdateBanner(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             when (state) {
                 is UpdateUi.Available -> {
-                    Text("Nuova versione ${state.versionName}", style = MaterialTheme.typography.titleMedium)
-                    Text("Si scarica dalla pagina Release del progetto e Android ti chiede conferma.")
-                    Actions(primary = "Aggiorna", onPrimary = onUpdate, onDismiss = onDismiss)
+                    Text(stringResource(Res.string.update_available_title, state.versionName), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.update_available_text))
+                    Actions(primary = stringResource(Res.string.update_action), onPrimary = onUpdate, onDismiss = onDismiss)
                 }
                 is UpdateUi.Downloading -> {
-                    Text("Scarico l'aggiornamento...", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.update_downloading), style = MaterialTheme.typography.titleMedium)
                     val p = state.percent
                     if (p == null) {
                         LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -43,18 +63,18 @@ fun UpdateBanner(
                     }
                 }
                 UpdateUi.NeedsPermission -> {
-                    Text("Serve un permesso", style = MaterialTheme.typography.titleMedium)
-                    Text("Nelle impostazioni attiva \"Consenti da questa fonte\" per RidePlan, poi torna qui e premi di nuovo Aggiorna.")
-                    Actions(primary = "Apri impostazioni", onPrimary = onOpenSettings, onDismiss = onDismiss)
+                    Text(stringResource(Res.string.update_permission_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.update_permission_text))
+                    Actions(primary = stringResource(Res.string.update_open_settings), onPrimary = onOpenSettings, onDismiss = onDismiss)
                 }
                 UpdateUi.Installing -> {
-                    Text("Installazione", style = MaterialTheme.typography.titleMedium)
-                    Text("Conferma nella finestra di Android. Poi riapri RidePlan.")
+                    Text(stringResource(Res.string.update_installing_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.update_installing_text))
                 }
                 is UpdateUi.Failed -> {
-                    Text("Aggiornamento non riuscito", style = MaterialTheme.typography.titleMedium)
-                    Text(state.message)
-                    Actions(primary = "Riprova", onPrimary = onUpdate, onDismiss = onDismiss)
+                    Text(stringResource(Res.string.update_failed_title), style = MaterialTheme.typography.titleMedium)
+                    Text(failureText(state))
+                    Actions(primary = stringResource(Res.string.update_retry), onPrimary = onUpdate, onDismiss = onDismiss)
                 }
             }
         }
@@ -64,7 +84,22 @@ fun UpdateBanner(
 @Composable
 private fun Actions(primary: String, onPrimary: () -> Unit, onDismiss: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        TextButton(onClick = onDismiss) { Text("Dopo") }
+        TextButton(onClick = onDismiss) { Text(stringResource(Res.string.update_later)) }
         Button(onClick = onPrimary) { Text(primary) }
     }
+}
+
+@Composable
+private fun failureText(state: UpdateUi.Failed): String {
+    val text = stringResource(
+        when (state.reason) {
+            UpdateError.NETWORK -> Res.string.update_err_network
+            UpdateError.DOWNLOAD_HTTP -> Res.string.update_err_download
+            UpdateError.CHECKSUM -> Res.string.update_err_checksum
+            UpdateError.ABORTED -> Res.string.update_err_aborted
+            UpdateError.SIGNATURE_CONFLICT -> Res.string.update_err_signature
+            UpdateError.OTHER -> Res.string.update_err_other
+        },
+    )
+    return if (state.detail != null && state.reason != UpdateError.CHECKSUM) "$text (${state.detail})" else text
 }

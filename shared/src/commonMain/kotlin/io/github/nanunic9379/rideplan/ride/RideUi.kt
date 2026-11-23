@@ -30,6 +30,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.close
+import io.github.nanunic9379.rideplan.resources.err_file_too_big
+import io.github.nanunic9379.rideplan.resources.err_file_unreadable
+import io.github.nanunic9379.rideplan.resources.err_gpx_empty
+import io.github.nanunic9379.rideplan.resources.err_invalid_coords
+import io.github.nanunic9379.rideplan.resources.err_kml_empty
+import io.github.nanunic9379.rideplan.resources.err_link_names_without_coords
+import io.github.nanunic9379.rideplan.resources.err_link_no_route
+import io.github.nanunic9379.rideplan.resources.err_link_too_many_redirects
+import io.github.nanunic9379.rideplan.resources.err_network
+import io.github.nanunic9379.rideplan.resources.err_no_stops
+import io.github.nanunic9379.rideplan.resources.err_not_google_maps
+import io.github.nanunic9379.rideplan.resources.err_single_place
+import io.github.nanunic9379.rideplan.resources.err_stop_without_coords
+import io.github.nanunic9379.rideplan.resources.err_unexpected
+import io.github.nanunic9379.rideplan.resources.err_unknown_format
+import io.github.nanunic9379.rideplan.resources.err_zip_without_ride
+import io.github.nanunic9379.rideplan.resources.import_another
+import io.github.nanunic9379.rideplan.resources.import_button
+import io.github.nanunic9379.rideplan.resources.import_loading
+import io.github.nanunic9379.rideplan.resources.import_open_file
+import io.github.nanunic9379.rideplan.resources.import_paste_link
+import io.github.nanunic9379.rideplan.resources.link_dialog_help
+import io.github.nanunic9379.rideplan.resources.link_dialog_import
+import io.github.nanunic9379.rideplan.resources.link_dialog_label
+import io.github.nanunic9379.rideplan.resources.link_dialog_paste
+import io.github.nanunic9379.rideplan.resources.link_dialog_title
+import io.github.nanunic9379.rideplan.resources.ok
+import io.github.nanunic9379.rideplan.resources.ride_default_name
+import io.github.nanunic9379.rideplan.resources.ride_km
+import io.github.nanunic9379.rideplan.resources.ride_km_straight
+import io.github.nanunic9379.rideplan.resources.ride_source_google
+import io.github.nanunic9379.rideplan.resources.ride_source_gpx
+import io.github.nanunic9379.rideplan.resources.ride_source_kml
+import io.github.nanunic9379.rideplan.resources.ride_stops
+import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
@@ -44,13 +84,13 @@ import kotlin.math.roundToInt
 class RideScreenState {
     var ride by mutableStateOf<Ride?>(null)
     var busy by mutableStateOf(false)
-    var message by mutableStateOf<String?>(null)
+    /** Ultimo errore; il testo tradotto lo sceglie [RidePanel]. */
+    var error by mutableStateOf<Throwable?>(null)
 
-    /** Esegue l'importazione e mostra il giro o l'errore. */
+    /** Mostra il giro o l'errore. */
     fun show(result: Result<Ride>) {
         busy = false
-        result.onSuccess { ride = it; message = null }
-            .onFailure { message = (it as? ImportException)?.message ?: "Non riesco ad aprire il giro: ${it.message ?: it::class.simpleName}" }
+        result.onSuccess { ride = it; error = null }.onFailure { error = it }
     }
 }
 
@@ -118,12 +158,12 @@ fun BoxScope.RidePanel(state: RideScreenState, actions: ImportActions?) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.End,
     ) {
-        state.message?.let { msg ->
+        state.error?.let { e ->
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(msg)
+                    Text(errorText(e))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { state.message = null }) { Text("OK") }
+                        TextButton(onClick = { state.error = null }) { Text(stringResource(Res.string.ok)) }
                     }
                 }
             }
@@ -131,7 +171,7 @@ fun BoxScope.RidePanel(state: RideScreenState, actions: ImportActions?) {
         if (state.busy) {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Apro il giro...")
+                    Text(stringResource(Res.string.import_loading))
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                 }
             }
@@ -139,19 +179,22 @@ fun BoxScope.RidePanel(state: RideScreenState, actions: ImportActions?) {
         if (ride != null) {
             RideCard(ride, onClose = { state.ride = null }, actions = actions, onLink = { linkDialog = true })
         } else if (actions != null && !state.busy) {
-            ImportButton(actions, onLink = { linkDialog = true })
+            ImportMenu(actions, onLink = { linkDialog = true }) { open ->
+                ExtendedFloatingActionButton(onClick = open) { Text(stringResource(Res.string.import_button)) }
+            }
         }
     }
 }
 
+/** Menu "file o link" attaccato al pulsante che lo apre. */
 @Composable
-private fun ImportButton(actions: ImportActions, onLink: () -> Unit) {
+private fun ImportMenu(actions: ImportActions, onLink: () -> Unit, anchor: @Composable (open: () -> Unit) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        ExtendedFloatingActionButton(onClick = { open = true }) { Text("Importa un giro") }
+        anchor { open = true }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text("Apri file GPX o KML") }, onClick = { open = false; actions.openFile() })
-            DropdownMenuItem(text = { Text("Incolla link di Google Maps") }, onClick = { open = false; onLink() })
+            DropdownMenuItem(text = { Text(stringResource(Res.string.import_open_file)) }, onClick = { open = false; actions.openFile() })
+            DropdownMenuItem(text = { Text(stringResource(Res.string.import_paste_link)) }, onClick = { open = false; onLink() })
         }
     }
 }
@@ -160,7 +203,12 @@ private fun ImportButton(actions: ImportActions, onLink: () -> Unit) {
 private fun RideCard(ride: Ride, onClose: () -> Unit, actions: ImportActions?, onLink: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(ride.name ?: defaultName(ride), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                ride.name ?: defaultName(ride) ?: stringResource(Res.string.ride_default_name),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(summary(ride), style = MaterialTheme.typography.bodyMedium)
             val names = ride.stops.mapNotNull { it.name }
             if (names.isNotEmpty()) {
@@ -168,22 +216,16 @@ private fun RideCard(ride: Ride, onClose: () -> Unit, actions: ImportActions?, o
             }
             if (ride.straightLines) {
                 Text(
-                    "Da Google arrivano solo le tappe, non la strada: per ora le unisco in linea retta. " +
-                        "La strada vera arriva con il calcolo del percorso.",
+                    stringResource(Res.string.ride_straight_lines_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onClose) { Text("Chiudi") }
+                TextButton(onClick = onClose) { Text(stringResource(Res.string.close)) }
                 if (actions != null) {
-                    var open by remember { mutableStateOf(false) }
-                    Box {
-                        Button(onClick = { open = true }) { Text("Importa un altro") }
-                        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                            DropdownMenuItem(text = { Text("Apri file GPX o KML") }, onClick = { open = false; actions.openFile() })
-                            DropdownMenuItem(text = { Text("Incolla link di Google Maps") }, onClick = { open = false; onLink() })
-                        }
+                    ImportMenu(actions, onLink) { open ->
+                        Button(onClick = open) { Text(stringResource(Res.string.import_another)) }
                     }
                 }
             }
@@ -194,22 +236,17 @@ private fun RideCard(ride: Ride, onClose: () -> Unit, actions: ImportActions?, o
 /** Campo per incollare il link di un percorso creato con Google Maps. */
 @Composable
 private fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
-    var text by remember {
-        mutableStateOf(actions.readClipboard()?.takeIf { RideImport.findUrl(it) != null }?.let { RideImport.findUrl(it) } ?: "")
-    }
+    var text by remember { mutableStateOf(actions.readClipboard()?.let(RideImport::findUrl) ?: "") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Link di Google Maps") },
+        title = { Text(stringResource(Res.string.link_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    "In Google Maps crea il percorso con le tappe, tocca Condividi e copia il link. Poi incollalo qui.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                Text(stringResource(Res.string.link_dialog_help), style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    label = { Text("Link del percorso") },
+                    label = { Text(stringResource(Res.string.link_dialog_label)) },
                     placeholder = { Text("https://maps.app.goo.gl/...") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -217,37 +254,71 @@ private fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            Button(enabled = text.isNotBlank(), onClick = { onDismiss(); actions.importText(text) }) { Text("Importa") }
+            Button(enabled = text.isNotBlank(), onClick = { onDismiss(); actions.importText(text) }) {
+                Text(stringResource(Res.string.link_dialog_import))
+            }
         },
         dismissButton = {
-            TextButton(onClick = {
-                actions.readClipboard()?.let { text = RideImport.findUrl(it) ?: it }
-            }) { Text("Incolla") }
+            TextButton(onClick = { actions.readClipboard()?.let { text = RideImport.findUrl(it) ?: it } }) {
+                Text(stringResource(Res.string.link_dialog_paste))
+            }
         },
     )
 }
 
-private fun defaultName(ride: Ride): String {
+/** "Partenza → Arrivo" se le tappe hanno un nome. */
+private fun defaultName(ride: Ride): String? {
     val first = ride.stops.firstOrNull()?.name
     val last = ride.stops.lastOrNull()?.name
-    return if (first != null && last != null && ride.stops.size >= 2) "$first → $last" else "Giro importato"
+    return if (first != null && last != null && ride.stops.size >= 2) "$first → $last" else null
 }
 
-internal fun summary(ride: Ride): String {
-    val km = ride.lengthKm
-    val kmText = if (km < 10) "${(km * 10).roundToInt() / 10.0} km" else "${km.roundToInt()} km"
+@Composable
+private fun summary(ride: Ride): String {
+    val km = formatKm(ride.lengthKm)
     val parts = buildList {
-        add(if (ride.straightLines) "$kmText in linea d'aria" else kmText)
-        if (ride.stops.isNotEmpty()) add("${ride.stops.size} tappe")
+        add(stringResource(if (ride.straightLines) Res.string.ride_km_straight else Res.string.ride_km, km))
+        if (ride.stops.isNotEmpty()) add(pluralStringResource(Res.plurals.ride_stops, ride.stops.size, ride.stops.size))
         add(
-            when (ride.source) {
-                Ride.Source.GPX -> "da GPX"
-                Ride.Source.KML -> "da KML"
-                Ride.Source.GOOGLE_LINK -> "da Google Maps"
-            },
+            stringResource(
+                when (ride.source) {
+                    Ride.Source.GPX -> Res.string.ride_source_gpx
+                    Ride.Source.KML -> Res.string.ride_source_kml
+                    Ride.Source.GOOGLE_LINK -> Res.string.ride_source_google
+                },
+            ),
         )
     }
     return parts.joinToString(" · ")
+}
+
+/** Un decimale sotto i 10 km, intero sopra. */
+internal fun formatKm(km: Double): String =
+    if (km < 10) "${(km * 10).roundToInt() / 10.0}" else "${km.roundToInt()}"
+
+@Composable
+private fun errorText(e: Throwable): String {
+    if (e !is ImportException) return stringResource(Res.string.err_unexpected, e.message ?: e::class.simpleName ?: "?")
+    val text = stringResource(importErrorText(e.error))
+    return if (e.detail != null && e.error == ImportError.LINK_NO_ROUTE) "$text (${e.detail})" else text
+}
+
+internal fun importErrorText(error: ImportError): StringResource = when (error) {
+    ImportError.UNKNOWN_FORMAT -> Res.string.err_unknown_format
+    ImportError.GPX_EMPTY -> Res.string.err_gpx_empty
+    ImportError.KML_EMPTY -> Res.string.err_kml_empty
+    ImportError.NOT_GOOGLE_MAPS -> Res.string.err_not_google_maps
+    ImportError.NO_STOPS -> Res.string.err_no_stops
+    ImportError.SINGLE_PLACE -> Res.string.err_single_place
+    ImportError.STOP_WITHOUT_COORDS -> Res.string.err_stop_without_coords
+    ImportError.LINK_NAMES_WITHOUT_COORDS -> Res.string.err_link_names_without_coords
+    ImportError.INVALID_COORDS -> Res.string.err_invalid_coords
+    ImportError.FILE_TOO_BIG -> Res.string.err_file_too_big
+    ImportError.FILE_UNREADABLE -> Res.string.err_file_unreadable
+    ImportError.ZIP_WITHOUT_RIDE -> Res.string.err_zip_without_ride
+    ImportError.LINK_NO_ROUTE -> Res.string.err_link_no_route
+    ImportError.LINK_TOO_MANY_REDIRECTS -> Res.string.err_link_too_many_redirects
+    ImportError.NETWORK -> Res.string.err_network
 }
 
 /** GeoJSON a mano: solo numeri, niente testo da proteggere. */

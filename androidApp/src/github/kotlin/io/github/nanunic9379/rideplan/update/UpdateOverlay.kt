@@ -66,8 +66,12 @@ fun BoxScope.UpdateOverlay() {
                         UpdateStore.ui = UpdateUi.Installing
                         GithubUpdater.install(context, apk)
                     }
+                } catch (e: UpdateException) {
+                    UpdateStore.ui = UpdateUi.Failed(e.reason, e.detail)
+                } catch (e: java.io.IOException) {
+                    UpdateStore.ui = UpdateUi.Failed(UpdateError.NETWORK, e.javaClass.simpleName)
                 } catch (e: Exception) {
-                    UpdateStore.ui = UpdateUi.Failed(e.message ?: "Errore di rete.")
+                    UpdateStore.ui = UpdateUi.Failed(UpdateError.OTHER, e.message ?: e.javaClass.simpleName)
                 }
             }
         },

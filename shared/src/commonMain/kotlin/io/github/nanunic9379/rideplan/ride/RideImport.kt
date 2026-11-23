@@ -1,7 +1,14 @@
 package io.github.nanunic9379.rideplan.ride
 
-/** Errore di importazione con un messaggio da mostrare così com'è. */
-class ImportException(message: String) : Exception(message)
+/** Motivi per cui un giro non si importa. Il testo, tradotto, lo sceglie l'interfaccia (#33). */
+enum class ImportError {
+    UNKNOWN_FORMAT, GPX_EMPTY, KML_EMPTY, NOT_GOOGLE_MAPS, NO_STOPS, SINGLE_PLACE,
+    STOP_WITHOUT_COORDS, LINK_NAMES_WITHOUT_COORDS, INVALID_COORDS,
+    FILE_TOO_BIG, FILE_UNREADABLE, ZIP_WITHOUT_RIDE, LINK_NO_ROUTE, LINK_TOO_MANY_REDIRECTS, NETWORK,
+}
+
+/** Errore di importazione. [detail]: dato tecnico facoltativo (es. codice HTTP), non tradotto. */
+class ImportException(val error: ImportError, val detail: String? = null) : Exception("$error${detail?.let { ": $it" } ?: ""}")
 
 /**
  * Lettura di un giro da GPX, KML o link di Google Maps (#27, #5).
@@ -26,7 +33,7 @@ object RideImport {
             trimmed.contains("<gpx", ignoreCase = true) -> Gpx.parse(trimmed)
             trimmed.contains("<kml", ignoreCase = true) -> Kml.parse(trimmed)
             url != null -> GoogleMapsLink.parse(url)
-            else -> throw ImportException("Non riconosco il formato. Funzionano file GPX o KML e link di Google Maps.")
+            else -> throw ImportException(ImportError.UNKNOWN_FORMAT)
         }
     }
 }
@@ -69,7 +76,7 @@ internal object Gpx {
             if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { Stop(Xml.text(e.body, "name"), it) } } else emptyList()
         }
         val track = trackPoints.ifEmpty { if (waypoints.isNotEmpty()) routePoints.mapNotNull { it.second } else emptyList() }
-        if (track.size < 2 && stops.size < 2) throw ImportException("Il file GPX non contiene una traccia né almeno due tappe.")
+        if (track.size < 2 && stops.size < 2) throw ImportException(ImportError.GPX_EMPTY)
 
         val name = listOf("metadata", "trk", "rte").firstNotNullOfOrNull { tag ->
             // Solo il <name> del giro: tolgo prima i punti, che hanno il loro <name>.
@@ -109,7 +116,7 @@ internal object Kml {
                     ?.let { stops += Stop(name, it) }
             }
         }
-        if (track.size < 2 && stops.size < 2) throw ImportException("Il file KML non contiene una linea né almeno due punti.")
+        if (track.size < 2 && stops.size < 2) throw ImportException(ImportError.KML_EMPTY)
         val name = Xml.elements(xml, "Document").firstOrNull()?.body?.let { body ->
             Regex("""^\s*<name>(.*?)</name>""", RegexOption.DOT_MATCHES_ALL).find(body)?.groupValues?.get(1)?.let(Xml::decode)?.trim()
         }
@@ -143,7 +150,7 @@ internal object GoogleMapsLink {
 
     fun parse(url: String): Ride {
         if (!url.contains("google.") || !url.contains("/maps")) {
-            throw ImportException("Il link non è di Google Maps.")
+            throw ImportException(ImportError.NOT_GOOGLE_MAPS)
         }
         val path = url.substringBefore('?')
         val query = url.substringAfter('?', "")
@@ -153,8 +160,8 @@ internal object GoogleMapsLink {
             "/maps/place/" in path -> listOfNotNull(place(path))
             else -> emptyList()
         }
-        if (stops.isEmpty()) throw ImportException("Nel link di Google Maps non trovo le tappe.")
-        if (stops.size == 1) throw ImportException("Il link contiene un solo posto: serve un percorso con almeno partenza e arrivo.")
+        if (stops.isEmpty()) throw ImportException(ImportError.NO_STOPS)
+        if (stops.size == 1) throw ImportException(ImportError.SINGLE_PLACE)
         return Ride(null, emptyList(), stops, Ride.Source.GOOGLE_LINK)
     }
 
@@ -170,17 +177,15 @@ internal object GoogleMapsLink {
                 literal != null -> latLon(literal.groupValues[1], literal.groupValues[2])?.let { Stop(null, it) }
                 else -> coords.removeFirstOrNull()?.let { Stop(seg, it) }
             }
-        }.takeIf { it.size == segments.size } ?: throw ImportException(
-            "Il link di Google Maps contiene tappe senza coordinate (es. \"La tua posizione\"). Scegli posti precisi e ricondividi.",
-        )
+        }.takeIf { it.size == segments.size } ?: throw ImportException(ImportError.STOP_WITHOUT_COORDS)
     }
 
     private fun apiLink(query: String): List<Stop> {
         val params = query.split('&').associate { it.substringBefore('=') to urlDecode(it.substringAfter('=', "")) }
         val names = listOfNotNull(params["origin"]) + (params["waypoints"]?.split('|') ?: emptyList()) + listOfNotNull(params["destination"])
         return names.map { n ->
-            val m = coordPair.matchEntire(n) ?: throw ImportException("Il link usa nomi senza coordinate: aprilo in Google Maps e ricondividilo da lì.")
-            Stop(null, latLon(m.groupValues[1], m.groupValues[2]) ?: throw ImportException("Coordinate non valide nel link."))
+            val m = coordPair.matchEntire(n) ?: throw ImportException(ImportError.LINK_NAMES_WITHOUT_COORDS)
+            Stop(null, latLon(m.groupValues[1], m.groupValues[2]) ?: throw ImportException(ImportError.INVALID_COORDS))
         }
     }
 
