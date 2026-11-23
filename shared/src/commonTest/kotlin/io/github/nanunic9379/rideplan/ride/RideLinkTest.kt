@@ -1,6 +1,8 @@
 package io.github.nanunic9379.rideplan.ride
 
+import io.github.nanunic9379.rideplan.route.Curves
 import io.github.nanunic9379.rideplan.route.Polyline
+import io.github.nanunic9379.rideplan.route.RouteOptions
 import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.test.Test
@@ -23,13 +25,14 @@ class RideLinkTest {
 
     @Test
     fun tappe() {
-        val link = RideLink.encode(Ride("Giro del sabato", emptyList(), stops, Ride.Source.GOOGLE_LINK), curves = "MORE")
+        val link = RideLink.encode(Ride("Giro del sabato", emptyList(), stops, Ride.Source.GOOGLE_LINK), RouteOptions(Curves.MORE, avoidTolls = true))
         assertTrue(link.startsWith(RideLink.PREFIX))
         // Niente caratteri che un'app di messaggi possa spezzare.
         assertTrue(link.substringAfter('#').all { it.isLetterOrDigit() || it == '-' || it == '_' }, link)
         val back = RideLink.decode(link)
         assertEquals("Giro del sabato", back.ride.name)
-        assertEquals("MORE", back.curves)
+        assertEquals(RouteOptions(Curves.MORE, avoidTolls = true), back.options)
+        assertEquals(back.options, back.ride.sharedOptions)
         assertEquals(stops, back.ride.stops)
         assertTrue(back.ride.straightLines)
         assertEquals(Ride.Source.RIDEPLAN_LINK, back.ride.source)
@@ -59,5 +62,25 @@ class RideLinkTest {
         assertFailsWith<ImportException> { RideLink.decode(RideLink.PREFIX + "abc") }
         val cut = RideLink.encode(Ride(null, emptyList(), stops, Ride.Source.GPX)).dropLast(12)
         assertFailsWith<ImportException> { RideLink.decode(cut) }
+    }
+
+    /** #50: il tipo di ogni tappa viaggia nel link; senza preferenze il campo resta vuoto. */
+    @Test
+    fun tipiDiTappa() {
+        val kinds = listOf(stops[0], stops[1].copy(kind = Stop.Kind.VIA), stops[2].copy(kind = Stop.Kind.PASS))
+        val back = RideLink.decode(RideLink.encode(Ride(null, emptyList(), kinds, Ride.Source.GOOGLE_LINK)))
+        assertEquals(listOf(Stop.Kind.STOP, Stop.Kind.VIA, Stop.Kind.PASS), back.ride.stops.map { it.kind })
+        assertNull(back.options)
+        assertNull(back.ride.sharedOptions)
+    }
+
+    /** Un link fatto prima del #50 (sei campi, curve scritte a mano) si apre ancora. */
+    @Test
+    fun linkVecchio() {
+        val old = listOf("1", "Vecchio", "MAX", Polyline.encode(stops.map { it.point }, 5), "A\u001fB\u001fC", "").joinToString("\n")
+        val link = RideLink.PREFIX + kotlin.io.encoding.Base64.UrlSafe.withPadding(kotlin.io.encoding.Base64.PaddingOption.ABSENT).encode(old.encodeToByteArray())
+        val back = RideLink.decode(link)
+        assertEquals(RouteOptions(Curves.MAX), back.options)
+        assertTrue(back.ride.stops.all { it.kind == Stop.Kind.STOP })
     }
 }

@@ -165,6 +165,7 @@ class MainActivity : ComponentActivity() {
     /** Un giro da "I tuoi giri": subito sulla mappa, il percorso si ricalcola se serve. */
     private fun openRide(ride: Ride) {
         routeJob?.cancel()
+        rides.options = loadOptions()
         rides.show(Result.success(ride))
         if (ride.needsRoute) planRoute(ride)
     }
@@ -218,6 +219,9 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) { runCatching(block) }
             routeJob?.cancel()
+            // Un giro ricevuto con un link si calcola come l'ha preparato chi l'ha mandato (#50);
+            // le tue preferenze salvate non cambiano e tornano col giro successivo.
+            result.getOrNull()?.let { rides.options = it.sharedOptions ?: loadOptions() }
             rides.show(result)
             result.getOrNull()?.takeIf { it.needsRoute }?.let(::planRoute)
         }

@@ -1,6 +1,8 @@
 package io.github.nanunic9379.rideplan.ride
 
+import io.github.nanunic9379.rideplan.route.Curves
 import io.github.nanunic9379.rideplan.route.Polyline
+import io.github.nanunic9379.rideplan.route.RouteOptions
 import kotlin.io.encoding.Base64
 import kotlin.math.cos
 import kotlin.math.sqrt
@@ -19,25 +21,30 @@ object RideLink {
     /** Oltre questi punti il QR diventa troppo fitto da inquadrare. */
     const val MAX_TRACK_POINTS = 150
 
-    /** [curves]: il livello delle curve di chi condivide, per rifare lo stesso percorso. */
-    data class Shared(val ride: Ride, val curves: String?)
+    /**
+     * [options]: curve, autostrade e pedaggi di chi condivide (#50), per rifare lo stesso
+     * percorso; null nei link che non le hanno.
+     */
+    data class Shared(val ride: Ride, val options: RouteOptions?)
 
     /** Il link web (dopo "#") o quello che la pagina web passa all'app (rideplan://r?d=...). */
     private val pattern = Regex("""(?:nanunic9379\.github\.io/RidePlan/r/?#|rideplan://r/?\?d=)([A-Za-z0-9_-]*)""")
 
     fun isLink(text: String): Boolean = pattern.containsMatchIn(text)
 
-    fun encode(ride: Ride, curves: String? = null): String {
+    fun encode(ride: Ride, options: RouteOptions? = null): String {
         // Un percorso calcolato si ricalcola dalle tappe: il link resta corto.
         val stopsOnly = ride.straightLines || ride.route != null
         val track = if (stopsOnly) emptyList() else simplify(ride.track)
         val fields = listOf(
             VERSION,
             ride.name.orEmpty(),
-            curves.orEmpty(),
+            options?.let(::optionsCode).orEmpty(),
             Polyline.encode(ride.stops.map { it.point }, 5),
             ride.stops.joinToString(SEP) { it.name.orEmpty() },
             Polyline.encode(track, 5),
+            // Campi aggiunti dopo (#50): le versioni vecchie e la pagina web leggono solo i primi sei.
+            ride.stops.joinToString("") { it.kind.name.take(1) },
         ).map { it.replace('\n', ' ') }
         return PREFIX + Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(fields.joinToString("\n").encodeToByteArray())
     }
@@ -51,16 +58,28 @@ object RideLink {
         if (f.size < 6 || f[0] != VERSION) throw ImportException(ImportError.LINK_BROKEN)
         val points = runCatching { Polyline.decode(f[3], 5) }.getOrElse { throw ImportException(ImportError.LINK_BROKEN) }
         val names = f[4].split(SEP)
-        val stops = points.mapIndexed { i, p -> Stop(names.getOrNull(i)?.ifEmpty { null }, p) }
+        val kinds = f.getOrNull(6).orEmpty()
+        val stops = points.mapIndexed { i, p -> Stop(names.getOrNull(i)?.ifEmpty { null }, p, kindOf(kinds.getOrNull(i))) }
         val track = runCatching { Polyline.decode(f[5], 5) }.getOrElse { throw ImportException(ImportError.LINK_BROKEN) }
         if (stops.size < 2 && track.size < 2) throw ImportException(ImportError.NO_STOPS)
-        return Shared(
-            Ride(f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK),
-            f[2].ifEmpty { null },
-        )
+        val options = parseOptions(f[2])
+        return Shared(Ride(f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK, sharedOptions = options), options)
     }
 
     private const val SEP = "\u001f"
+
+    /** "MAX,h,t": curve, poi h = niente autostrade, t = niente pedaggi. */
+    internal fun optionsCode(o: RouteOptions): String =
+        (listOf(o.curves.name) + listOfNotNull("h".takeIf { o.avoidHighways }, "t".takeIf { o.avoidTolls })).joinToString(",")
+
+    internal fun parseOptions(code: String): RouteOptions? {
+        val parts = code.split(',')
+        val curves = Curves.entries.firstOrNull { it.name == parts[0] } ?: return null
+        return RouteOptions(curves, avoidHighways = "h" in parts, avoidTolls = "t" in parts)
+    }
+
+    /** Una lettera per tappa: S sosta, V punto trascinato, P passaggio. */
+    private fun kindOf(c: Char?): Stop.Kind = Stop.Kind.entries.firstOrNull { it.name.first() == c } ?: Stop.Kind.STOP
 
     /** Douglas-Peucker con tolleranza crescente finché la traccia sta in [MAX_TRACK_POINTS]. */
     internal fun simplify(track: List<LatLon>): List<LatLon> {

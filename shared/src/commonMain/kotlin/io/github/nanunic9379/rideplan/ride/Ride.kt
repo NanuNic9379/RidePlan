@@ -1,6 +1,7 @@
 package io.github.nanunic9379.rideplan.ride
 
 import io.github.nanunic9379.rideplan.route.RouteInfo
+import io.github.nanunic9379.rideplan.route.RouteOptions
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.sin
@@ -74,6 +75,8 @@ data class Ride(
     val stops: List<Stop>,
     val source: Source,
     val route: RouteInfo? = null,
+    /** Preferenze di chi ha condiviso il giro con un link (#50): il percorso si rifà con queste. */
+    val sharedOptions: RouteOptions? = null,
 ) {
     enum class Source { GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK }
 

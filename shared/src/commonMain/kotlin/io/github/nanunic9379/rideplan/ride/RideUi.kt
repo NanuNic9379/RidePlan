@@ -330,7 +330,7 @@ private fun RideCard(
                     if (asking) ShareDialog(onDismiss = { asking = false }) { trim, asLink ->
                         asking = false
                         val out = if (trim) PrivateEnds.trim(ride) else ride
-                        if (asLink) qr = RideLink.encode(out) else share(out, title)
+                        if (asLink) qr = RideLink.encode(out, options) else share(out, title)
                     }
                     qr?.let { QrDialog(it, actions?.shareText, onDismiss = { qr = null }) }
                 }
