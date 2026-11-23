@@ -177,6 +177,7 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
                     }
                 }
             },
+            zones = store?.data?.privateZones.orEmpty(),
         )
     }
 }

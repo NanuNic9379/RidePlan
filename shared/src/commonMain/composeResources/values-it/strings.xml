@@ -163,4 +163,26 @@
     <string name="backup_saved">Copia salvata.</string>
     <string name="backup_restored">Copia ripristinata. Giri nuovi: %1$d.</string>
     <string name="backup_failed">Questo file non è una copia di RidePlan.</string>
+    <string name="share_hide_zones">Nascondi le mie zone private (%1$d)</string>
+    <string name="share_no_zones">Consiglio: aggiungi casa come zona privata nel profilo, verrà nascosta da ogni giro condiviso.</string>
+    <string name="share_preview_summary">Cosa esce dal telefono: %1$s km, %2$d tappe</string>
+    <string name="share_preview_moved">Partenza spostata di %1$s km, arrivo di %2$s km</string>
+    <string name="share_preview_hidden">%1$d tappe nascoste</string>
+    <string name="share_preview_empty">Tutto il giro è dentro le tue zone private: non c'è niente da condividere.</string>
+    <string name="zones_title">Zone private</string>
+    <string name="zones_text">Posti come casa o il garage. Vengono tagliati da ogni giro che condividi (file GPX, QR e link): tappe e traccia al loro interno non escono mai dal telefono.</string>
+    <string name="zones_empty">Ancora nessuna zona privata: i giri condivisi possono mostrare dove abiti.</string>
+    <string name="zones_add">Aggiungi una zona privata</string>
+    <string name="zones_delete">Elimina</string>
+    <string name="zones_radius">%1$d m</string>
+    <string name="zones_suggested">Dove partono o arrivano i tuoi giri:</string>
+    <string name="zones_candidate">Partenza o arrivo di “%1$s” (%2$d giri)</string>
+    <string name="zones_candidate_unnamed">Partenza o arrivo di un giro (%1$d giri)</string>
+    <string name="zones_other_place">Un altro posto</string>
+    <string name="zones_coords">Coordinate (lat, lon)</string>
+    <string name="zones_coords_help">Tieni premuto il posto in un'app di mappe e copia le coordinate.</string>
+    <string name="zones_coords_invalid">Queste non sono coordinate: scrivile come 40.6667, 16.6043.</string>
+    <string name="zones_name">Nome</string>
+    <string name="zones_name_default">Casa</string>
+    <string name="zones_save">Salva</string>
 </resources>

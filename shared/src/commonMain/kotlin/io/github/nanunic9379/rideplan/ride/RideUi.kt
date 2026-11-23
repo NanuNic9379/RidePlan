@@ -17,11 +17,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -39,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -225,6 +222,7 @@ fun BoxScope.RidePanel(
     actions: ImportActions?,
     routeActions: RouteActions? = null,
     saved: @Composable () -> Unit = {},
+    zones: List<PrivateZone> = emptyList(),
 ) {
     val ride = state.ride
     var linkDialog by remember { mutableStateOf(false) }
@@ -249,6 +247,7 @@ fun BoxScope.RidePanel(
                 saved = saved,
                 open = state.panelOpen,
                 onToggle = { state.panelOpen = !state.panelOpen },
+                zones = zones,
             )
         } else if (actions != null && !state.busy) {
             ImportMenu(actions, onLink = { linkDialog = true }) { open ->
@@ -307,6 +306,7 @@ private fun RideCard(
     saved: @Composable () -> Unit,
     open: Boolean = true,
     onToggle: () -> Unit = {},
+    zones: List<PrivateZone> = emptyList(),
 ) {
     val title = ride.name ?: defaultName(ride) ?: stringResource(Res.string.ride_default_name)
     // Never taller than about half the screen: the rest scrolls and the map stays visible.
@@ -356,9 +356,8 @@ private fun RideCard(
                     var asking by remember { mutableStateOf(false) }
                     TextButton(onClick = { asking = true }) { Text(stringResource(Res.string.share_gpx)) }
                     var qr by remember { mutableStateOf<String?>(null) }
-                    if (asking) ShareDialog(onDismiss = { asking = false }) { trim, asLink ->
+                    if (asking) ShareDialog(ride, zones, onDismiss = { asking = false }) { out, asLink ->
                         asking = false
-                        val out = if (trim) PrivateEnds.trim(ride) else ride
                         if (asLink) qr = RideLink.encode(out, options) else share(out, title)
                     }
                     qr?.let { QrDialog(it, actions?.shareText, onDismiss = { qr = null }) }
@@ -374,30 +373,31 @@ private fun RideCard(
     }
 }
 
-/** Before sharing: start and finish are often home or the garage (#12). */
+/**
+ * Before sharing: start and finish are often home or the garage (#12), and the private zones
+ * (#6) are cut out. [onShare] receives only what may leave the phone ([SharePreview]).
+ */
 @Composable
-private fun ShareDialog(onDismiss: () -> Unit, onShare: (trimEnds: Boolean, asLink: Boolean) -> Unit) {
+private fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> Unit, onShare: (out: Ride, asLink: Boolean) -> Unit) {
     var trim by remember { mutableStateOf(true) }
+    var hideZones by remember { mutableStateOf(true) }
+    val preview = remember(ride, zones, trim, hideZones) { SharePreview.of(ride, zones, trim, hideZones) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.share_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(Res.string.share_privacy_note), style = MaterialTheme.typography.bodyMedium)
-                Row(
-                    Modifier.fillMaxWidth().toggleable(trim, role = Role.Checkbox) { trim = it },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Checkbox(checked = trim, onCheckedChange = null)
-                    Text(stringResource(Res.string.share_trim_ends), Modifier.padding(start = 8.dp))
-                }
+                HideZonesOption(zones, hideZones) { hideZones = it }
+                ShareOption(stringResource(Res.string.share_trim_ends), trim) { trim = it }
+                SharePreviewText(preview)
             }
         },
         // The GPX file for navigators and other apps; QR and link for those who have RidePlan (#6).
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onShare(trim, false) }) { Text(stringResource(Res.string.share_confirm)) }
-                Button(onClick = { onShare(trim, true) }) { Text(stringResource(Res.string.share_qr)) }
+                OutlinedButton(onClick = { onShare(preview.ride, false) }, enabled = !preview.empty) { Text(stringResource(Res.string.share_confirm)) }
+                Button(onClick = { onShare(preview.ride, true) }, enabled = !preview.empty) { Text(stringResource(Res.string.share_qr)) }
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.route_cancel)) } },

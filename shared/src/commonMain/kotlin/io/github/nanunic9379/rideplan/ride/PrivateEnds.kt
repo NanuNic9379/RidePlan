@@ -5,7 +5,7 @@ package io.github.nanunic9379.rideplan.ride
  *
  * The first and last [KM] along the ride are removed (at most a quarter on each side, so a
  * short ride does not vanish). Stops inside the removed stretches disappear, those at the ends
- * lose their name. This is a first version: configurable private zones will come with #12.
+ * lose their name. The private zones of the profile (#6) are applied first, see [SharePreview].
  */
 object PrivateEnds {
     const val KM = 1.0
