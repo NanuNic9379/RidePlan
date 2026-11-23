@@ -65,6 +65,7 @@ import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
 import io.github.nanunic9379.rideplan.nav.NavigationScreen
 import io.github.nanunic9379.rideplan.ui.RidePlanTheme
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
@@ -91,6 +92,7 @@ fun App(
     importActions: ImportActions? = null,
     routeActions: RouteActions? = null,
     backupActions: BackupActions? = null,
+    mapViews: MapViewMemory? = null,
     /** Turn-by-turn navigation on this platform (#5); null = no "Navigate" button. */
     navigation: NavigationPlatform? = null,
     overlay: @Composable BoxScope.() -> Unit = {},
@@ -119,7 +121,7 @@ fun App(
                         onExit = { rides.navigating = false },
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
-                    store == null || rides.onMap -> MapScreen(rides, store, importActions, routeActions, navigation)
+                    store == null || rides.onMap -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation)
                     !store.data.profile.welcomed -> Surface(Modifier.fillMaxSize()) { WelcomeScreen(store) }
                     rides.page == Page.PROFILE -> Surface(Modifier.fillMaxSize()) { ProfileScreen(store, onBack = { rides.page = Page.HOME }, backup = backupActions) }
                     else -> Surface(Modifier.fillMaxSize()) { HomeScreen(store, rides, importActions, snackbar) }
@@ -142,17 +144,27 @@ private fun MapScreen(
     store: ProfileStore?,
     importActions: ImportActions?,
     routeActions: RouteActions?,
+    mapViews: MapViewMemory?,
     navigation: NavigationPlatform? = null,
 ) {
     val ride = rides.ride
+    // Explore opens where you looked last, or around your rides: not on a whole continent.
+    val start = remember { MapStart.of(mapViews?.load(), store?.data?.rides.orEmpty()) }
     val state = rememberMapState(
         baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
         initialCameraPosition = CameraPosition(
-            center = Position(latitude = MapDefaults.START_LAT, longitude = MapDefaults.START_LON),
-            zoom = MapDefaults.START_ZOOM,
+            center = Position(latitude = start.lat, longitude = start.lon),
+            zoom = start.zoom,
         ),
     ) {
         if (ride != null) RideLayers(ride)
+    }
+    // The area on screen is remembered each time the map stops moving (not the world overview).
+    LaunchedEffect(state, mapViews) {
+        if (mapViews == null) return@LaunchedEffect
+        snapshotFlow { if (state.isCameraMoving) null else state.cameraPosition }
+            .filter { it != null && it.zoom >= MapStart.RIDE_ZOOM - 4 }
+            .collect { p -> p?.let { mapViews.save(MapView(it.center.latitude, it.center.longitude, it.zoom)) } }
     }
     // Editing the stops on the map (#2): only rides made of stops, and not while data is downloading.
     val editable = ride != null && routeActions != null && ride.stopsEditable && rides.route !is RouteState.Downloading
