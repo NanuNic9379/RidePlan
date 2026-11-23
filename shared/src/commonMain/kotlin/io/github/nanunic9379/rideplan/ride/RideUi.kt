@@ -117,38 +117,38 @@ import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.spatialk.geojson.BoundingBox
 import kotlin.math.roundToInt
 
-/** Dove si trova chi usa l'app (#41). La mappa si vede anche quando c'è un giro aperto. */
+/** Where the user is in the app (#41). The map is also shown when a ride is open. */
 enum class Page { HOME, MAP, PROFILE }
 
-/** Stato del giro sullo schermo. Lo cambia la piattaforma (file, link) e lo legge [App]. */
+/** State of the ride on screen. The platform (file, link) changes it and [App] reads it. */
 @Stable
 class RideScreenState {
     var ride by mutableStateOf<Ride?>(null)
     var busy by mutableStateOf(false)
-    /** Ultimo errore; il testo tradotto lo sceglie [RidePanel]. */
+    /** Last error; [RidePanel] picks the translated text. */
     var error by mutableStateOf<Throwable?>(null)
-    /** Calcolo del percorso del giro mostrato (#3). */
+    /** Route calculation of the shown ride (#3). */
     var route by mutableStateOf<RouteState>(RouteState.Idle)
-    /** Preferenze del percorso (#4); valgono per tutti i giri. */
+    /** Route preferences (#4); they apply to all rides. */
     var options by mutableStateOf(RouteOptions())
     var page by mutableStateOf(Page.HOME)
-    /** Il giro mostrato è in "I tuoi giri" con questo id: ogni modifica lo aggiorna. */
+    /** The shown ride is in "Your rides" with this id: every change updates it. */
     var savedId by mutableStateOf<String?>(null)
     /** Scheda del giro aperta (impostazioni) o ridotta a nome e km, per vedere il percorso. */
     var panelOpen by mutableStateOf(true)
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
-    /** Giro ricevuto con un link e non ancora salvato (#48): niente salvataggio automatico. */
+    /** Ride received by link and not saved yet (#48): no automatic saving. */
     val isPreview: Boolean get() = ride?.source == Ride.Source.RIDEPLAN_LINK && savedId == null
 
-    /** Mostra il giro o l'errore. Un giro nuovo non è ancora tra quelli salvati. */
+    /** Shows the ride or the error. A new ride is not among the saved ones yet. */
     fun show(result: Result<Ride>) {
         busy = false
         result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true }.onFailure { error = it }
     }
 
-    /** Torna alla schermata iniziale; il giro è già salvato. */
+    /** Back to the home screen; the ride is already saved. */
     fun goHome() {
         ride = null
         route = RouteState.Idle
@@ -158,19 +158,19 @@ class RideScreenState {
 }
 
 /**
- * Modi di importare offerti dalla piattaforma.
- * [readClipboard]: testo negli appunti, per precompilare il campo del link.
- * [importText]: importa un link (o testo che lo contiene) di un percorso di Google Maps.
- * [openRide]: apre un giro già pronto (da "I tuoi giri") e ne calcola il percorso se serve.
+ * Ways of importing offered by the platform.
+ * [readClipboard]: clipboard text, to prefill the link field.
+ * [importText]: imports a Google Maps route link (or text containing it).
+ * [openRide]: opens a ready ride (from "Your rides") and calculates its route if needed.
  */
 class ImportActions(
     val openFile: () -> Unit,
     val readClipboard: () -> String?,
     val importText: (String) -> Unit,
     val openRide: (Ride) -> Unit = {},
-    /** Manda il giro come file GPX (#5). Il nome serve quando il giro non ne ha uno. */
+    /** Sends the ride as a GPX file (#5). The name is used when the ride has none. */
     val shareGpx: ((ride: Ride, fallbackName: String) -> Unit)? = null,
-    /** Manda un testo (il link del giro, #6) con la condivisione di sistema. */
+    /** Sends a text (the ride link, #6) with the system share sheet. */
     val shareText: ((String) -> Unit)? = null,
 )
 
@@ -179,7 +179,7 @@ private val RouteCasing = Color(0xFF7A3300)
 private val StopFill = Color(0xFFFFFFFF)
 private val StopStroke = Color(0xFF1C1B26)
 
-/** Traccia e tappe sulla mappa. */
+/** Track and stops on the map. */
 @Composable
 fun RideLayers(ride: Ride) {
     val line = rememberGeoJsonSource(GeoJsonData.JsonString(lineJson(ride.line)))
@@ -197,9 +197,8 @@ fun RideLayers(ride: Ride) {
 }
 
 /**
- * Inquadra tutto il giro, con margine ai lati e spazio in basso per la scheda.
- * Il margine si aggiunge ai limiti invece che in pixel: funziona uguale su ogni schermo.
- * [panelOpen]: la scheda aperta copre circa metà schermo, ridotta molto meno.
+ * Frames the whole ride, with a margin on the sides and room at the bottom for the card.
+ * The margin is added to the bounds instead of in pixels: it works the same on every screen.
  */
 suspend fun MapState.fitRide(ride: Ride, panelOpen: Boolean = true) {
     val (sw, ne) = ride.bounds()
@@ -215,7 +214,7 @@ suspend fun MapState.fitRide(ride: Ride, panelOpen: Boolean = true) {
     )
 }
 
-/** Pulsante di importazione, scheda del giro, attesa ed errori. */
+/** Import button, ride card, progress and errors. */
 @Composable
 fun BoxScope.RidePanel(
     state: RideScreenState,
@@ -255,7 +254,7 @@ fun BoxScope.RidePanel(
     }
 }
 
-/** Attesa dell'importazione ed errori: sulla mappa e nella schermata iniziale. */
+/** Import progress and errors: on the map and on the home screen. */
 @Composable
 internal fun ImportStatus(state: RideScreenState) {
     state.error?.let { e ->
@@ -278,7 +277,7 @@ internal fun ImportStatus(state: RideScreenState) {
     }
 }
 
-/** Menu "file o link" attaccato al pulsante che lo apre. */
+/** "File or link" menu attached to the button that opens it. */
 @Composable
 private fun ImportMenu(actions: ImportActions, onLink: () -> Unit, anchor: @Composable (open: () -> Unit) -> Unit) {
     var open by remember { mutableStateOf(false) }
@@ -368,7 +367,7 @@ private fun RideCard(
     }
 }
 
-/** Prima di condividere: partenza e arrivo spesso sono casa o garage (#12). */
+/** Before sharing: start and finish are often home or the garage (#12). */
 @Composable
 private fun ShareDialog(onDismiss: () -> Unit, onShare: (trimEnds: Boolean, asLink: Boolean) -> Unit) {
     var trim by remember { mutableStateOf(true) }
@@ -387,7 +386,7 @@ private fun ShareDialog(onDismiss: () -> Unit, onShare: (trimEnds: Boolean, asLi
                 }
             }
         },
-        // Il file GPX per navigatori e altre app; QR e link per chi ha RidePlan (#6).
+        // The GPX file for navigators and other apps; QR and link for those who have RidePlan (#6).
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { onShare(trim, false) }) { Text(stringResource(Res.string.share_confirm)) }
@@ -398,7 +397,7 @@ private fun ShareDialog(onDismiss: () -> Unit, onShare: (trimEnds: Boolean, asLi
     )
 }
 
-/** Il giro in un QR da inquadrare al bar, più il link da mandare in chat (#6). */
+/** The ride in a QR to scan at the bar, plus the link to send in a chat (#6). */
 @Composable
 private fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> Unit) {
     AlertDialog(
@@ -406,7 +405,7 @@ private fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> U
         title = { Text(stringResource(Res.string.qr_title)) },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Sempre nero su bianco, anche col tema scuro: le fotocamere lo leggono meglio.
+                // Always black on white, even with the dark theme: cameras read it better.
                 Box(Modifier.background(Color.White).padding(12.dp)) {
                     Image(rememberQrCodePainter(link), contentDescription = null, modifier = Modifier.size(240.dp))
                 }
@@ -420,7 +419,7 @@ private fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> U
     )
 }
 
-/** Campo per incollare il link di un percorso creato con Google Maps. */
+/** Field to paste the link of a route created with Google Maps. */
 @Composable
 internal fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(actions.readClipboard()?.let(RideImport::findUrl) ?: "") }
@@ -453,7 +452,7 @@ internal fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
     )
 }
 
-/** "Partenza → Arrivo" se le tappe hanno un nome. */
+/** "Start → Finish" if the stops have names. */
 private fun defaultName(ride: Ride): String? {
     val first = ride.stops.firstOrNull()?.name
     val last = ride.stops.lastOrNull()?.name
@@ -481,7 +480,7 @@ private fun summary(ride: Ride): String {
     return parts.joinToString(" · ")
 }
 
-/** Un decimale sotto i 10 km, intero sopra. */
+/** One decimal below 10 km, whole number above. */
 internal fun formatKm(km: Double): String =
     if (km < 10) "${(km * 10).roundToInt() / 10.0}" else "${km.roundToInt()}"
 
@@ -511,7 +510,7 @@ internal fun importErrorText(error: ImportError): StringResource = when (error) 
     ImportError.LINK_BROKEN -> Res.string.err_link_broken
 }
 
-/** GeoJSON a mano: solo numeri, niente testo da proteggere. */
+/** Hand-made GeoJSON: numbers only, no text to escape. */
 internal fun lineJson(points: List<LatLon>): String =
     points.joinToString(",", """{"type":"Feature","properties":{},"geometry":{"type":"LineString","coordinates":[""", "]}}") {
         "[${it.lon},${it.lat}]"

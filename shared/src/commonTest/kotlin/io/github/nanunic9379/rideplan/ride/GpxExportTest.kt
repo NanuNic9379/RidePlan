@@ -11,7 +11,7 @@ class GpxExportTest {
     private val c = LatLon(40.3421591, 15.6580114)
 
     @Test
-    fun coordinate() {
+    fun coordinates() {
         assertEquals("40.6894884", GpxExport.coord(40.6894884))
         assertEquals("-3.5", GpxExport.coord(-3.5))
         assertEquals("0", GpxExport.coord(0.0))
@@ -20,10 +20,10 @@ class GpxExportTest {
     }
 
     @Test
-    fun andataERitorno() {
-        // Quello che esporto deve rientrare uguale.
-        val ride = Ride("Giro <del> sud & \"mare\"", listOf(a, b, c), listOf(Stop("San Basilio", a), Stop(null, b), Stop("Padula", c)), Ride.Source.GOOGLE_LINK)
-        val gpx = GpxExport.write(ride, "giro")
+    fun roundTrip() {
+        // What I export must come back the same.
+        val ride = Ride("Ride <del> south & \"sea\"", listOf(a, b, c), listOf(Stop("San Basilio", a), Stop(null, b), Stop("Padula", c)), Ride.Source.GOOGLE_LINK)
+        val gpx = GpxExport.write(ride, "ride")
         val back = RideImport.parse(gpx)
         assertEquals(ride.name, back.name)
         assertEquals(ride.track, back.track)
@@ -32,7 +32,7 @@ class GpxExportTest {
     }
 
     @Test
-    fun soloTappe() {
+    fun stopsOnly() {
         val ride = Ride(null, emptyList(), listOf(Stop("A", a), Stop("B", c)), Ride.Source.GOOGLE_LINK)
         val gpx = GpxExport.write(ride, "A → B")
         assertFalse("<trk>" in gpx)
@@ -44,7 +44,7 @@ class GpxExportTest {
     }
 
     @Test
-    fun nomeDelFile() {
+    fun fileName() {
         val ride = Ride("Passo: Giau / Falzarego?", emptyList(), emptyList(), Ride.Source.GPX)
         assertEquals("Passo Giau Falzarego.gpx", GpxExport.fileName(ride, "x"))
         assertEquals("San Basilio - Padula.gpx", GpxExport.fileName(ride.copy(name = null), "San Basilio → Padula"))

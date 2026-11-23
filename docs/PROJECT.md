@@ -1,0 +1,58 @@
+# RidePlan — project
+
+## Who it is for
+For people who ride and plan the ride: Sunday in the hills, the alpine pass, the multi-day trip.
+Every choice is judged from the rider's point of view: gloves, sun on the screen, no signal,
+phone battery, the group waiting at the bar.
+
+## Principles
+1. **From rider to rider (c2c).** No servers of ours, no accounts. Routes go
+   from one phone to another or over open networks that anyone can run.
+2. **Offline first.** Map and route calculation work without a network.
+3. **Open formats.** The route is a GPX: it goes in and out of any navigator.
+4. **No data collected.** No usage statistics, no ads.
+5. **Open source** GPL-3.0: whoever improves it gives it back to everyone.
+6. **Global.** It works all over the world, not just in Italy: data for any country,
+   UI in several languages (English as the base, Italian from day one, translations from the
+   community), km or miles, per-country rules (e.g. engine size limits on motorways).
+
+## Architecture (proposal, to be verified in the first phase)
+| Part | Choice | Why |
+|---|---|---|
+| App | Kotlin Multiplatform + Compose Multiplatform | one codebase for Android and iPhone |
+| Map | MapLibre Native, OpenStreetMap data, offline vector tiles | open source, no per-map cost |
+| Route calculation | Valhalla on the phone, motorcycle profile | offline, twisty roads, avoids motorways |
+| Route format | GPX 1.1 | every navigator reads it |
+| Identity | key pair created on the phone | no registration; signs who made the route |
+| Nearby sharing | QR code, link, GPX file | at the bar, on WhatsApp/Telegram, without mobile data |
+| Network sharing | Nostr (signed events on public relays) | no servers of ours; anyone can run a relay |
+
+### Why not a phone-to-phone-only network
+On mobile networks phones cannot reach each other directly (carrier NAT) and the systems block
+apps in the background: a "pure" network does not hold up. Nostr relays are servers, but third-party,
+interchangeable and without accounts: the route is signed by the publisher's key, so nobody can
+modify it without breaking the signature. The signature, however, tells *which key* signed it, not *who*
+the person is: anyone can republish a copy with their own key.
+
+### Known limits
+- **iPhone:** it builds only on a Mac with Xcode (or with an automated build on macOS).
+- **iPhone on a real phone:** installation, TestFlight and the App Store require the Apple Developer Program ($99/year).
+- **Offline calculation:** road data is heavy (the whole of Italy is about 2.4 GB): it is downloaded per area
+  (Geofabrik regions all over the world), from packages built with GitHub Actions and published in the
+  Releases, with a configurable mirror. The map (PMTiles) can be cut per area directly from the
+  public world builds of Protomaps, without hosting anything.
+- **Nostr:** there is no standard format for routes; we have to define it (replaceable event).
+
+## First milestones
+1. Kotlin Multiplatform app skeleton (Android + iPhone) with a map screen.
+2. Offline OpenStreetMap map of an area, anywhere in the world.
+3. Route between two points with a motorcycle profile (Valhalla check on Android and iPhone).
+4. Draggable waypoints, prefer curves / avoid motorways.
+5. GPX export and import.
+6. Sharing with QR code and link.
+7. Key identity and publishing / searching routes on Nostr.
+
+The initial analysis ([ANALYSIS.md](ANALYSIS.md)) brought more milestones, all as issues:
+curve check, following the ride in the saddle, private zone, range and fuel stations,
+vehicle profile (engine size), dirt and surface, stops and meeting points, versioned update
+of the ride, multi-day trip, seasonal pass closures.

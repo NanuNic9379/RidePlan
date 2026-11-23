@@ -14,35 +14,35 @@ class RoutingTest {
     private fun region(id: String, vararg bbox: Double) =
         RoutingRegion(id, bbox.toList(), "$id.tar.gz", 100, 300, "ab", "2026-11-22T21:00:00Z", "3.9.2")
 
-    private val sud = region("it-sud", 13.0, 39.7, 18.6, 42.3)
+    private val south = region("it-sud", 13.0, 39.7, 18.6, 42.3)
     private val calabria = region("it-calabria-sicilia", 12.3, 36.6, 17.3, 40.2)
-    private val centro = region("it-centro", 9.7, 41.3, 14.3, 44.3)
+    private val center = region("it-centro", 9.7, 41.3, 14.3, 44.3)
 
     private val sanBasilio = LatLon(40.6894884, 16.9741293)
     private val padula = LatLon(40.3421591, 15.6580114)
 
     @Test
-    fun polylineDiGoogle() {
+    fun googlePolyline() {
         val p = Polyline.decode("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 5)
         assertEquals(listOf(LatLon(38.5, -120.2), LatLon(40.7, -120.95), LatLon(43.252, -126.453)), p)
     }
 
     @Test
-    fun polylineSeiCifre() {
-        // Stessi punti con precisione 6, come li manda Valhalla.
+    fun polylineSixDigits() {
+        // Same points with precision 6, as Valhalla sends them.
         val p = Polyline.decode("_izlhA~rlgdF_{geC~ywl@_kwzCn`{nI", 6)
         assertEquals(LatLon(38.5, -120.2), p[0])
         assertEquals(LatLon(43.252, -126.453), p[2])
     }
 
     @Test
-    fun zonaPiuPiccolaCheContieneTutto() {
-        assertEquals(sud, RoutingRegion.bestFor(listOf(centro, sud, calabria), listOf(sanBasilio, padula)))
-        // Cosenza (39.3) sta solo in Calabria-Sicilia.
+    fun smallestAreaContainingEverything() {
+        assertEquals(south, RoutingRegion.bestFor(listOf(center, south, calabria), listOf(sanBasilio, padula)))
+        // Cosenza (39.3) is only in Calabria-Sicily.
         val cosenza = LatLon(39.30, 16.25)
-        assertEquals(calabria, RoutingRegion.bestFor(listOf(sud, calabria), listOf(cosenza)))
-        // Da Roma a Cosenza non basta nessuna zona.
-        assertNull(RoutingRegion.bestFor(listOf(centro, sud, calabria), listOf(LatLon(41.9, 12.5), cosenza)))
+        assertEquals(calabria, RoutingRegion.bestFor(listOf(south, calabria), listOf(cosenza)))
+        // From Rome to Cosenza no single area is enough.
+        assertNull(RoutingRegion.bestFor(listOf(center, south, calabria), listOf(LatLon(41.9, 12.5), cosenza)))
     }
 
     @Test
@@ -59,7 +59,7 @@ class RoutingTest {
     }
 
     @Test
-    fun richiestaMoto() {
+    fun motorcycleRequest() {
         val req = ValhallaRoute.request(
             listOf(Stop("San Basilio", sanBasilio), Stop(null, LatLon(40.5, 16.5), Stop.Kind.VIA), Stop("Masseria", LatLon(40.37, 16.08)), Stop("Padula", padula)),
         )
@@ -69,8 +69,8 @@ class RoutingTest {
     }
 
     @Test
-    fun paesiComePassaggi() {
-        // Il link di Google del giro di prova (#29): i paesi in mezzo sono passaggi larghi.
+    fun townsAsPassThrough() {
+        // The Google link of the test ride (#29): the towns in between are wide pass-through points.
         val ride = Ride(null, emptyList(), Stop.guessKinds(
             listOf(
                 Stop("San Basilio", sanBasilio), Stop("Matera, MT", LatLon(40.66, 16.6)),
@@ -83,17 +83,17 @@ class RoutingTest {
         val req = ValhallaRoute.request(ride.stops)
         assertEquals(1, Regex(""""radius":2500""").findAll(req).count())
         assertEquals(2, Regex(""""type":"through"""").findAll(req).count())
-        // Un tocco: Matera diventa sosta, il percorso va rifatto.
-        val routed = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, padula), 200.0, 9000.0), sud)
+        // One tap: Matera becomes a stop, the route must be recalculated.
+        val routed = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, padula), 200.0, 9000.0), south)
         val changed = routed.toggledStop(1)
         assertEquals(Stop.Kind.STOP, changed.stops[1].kind)
         assertNull(changed.route)
-        assertEquals(changed, changed.toggledStop(3)) // i punti trascinati non cambiano
+        assertEquals(changed, changed.toggledStop(3)) // dragged points do not change
         assertEquals(ride.stops[0], ride.toggledStop(0).stops[0].copy(kind = Stop.Kind.STOP))
     }
 
     @Test
-    fun cheCosEUnPaese() {
+    fun whatIsATown() {
         listOf("Matera", "75100 Matera MT", "Stigliano, Provincia di Matera", "Corleto Perticara, PZ").forEach {
             assertTrue(Stop.looksLikeTown(it), it)
         }
@@ -103,7 +103,7 @@ class RoutingTest {
     }
 
     @Test
-    fun preferenze() {
+    fun preferences() {
         val stops = listOf(Stop("A", sanBasilio), Stop("B", padula))
         val base = ValhallaRoute.request(stops)
         assertTrue(""""use_trails":0.0""" in base)
@@ -116,30 +116,30 @@ class RoutingTest {
     }
 
     @Test
-    fun ricalcolo() {
-        val ride = Ride("prova", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
-        val done = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, padula), 200.0, 9000.0), sud, RouteOptions(curves = Curves.MAX))
+    fun recalculation() {
+        val ride = Ride("test", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
+        val done = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, padula), 200.0, 9000.0), south, RouteOptions(curves = Curves.MAX))
         assertTrue(done.routable)
         assertEquals(RouteOptions(curves = Curves.MAX), done.route?.options)
         assertEquals(ride, done.unrouted())
-        // Una traccia GPX non si ricalcola.
+        // A GPX track is not recalculated.
         assertFalse(Ride("gpx", listOf(sanBasilio, padula), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GPX).routable)
     }
 
     @Test
-    fun quantoSiAllunga() {
-        val ride = Ride("prova", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
-        // Numeri della prova #10: 231 km normale, 287 km con curve al massimo.
+    fun howMuchLonger() {
+        val ride = Ride("test", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
+        // Numbers from test #10: 231 km normal, 287 km with curves at maximum.
         val curvy = ValhallaRoute.Result(listOf(sanBasilio, padula), 287.0, 18780.0)
         val normal = ValhallaRoute.Result(listOf(sanBasilio, padula), 231.0, 13440.0)
-        val info = ride.routed(curvy, sud, RouteOptions(curves = Curves.MAX), normal).route!!
+        val info = ride.routed(curvy, south, RouteOptions(curves = Curves.MAX), normal).route!!
         assertEquals(24, kotlin.math.round(info.extraShare!! * 100).toInt())
         assertTrue(info.extraShare!! >= RouteInfo.LONG_DETOUR)
-        assertNull(ride.routed(curvy, sud).route!!.extraShare)
+        assertNull(ride.routed(curvy, south).route!!.extraShare)
     }
 
     @Test
-    fun rispostaConDueTratti() {
+    fun responseWithTwoLegs() {
         val json = """
             {"trip":{"summary":{"length":231.4,"time":13440.5},"legs":[
               {"shape":"_izlhA~rlgdF_{geC~ywl@"},
@@ -149,15 +149,15 @@ class RoutingTest {
         val r = ValhallaRoute.parse(json)
         assertEquals(231.4, r.km)
         assertEquals(13440.5, r.seconds)
-        // Il punto in comune tra i due tratti compare una volta sola.
+        // The point shared by the two legs appears only once.
         assertEquals(listOf(LatLon(38.5, -120.2), LatLon(40.7, -120.95), LatLon(43.252, -126.453)), r.shape)
     }
 
     @Test
-    fun giroCalcolato() {
-        val ride = Ride("prova", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
+    fun calculatedRide() {
+        val ride = Ride("test", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
         assertTrue(ride.needsRoute)
-        val done = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, LatLon(40.5, 16.3), padula), 231.4, 13440.0), sud)
+        val done = ride.routed(ValhallaRoute.Result(listOf(sanBasilio, LatLon(40.5, 16.3), padula), 231.4, 13440.0), south)
         assertFalse(done.needsRoute)
         assertFalse(done.straightLines)
         assertEquals(231.4, done.lengthKm)
@@ -165,7 +165,7 @@ class RoutingTest {
     }
 
     @Test
-    fun pesi() {
+    fun sizes() {
         assertEquals("410 MB", formatBytes(410_000_000))
         assertEquals("1.2 GB", formatBytes(1_234_000_000))
     }

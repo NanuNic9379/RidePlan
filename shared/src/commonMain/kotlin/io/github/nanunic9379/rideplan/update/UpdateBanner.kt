@@ -36,7 +36,7 @@ import io.github.nanunic9379.rideplan.resources.update_permission_title
 import io.github.nanunic9379.rideplan.resources.update_retry
 import org.jetbrains.compose.resources.stringResource
 
-/** Avviso in alto sopra la mappa. Non blocca: "Dopo" lo chiude fino al prossimo avvio. */
+/** Banner at the top over the map. Non-blocking: "Later" closes it until the next launch. */
 @Composable
 fun UpdateBanner(
     state: UpdateUi,

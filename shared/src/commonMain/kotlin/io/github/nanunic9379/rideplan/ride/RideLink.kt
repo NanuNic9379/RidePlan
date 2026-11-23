@@ -8,32 +8,32 @@ import kotlin.math.cos
 import kotlin.math.sqrt
 
 /**
- * Il giro dentro un link, senza server (#6): al bar il gruppo inquadra il QR e ha il giro.
+ * The ride inside a link, without a server (#6): at the bar the group scans the QR and has the ride.
  *
- * Tutto sta dopo il "#": il browser non lo manda mai al server della pagina.
- * Dentro ci sono le tappe (il percorso lo ricalcola ogni telefono, con le stesse curve)
- * oppure, per una traccia GPX, la traccia semplificata.
+ * Everything is after the "#": the browser never sends it to the page's server.
+ * Inside are the stops (every phone recalculates the route, with the same curves)
+ * or, for a GPX track, the simplified track.
  */
 object RideLink {
     const val PREFIX = "https://nanunic9379.github.io/RidePlan/r/#"
     private const val VERSION = "1"
 
-    /** Oltre questi punti il QR diventa troppo fitto da inquadrare. */
+    /** Beyond this many points the QR becomes too dense to scan. */
     const val MAX_TRACK_POINTS = 150
 
     /**
-     * [options]: curve, autostrade e pedaggi di chi condivide (#50), per rifare lo stesso
-     * percorso; null nei link che non le hanno.
+     * [options]: the sharer's curves, motorway and toll choices (#50), to rebuild the same
+     * route; null for links that do not carry them.
      */
     data class Shared(val ride: Ride, val options: RouteOptions?)
 
-    /** Il link web (dopo "#") o quello che la pagina web passa all'app (rideplan://r?d=...). */
+    /** The web link (after "#") or the one the web page passes to the app (rideplan://r?d=...). */
     private val pattern = Regex("""(?:nanunic9379\.github\.io/RidePlan/r/?#|rideplan://r/?\?d=)([A-Za-z0-9_-]*)""")
 
     fun isLink(text: String): Boolean = pattern.containsMatchIn(text)
 
     fun encode(ride: Ride, options: RouteOptions? = null): String {
-        // Un percorso calcolato si ricalcola dalle tappe: il link resta corto.
+        // A calculated route is recalculated from the stops: the link stays short.
         val stopsOnly = ride.straightLines || ride.route != null
         val track = if (stopsOnly) emptyList() else simplify(ride.track)
         val fields = listOf(
@@ -43,7 +43,7 @@ object RideLink {
             Polyline.encode(ride.stops.map { it.point }, 5),
             ride.stops.joinToString(SEP) { it.name.orEmpty() },
             Polyline.encode(track, 5),
-            // Campi aggiunti dopo (#50): le versioni vecchie e la pagina web leggono solo i primi sei.
+            // Fields added later (#50): older versions and the web page only read the first six.
             ride.stops.joinToString("") { it.kind.name.take(1) },
         ).map { it.replace('\n', ' ') }
         return PREFIX + Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(fields.joinToString("\n").encodeToByteArray())
@@ -68,7 +68,7 @@ object RideLink {
 
     private const val SEP = "\u001f"
 
-    /** "MAX,h,t": curve, poi h = niente autostrade, t = niente pedaggi. */
+    /** "MAX,h,t": curves, then h = no motorways, t = no tolls. */
     internal fun optionsCode(o: RouteOptions): String =
         (listOf(o.curves.name) + listOfNotNull("h".takeIf { o.avoidHighways }, "t".takeIf { o.avoidTolls })).joinToString(",")
 
@@ -78,10 +78,10 @@ object RideLink {
         return RouteOptions(curves, avoidHighways = "h" in parts, avoidTolls = "t" in parts)
     }
 
-    /** Una lettera per tappa: S sosta, V punto trascinato, P passaggio. */
+    /** One letter per stop: S stop, V dragged via point, P pass-by town. */
     private fun kindOf(c: Char?): Stop.Kind = Stop.Kind.entries.firstOrNull { it.name.first() == c } ?: Stop.Kind.STOP
 
-    /** Douglas-Peucker con tolleranza crescente finché la traccia sta in [MAX_TRACK_POINTS]. */
+    /** Douglas-Peucker with growing tolerance until the track fits in [MAX_TRACK_POINTS]. */
     internal fun simplify(track: List<LatLon>): List<LatLon> {
         if (track.size <= 2) return track
         var tolerance = 0.02 // km
@@ -115,7 +115,7 @@ object RideLink {
         return points.filterIndexed { i, _ -> keep[i] }
     }
 
-    /** Distanza di [p] dal segmento [a]-[b], in piano: per pochi km va benissimo. */
+    /** Distance of [p] from segment [a]-[b], on a plane: fine for a few km. */
     private fun offsetKm(p: LatLon, a: LatLon, b: LatLon): Double {
         val k = 111.32
         val c = cos(a.lat * kotlin.math.PI / 180)

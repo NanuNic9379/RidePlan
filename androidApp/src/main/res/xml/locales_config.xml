@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lingue proposte da Android 13+ in Impostazioni > App > RidePlan > Lingua.
-     Una per ogni cartella shared/src/commonMain/composeResources/values-xx (controllato da StringsTest). -->
+<!-- Languages offered by Android 13+ in Settings > Apps > RidePlan > Language.
+     One for each shared/src/commonMain/composeResources/values-xx folder (checked by StringsTest). -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en" />
     <locale android:name="it" />

@@ -1,45 +1,38 @@
-# Sicurezza
+# Security
 
-## Come segnalare
+## How to report
 
-Se trovi una falla (per esempio un modo per falsificare un percorso, far installare un APK non
-nostro o leggere la posizione di qualcuno), **non aprire una issue pubblica**: usa
-"Report a vulnerability" nella scheda Security di questo repository.
+If you find a flaw (for example a way to forge a route, get a non-official APK installed
+or read someone's location), **do not open a public issue**: use
+"Report a vulnerability" in the Security tab of this repository.
 
-- Risposta entro **7 giorni**.
-- Correzione o piano di correzione entro **90 giorni**; poi la falla diventa pubblica con i
-  ringraziamenti, se li vuoi.
+- Reply within **7 days**.
+- Fix or fix plan within **90 days**; then the flaw is made public with
+  acknowledgements, if you want them.
 
-## Versioni supportate
+## Supported versions
 
-Solo l'ultima versione pubblicata nelle Release. Le correzioni non vengono portate indietro.
+Only the latest version published in the Releases. Fixes are not backported.
 
-## Perimetro
+## Scope
 
-Dentro: l'app Android e iOS, gli aggiornamenti dalle Release, l'import di GPX, KML e link,
-i dati stradali (`routing-data`) e le pipeline di questo repository.
-Fuori: i servizi esterni (OpenFreeMap, Google, GitHub, relay Nostr), i telefoni con root o
-modificati, gli attacchi che richiedono il telefono sbloccato in mano.
+In scope: the Android and iOS app, updates from the Releases, GPX, KML and link import,
+the road data (`routing-data`) and the pipelines of this repository.
+Out of scope: external services (OpenFreeMap, Google, GitHub, Nostr relays), rooted or
+modified phones, attacks that require the unlocked phone in hand.
 
-## Verificare l'APK
+## Verifying the APK
 
-Gli APK ufficiali sono firmati con questo certificato (CN=RidePlan, O=NanuNic9379):
+Official APKs are signed with this certificate (CN=RidePlan, O=NanuNic9379):
 
 ```
 SHA-256: B6:B2:A9:4D:4D:6F:A4:F9:D9:D9:8C:57:50:95:71:61:15:07:AB:BE:10:A1:FE:DA:F9:02:3A:54:99:B9:5C:40
 ```
 
-Per controllare: `apksigner verify --print-certs RidePlan.apk`. Se l'impronta è diversa, non
-installarlo. L'app si aggiorna da sola solo con APK firmati con lo stesso certificato.
+To check: `apksigner verify --print-certs RidePlan.apk`. If the fingerprint differs, do not
+install it. The app updates itself only with APKs signed with the same certificate.
 
-## Mai condividere la chiave privata
+## Never share the private key
 
-Quando arriverà Nostr: la tua chiave privata (`nsec...`) non va **mai** incollata in una issue,
-una chat o un sito. Nessuno del progetto te la chiederà mai.
-
----
-
-*English:* report vulnerabilities privately via "Report a vulnerability" in the Security tab, not
-in public issues. We reply within 7 days and fix or plan a fix within 90 days. Only the latest
-Release is supported. Official APKs are signed with the certificate above (check with
-`apksigner verify --print-certs`). Never paste your Nostr private key (`nsec`) anywhere.
+When Nostr arrives: your private key (`nsec...`) must **never** be pasted into an issue,
+a chat or a website. Nobody from the project will ever ask you for it.

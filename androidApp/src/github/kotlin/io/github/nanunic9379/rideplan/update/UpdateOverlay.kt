@@ -19,15 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Stato dell'avviso, condiviso con [InstallResultReceiver]. */
+/** State of the banner, shared with [InstallResultReceiver]. */
 object UpdateStore {
     var ui by mutableStateOf<UpdateUi?>(null)
 }
 
-/** Controlla una volta per avvio se c'e' una Release nuova e mostra l'avviso. */
+/** Checks once per launch whether there is a new Release and shows the banner. */
 @Composable
 fun BoxScope.UpdateOverlay() {
-    // Le build di prova hanno un'altra firma: l'aggiornamento non si installerebbe.
+    // Test builds have a different signature: the update would not install.
     if (BuildConfig.DEBUG) return
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

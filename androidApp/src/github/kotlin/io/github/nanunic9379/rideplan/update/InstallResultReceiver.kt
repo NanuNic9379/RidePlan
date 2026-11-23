@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
 
-/** Risposta di Android all'installazione: chiede conferma all'utente o segnala l'esito. */
+/** Android's response to the installation: asks the user to confirm or reports the outcome. */
 class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
@@ -19,7 +19,7 @@ class InstallResultReceiver : BroadcastReceiver() {
                 }
                 confirm?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)?.let(context::startActivity)
             }
-            // Se va bene, Android chiude e sostituisce l'app: non c'e' altro da fare.
+            // On success, Android closes and replaces the app: nothing else to do.
             PackageInstaller.STATUS_SUCCESS -> UpdateStore.ui = null
             PackageInstaller.STATUS_FAILURE_ABORTED -> UpdateStore.ui = UpdateUi.Failed(UpdateError.ABORTED)
             PackageInstaller.STATUS_FAILURE_CONFLICT -> UpdateStore.ui = UpdateUi.Failed(UpdateError.SIGNATURE_CONFLICT)

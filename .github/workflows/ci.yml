@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   android:
-    name: Android (build e test)
+    name: Android (build and test)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -24,7 +24,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build e test
+      - name: Build and test
         run: ./gradlew --console=plain :androidApp:assembleDebug :shared:testAndroidHostTest
       - uses: actions/upload-artifact@v4
         with:
@@ -33,7 +33,7 @@ jobs:
           retention-days: 14
 
   ios:
-    name: iPhone (simulatore, senza firma)
+    name: iPhone (simulator, unsigned)
     runs-on: macos-26
     timeout-minutes: 45
     env:
@@ -45,11 +45,11 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Versione di Xcode
+      - name: Xcode version
         run: xcodebuild -version
-      - name: Test del codice comune sul simulatore
+      - name: Common code tests on the simulator
         run: ./gradlew --console=plain :shared:iosSimulatorArm64Test
-      - name: App per il simulatore
+      - name: App for the simulator
         run: |
           cd iosApp
           xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug \

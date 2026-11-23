@@ -7,29 +7,29 @@ import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
 /**
- * Chi usa l'app su questo telefono (#41). Niente account: tutto resta qui.
- * [id]: casuale, creato al primo avvio; servirà per riconoscersi quando i giri
- * si scambieranno tra persone (#7) o se arriverà un archivio centrale.
+ * Who uses the app on this phone (#41). No account: everything stays here.
+ * [id]: random, created on first launch; it will be used to recognize each other when rides
+ * are exchanged between people (#7) or if a central archive arrives.
  */
 @Serializable
 data class Profile(
     val id: String,
     val name: String = "",
     val bike: String = "",
-    /** Il benvenuto si mostra una volta sola, anche se lo salti. */
+    /** The welcome is shown only once, even if you skip it. */
     val welcomed: Boolean = false,
     val createdAt: Long,
 )
 
-/** Una tappa salvata: [kind] è il nome di [Stop.Kind], così il file resta leggibile. */
+/** A saved stop: [kind] is the name of [Stop.Kind], so the file stays readable. */
 @Serializable
 data class SavedStop(val name: String?, val lat: Double, val lon: Double, val kind: String = Stop.Kind.STOP.name)
 
 /**
- * Un giro nell'elenco "I tuoi giri".
- * [track]: la traccia di un GPX, lat e lon alternate. Vuota se il percorso lo calcola
- * RidePlan: si ricalcola dalle tappe quando si riapre.
- * [ridden]: quando l'hai fatto (millisecondi), una volta per ogni uscita.
+ * A ride in the "Your rides" list.
+ * [track]: the track of a GPX, alternating lat and lon. Empty if RidePlan calculates
+ * the route: it is recalculated from the stops when reopened.
+ * [ridden]: when you rode it (milliseconds), once per outing.
  */
 @Serializable
 data class SavedRide(
@@ -59,14 +59,14 @@ data class SavedRide(
             seconds = ride.route?.seconds?.toLong(),
             source = ride.source.name,
             stops = ride.stops.map { SavedStop(it.name, it.point.lat, it.point.lon, it.kind.name) },
-            // Il percorso calcolato da RidePlan si rifà dalle tappe: il file resta piccolo.
+            // The route calculated by RidePlan is rebuilt from the stops: the file stays small.
             track = if (ride.route != null) emptyList() else ride.track.flatMap { listOf(it.lat, it.lon) },
             ridden = ridden,
         )
     }
 }
 
-/** Tutto quello che l'app ricorda di te. [version]: per cambiare il formato in futuro. */
+/** Everything the app remembers about you. [version]: to change the format in the future. */
 @Serializable
 data class ProfileData(
     val version: Int = 1,
@@ -81,7 +81,7 @@ data class ProfileData(
         lastRidden = rides.flatMap { it.ridden }.maxOrNull(),
     )
 
-    /** Il giro salvato (nuovo o aggiornato), in cima all'elenco. */
+    /** The saved ride (new or updated), at the top of the list. */
     fun save(ride: Ride, id: String?, now: Long): Pair<ProfileData, String> {
         val old = rides.firstOrNull { it.id == id }
         val newId = old?.id ?: newId()
@@ -92,7 +92,7 @@ data class ProfileData(
     fun markRidden(id: String, now: Long): ProfileData =
         copy(rides = rides.map { if (it.id == id) it.copy(ridden = it.ridden + now) else it })
 
-    /** Toglie l'ultima uscita segnata, per chi ha premuto per sbaglio. */
+    /** Removes the last marked outing, for those who tapped by mistake. */
     fun undoRidden(id: String): ProfileData =
         copy(rides = rides.map { if (it.id == id) it.copy(ridden = it.ridden.dropLast(1)) else it })
 
@@ -102,11 +102,11 @@ data class ProfileData(
     fun delete(id: String): ProfileData = copy(rides = rides.filter { it.id != id })
 
     /**
-     * Ripristino da una copia (#43): si unisce, non si sostituisce, così non si perde
-     * niente di quello che hai già su questo telefono. Lo stesso giro (stesso id) non si
-     * duplica: vince la versione salvata per ultima e le uscite si sommano senza doppioni.
-     * Nome e moto della copia servono solo se qui sono ancora vuoti.
-     * Restituisce anche quanti giri sono arrivati di nuovo.
+     * Restore from a backup (#43): it merges, it does not replace, so nothing you already
+     * have on this phone is lost. The same ride (same id) is not duplicated: the version
+     * saved last wins and the outings add up without duplicates.
+     * The backup's name and bike are used only if they are still empty here.
+     * Also returns how many new rides arrived.
      */
     fun merge(other: ProfileData): Pair<ProfileData, Int> {
         val merged = rides.associateBy { it.id }.toMutableMap()

@@ -7,9 +7,9 @@ import androidx.compose.runtime.setValue
 import kotlinx.serialization.json.Json
 
 /**
- * Il profilo sul telefono (#41): un file JSON che legge e scrive la piattaforma.
- * Se il file è rovinato non si perde l'app: si riparte da un profilo nuovo e
- * il file vecchio lo mette da parte [backup].
+ * The profile on the phone (#41): a JSON file read and written by the platform.
+ * If the file is corrupted the app is not lost: it starts again from a new profile and
+ * [backup] sets the old file aside.
  */
 @Stable
 class ProfileStore(
@@ -30,15 +30,15 @@ class ProfileStore(
 
     fun time(): Long = now()
 
-    /** Esito dell'ultima copia o ripristino, da mostrare nel profilo; null = niente da dire. */
+    /** Outcome of the last backup or restore, to show in the profile; null = nothing to say. */
     var backupNotice by mutableStateOf<BackupNotice?>(null)
 
-    /** Il testo da salvare come copia (#43): lo stesso formato del file sul telefono. */
+    /** The text to save as a backup (#43): the same format as the file on the phone. */
     fun backupText(): String = encode(data)
 
     /**
-     * Unisce una copia salvata prima (#43) e dice quanti giri nuovi sono arrivati.
-     * Se il file non è una copia di RidePlan lancia un'eccezione e non tocca niente.
+     * Merges a previously saved backup (#43) and returns how many new rides arrived.
+     * If the file is not a RidePlan backup it throws and touches nothing.
      */
     fun restore(text: String): Int {
         val (merged, added) = data.merge(decode(text))
@@ -62,14 +62,14 @@ class ProfileStore(
     }
 }
 
-/** Come è andata la copia del profilo (#43). */
+/** How the profile backup went (#43). */
 sealed interface BackupNotice {
     data object Saved : BackupNotice
     data class Restored(val added: Int) : BackupNotice
     data object Failed : BackupNotice
 }
 
-/** Salvare e ripristinare la copia del profilo, su questa piattaforma (#43). */
+/** Saving and restoring the profile backup, on this platform (#43). */
 class BackupActions(
     val save: () -> Unit,
     val restore: () -> Unit,

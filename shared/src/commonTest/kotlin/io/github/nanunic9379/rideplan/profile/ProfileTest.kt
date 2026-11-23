@@ -15,7 +15,7 @@ class ProfileTest {
         Stop("Grassano", LatLon(40.63, 16.28), Stop.Kind.PASS),
         Stop("Potenza", LatLon(40.64005, 15.80507)),
     )
-    private val ride = Ride("Giro del sabato", emptyList(), stops, Ride.Source.GOOGLE_LINK)
+    private val ride = Ride("Saturday ride", emptyList(), stops, Ride.Source.GOOGLE_LINK)
     private val gpx = Ride(null, listOf(LatLon(45.0, 9.0), LatLon(45.1, 9.1), LatLon(45.2, 9.0)), emptyList(), Ride.Source.GPX)
 
     private class Disk(var text: String? = null) { var backups = 0 }
@@ -24,18 +24,18 @@ class ProfileTest {
         ProfileStore(read = { disk.text }, write = { disk.text = it }, backup = { disk.backups++ }, now = { t })
 
     @Test
-    fun primoAvvio() {
+    fun firstLaunch() {
         val disk = Disk()
         val a = store(disk)
         assertEquals(32, a.data.profile.id.length)
         assertEquals("", a.data.profile.name)
-        // Al secondo avvio è la stessa persona.
+        // On the second launch it is the same person.
         assertEquals(a.data.profile.id, store(disk).data.profile.id)
         assertNotEquals(a.data.profile.id, store(Disk()).data.profile.id)
     }
 
     @Test
-    fun salvaERiapri() {
+    fun saveAndReopen() {
         val disk = Disk()
         val s = store(disk)
         var id: String? = null
@@ -46,14 +46,14 @@ class ProfileTest {
         assertEquals(1, back.rides.size)
         assertEquals(stops, back.rides[0].toRide().stops)
         assertEquals(Ride.Source.GOOGLE_LINK, back.rides[0].toRide().source)
-        // Salvare di nuovo lo stesso giro lo aggiorna, non lo duplica.
-        s.update { it.save(ride.copy(name = "Nuovo nome"), id, 9).first }
+        // Saving the same ride again updates it, it does not duplicate it.
+        s.update { it.save(ride.copy(name = "New name"), id, 9).first }
         assertEquals(1, s.data.rides.size)
-        assertEquals("Nuovo nome", s.data.rides[0].name)
+        assertEquals("New name", s.data.rides[0].name)
     }
 
     @Test
-    fun tracciaGpx() {
+    fun gpxTrack() {
         val (d, id) = ProfileData.fresh(0).save(gpx, null, 1)
         val back = d.rides.first { it.id == id }.toRide()
         assertEquals(gpx.track, back.track)
@@ -61,7 +61,7 @@ class ProfileTest {
     }
 
     @Test
-    fun statistiche() {
+    fun statistics() {
         var d = ProfileData.fresh(0)
         val (d1, a) = d.save(ride, null, 1)
         val (d2, b) = d1.save(gpx, null, 2)
@@ -75,25 +75,25 @@ class ProfileTest {
         assertEquals(1, d.undoRidden(a).rides.first { it.id == a }.ridden.size)
         assertEquals(1, d.delete(a).stats.saved)
         assertNull(ProfileData.fresh(0).stats.longestKm)
-        // L'ultimo salvato è in cima.
+        // The last one saved is at the top.
         assertEquals(b, d.rides[0].id)
     }
 
     @Test
-    fun fileRovinato() {
-        val disk = Disk("{questo non è json")
+    fun corruptedFile() {
+        val disk = Disk("{this is not json")
         val s = store(disk)
         assertEquals(1, disk.backups)
         assertTrue(s.data.rides.isEmpty())
-        // Campi sconosciuti (versioni future) non rompono niente.
-        val future = ProfileStore.encode(s.data).replaceFirst("{", """{"nuovo":42,""")
+        // Unknown fields (future versions) break nothing.
+        val future = ProfileStore.encode(s.data).replaceFirst("{", """{"new":42,""")
         assertEquals(s.data, ProfileStore.decode(future))
     }
 
 
     @Test
-    fun copiaERipristino() {
-        // Vecchio telefono: un giro fatto due volte, nome e moto.
+    fun backupAndRestore() {
+        // Old phone: a ride ridden twice, name and bike.
         val oldDisk = Disk()
         val old = store(oldDisk)
         var a = ""
@@ -101,7 +101,7 @@ class ProfileTest {
         old.update { it.copy(profile = it.profile.copy(name = "Nico", bike = "Tracer 9")) }
         val copy = old.backupText()
 
-        // Nuovo telefono: un giro suo, poi il ripristino, due volte.
+        // New phone: a ride of its own, then the restore, twice.
         val fresh = store(Disk())
         fresh.update { it.save(gpx, null, 7).first }
         assertEquals(1, fresh.restore(copy))
@@ -111,14 +111,14 @@ class ProfileTest {
         assertEquals("Nico", fresh.data.profile.name)
         assertNotEquals(old.data.profile.id, fresh.data.profile.id)
 
-        // Uscite segnate su entrambi i telefoni si sommano senza doppioni.
+        // Outings marked on both phones add up without duplicates.
         val newer = old.data.markRidden(a, 30)
         fresh.restore(ProfileStore.encode(newer))
         assertEquals(listOf(10L, 20L, 30L), fresh.data.rides.first { it.id == a }.ridden)
 
-        // Un file qualunque non tocca niente.
+        // Any other file touches nothing.
         val before = fresh.data
-        assertTrue(runCatching { fresh.restore("""{"ciao":1}""") }.isFailure)
+        assertTrue(runCatching { fresh.restore("""{"hello":1}""") }.isFailure)
         assertEquals(before, fresh.data)
     }
     @Test

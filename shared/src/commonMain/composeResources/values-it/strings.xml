@@ -104,7 +104,7 @@
         <item quantity="one">%1$d tappa</item>
         <item quantity="other">%1$d tappe</item>
     </plurals>
-    <!-- Schermata iniziale e profilo (#41) -->
+    <!-- Home screen and profile (#41) -->
     <string name="home_hello">Ciao, %1$s</string>
     <string name="home_hello_anon">Ciao, motociclista</string>
     <string name="home_add_profile">Aggiungi il tuo nome e la moto</string>

@@ -8,8 +8,8 @@ import kotlin.test.assertTrue
 import org.w3c.dom.Element
 
 /**
- * Controlla le traduzioni (#33): ogni lingua ha tutte le chiavi dell'inglese (la lingua di base),
- * niente chiavi in piu', e gli stessi segnaposto (%1$s, %1$d) del testo inglese.
+ * Checks the translations (#33): every language has all the keys of English (the base language),
+ * no extra keys, and the same placeholders (%1$s, %1$d) as the English text.
  */
 class StringsTest {
     private val dir = File("src/commonMain/composeResources")
@@ -35,27 +35,27 @@ class StringsTest {
     }
 
     @Test
-    fun ogniLinguaCompleta() {
+    fun everyLanguageComplete() {
         val base = load(File(dir, "values"))
         val languages = dir.listFiles { f -> f.isDirectory && f.name.startsWith("values-") }!!.sortedBy { it.name }
         assertTrue(languages.isNotEmpty())
         for (lang in languages) {
             val tr = load(lang)
-            assertEquals(base.keys, tr.keys, "Chiavi diverse in ${lang.name}")
+            assertEquals(base.keys, tr.keys, "Different keys in ${lang.name}")
             for ((key, text) in base) {
                 assertEquals(
                     placeholder.findAll(text).map { it.value }.toSet(),
                     placeholder.findAll(tr.getValue(key)).map { it.value }.toSet(),
-                    "Segnaposto diversi in ${lang.name}/$key",
+                    "Different placeholders in ${lang.name}/$key",
                 )
-                assertTrue(tr.getValue(key).isNotBlank(), "Testo vuoto in ${lang.name}/$key")
+                assertTrue(tr.getValue(key).isNotBlank(), "Empty text in ${lang.name}/$key")
             }
         }
     }
 
-    /** Le lingue offerte da Android 13+ nelle impostazioni dell'app devono essere quelle tradotte. */
+    /** The languages offered by Android 13+ in the app settings must be the translated ones. */
     @Test
-    fun lingueAndroidAllineate() {
+    fun androidLanguagesAligned() {
         val translated = dir.listFiles { f -> f.isDirectory && f.name.startsWith("values-") }!!
             .map { it.name.removePrefix("values-") }.toSet() + "en"
         val config = File("../androidApp/src/main/res/xml/locales_config.xml").readText()

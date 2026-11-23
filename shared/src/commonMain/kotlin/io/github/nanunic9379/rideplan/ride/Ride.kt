@@ -9,23 +9,23 @@ import kotlin.math.sqrt
 
 data class LatLon(val lat: Double, val lon: Double) {
     init {
-        require(lat in -90.0..90.0 && lon in -180.0..180.0) { "Coordinate fuori scala: $lat, $lon" }
+        require(lat in -90.0..90.0 && lon in -180.0..180.0) { "Coordinates out of range: $lat, $lon" }
     }
 }
 
 /**
- * Una tappa con il suo nome, se la sorgente lo dà.
- * [kind]: quanto conta il punto esatto (#29).
+ * A stop with its name, if the source provides one.
+ * [kind]: how much the exact point matters (#29).
  */
 data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP) {
     enum class Kind {
-        /** Ci vado davvero (bar, benzina, agriturismo): il percorso arriva lì e si ferma. */
+        /** I really go there (bar, fuel, farm restaurant): the route gets there and stops. */
         STOP,
 
-        /** Punto trascinato sulla mappa: il percorso ci passa esattamente, senza fermarsi. */
+        /** Point dragged on the map: the route passes exactly through it, without stopping. */
         VIA,
 
-        /** "Passa da quelle parti": un paese. Basta una strada vicina, senza entrare in centro. */
+        /** "Pass around there": a town. A nearby road is enough, without entering the center. */
         PASS,
     }
 
@@ -39,7 +39,7 @@ data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP
         private val houseNumber = Regex("""^\d+[a-zA-Z/]*$""")
         private val postCode = Regex("""^\d{4,5}\s+""")
 
-        /** Il nome sembra un comune ("Matera", "75100 Matera MT", "Stigliano, Provincia di Matera"). */
+        /** The name looks like a town ("Matera", "75100 Matera MT", "Stigliano, Provincia di Matera"). */
         fun looksLikeTown(name: String): Boolean {
             val parts = name.split(',').map { it.trim() }.filter { it.isNotEmpty() }
             return parts.isNotEmpty() && parts.size <= 3 &&
@@ -48,8 +48,8 @@ data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP
         }
 
         /**
-         * Tipo delle tappe appena importate: partenza e arrivo sono soste, i punti senza nome
-         * passaggi esatti; con [towns] i paesi diventano passaggi larghi (link di Google, #29).
+         * Kind of freshly imported stops: start and finish are stops, unnamed points are
+         * exact pass-throughs; with [towns] the towns become wide pass-throughs (Google link, #29).
          */
         fun guessKinds(stops: List<Stop>, towns: Boolean): List<Stop> = stops.mapIndexed { i, s ->
             val kind = when {
@@ -64,10 +64,10 @@ data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP
 }
 
 /**
- * Un giro importato (#27, #5).
- * [track]: la strada vera (da GPX o KML, oppure calcolata sul telefono, #3). Se è vuota,
- * sulla mappa le tappe sono unite da linee dritte.
- * [route]: presente quando la strada l'ha calcolata RidePlan.
+ * An imported ride (#27, #5).
+ * [track]: the actual road (from GPX or KML, or calculated on the phone, #3). If it is empty,
+ * the stops are joined by straight lines on the map.
+ * [route]: present when RidePlan calculated the road.
  */
 data class Ride(
     val name: String?,
@@ -75,30 +75,30 @@ data class Ride(
     val stops: List<Stop>,
     val source: Source,
     val route: RouteInfo? = null,
-    /** Preferenze di chi ha condiviso il giro con un link (#50): il percorso si rifà con queste. */
+    /** Preferences of whoever shared the ride by link (#50): the route is rebuilt with these. */
     val sharedOptions: RouteOptions? = null,
 ) {
     enum class Source { GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK }
 
-    /** True quando non c'è una traccia vera ma solo le tappe. */
+    /** True when there is no real track, only the stops. */
     val straightLines: Boolean get() = track.size < 2
 
-    /** La linea da disegnare: la traccia, oppure le tappe in fila. */
+    /** The line to draw: the track, or the stops in a row. */
     val line: List<LatLon> get() = if (straightLines) stops.map { it.point } else track
 
-    /** Da calcolare: solo tappe, almeno due. */
+    /** To be calculated: stops only, at least two. */
     val needsRoute: Boolean get() = straightLines && stops.size >= 2
 
     val lengthKm: Double get() = route?.km ?: line.zipWithNext { a, b -> distanceKm(a, b) }.sum()
 
-    /** Sud-ovest e nord-est di tutto quello che è sulla mappa. */
+    /** South-west and north-east of everything on the map. */
     fun bounds(): Pair<LatLon, LatLon> {
         val all = line + stops.map { it.point }
         return LatLon(all.minOf { it.lat }, all.minOf { it.lon }) to LatLon(all.maxOf { it.lat }, all.maxOf { it.lon })
     }
 }
 
-/** Distanza in linea d'aria (formula dell'emisenoverso). */
+/** Distance as the crow flies (haversine formula). */
 fun distanceKm(a: LatLon, b: LatLon): Double {
     val r = 6371.0088
     val dLat = (b.lat - a.lat).toRadians()

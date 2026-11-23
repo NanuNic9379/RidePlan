@@ -113,12 +113,12 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Altezza minima dei pulsanti: si usano anche con i guanti. */
+/** Minimum button height: they are also used with gloves. */
 private val Touch = 56.dp
 
 /**
- * Schermata iniziale (#41): chi sei, le azioni per un giro nuovo e i tuoi giri.
- * La mappa si apre solo quando serve.
+ * Home screen (#41): who you are, the actions for a new ride and your rides.
+ * The map opens only when needed.
  */
 @Composable
 fun HomeScreen(store: ProfileStore, rides: RideScreenState, actions: ImportActions?, snackbar: SnackbarHostState) {
@@ -309,9 +309,9 @@ private fun doneText(saved: SavedRide): String {
 }
 
 /**
- * Sotto al giro aperto: già salvato (Rinomina, L'ho fatto) oppure, per un giro ricevuto
- * con un link (#48), il pulsante per tenerlo. [onSave]: null se non c'è niente da salvare.
- * [onRename] cambia il nome del giro mostrato: il salvataggio automatico fa il resto.
+ * Below the open ride: already saved (Rename, I rode it) or, for a ride received
+ * by link (#48), the button to keep it. [onSave]: null if there is nothing to save.
+ * [onRename] changes the name of the shown ride: automatic saving does the rest.
  */
 @Composable
 fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave: (() -> Unit)? = null, onRename: (String) -> Unit) {
@@ -345,7 +345,7 @@ fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave
     }
 }
 
-/** Pagina del profilo: nome, moto e statistiche. */
+/** Profile page: name, bike and statistics. */
 @Composable
 fun ProfileScreen(store: ProfileStore, onBack: () -> Unit, backup: BackupActions? = null) {
     val data = store.data
@@ -387,7 +387,7 @@ fun ProfileScreen(store: ProfileStore, onBack: () -> Unit, backup: BackupActions
     }
 }
 
-/** Copia di sicurezza del profilo (#43): un file da tenere o portare su un altro telefono. */
+/** Profile backup (#43): a file to keep or carry to another phone. */
 @Composable
 private fun BackupSection(store: ProfileStore, backup: BackupActions) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -420,7 +420,7 @@ private fun Stat(label: String, value: String, modifier: Modifier) {
     }
 }
 
-/** Primo avvio: una schermata sola, nome e moto facoltativi. */
+/** First launch: a single screen, name and bike optional. */
 @Composable
 fun WelcomeScreen(store: ProfileStore) {
     var name by remember { mutableStateOf(store.data.profile.name) }
@@ -450,14 +450,14 @@ fun WelcomeScreen(store: ProfileStore) {
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch),
         ) { Text(stringResource(Res.string.welcome_start)) }
         TextButton(
-            // Anche "Salta" tiene quello che hai già scritto: con la tastiera aperta i pulsanti si spostano.
+            // "Skip" also keeps what you already typed: with the keyboard open the buttons move.
             onClick = { store.update { it.copy(profile = it.profile.copy(name = name.trim(), bike = bike.trim(), welcomed = true)) } },
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch),
         ) { Text(stringResource(Res.string.welcome_skip)) }
     }
 }
 
-/** Pulsante in alto sulla mappa per tornare alla schermata iniziale. */
+/** Button at the top of the map to go back to the home screen. */
 @Composable
 fun HomeButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     FilledTonalButton(onClick = onClick, modifier = modifier.heightIn(min = Touch)) {
@@ -479,11 +479,11 @@ private fun RenameDialog(initial: String, onDismiss: () -> Unit, onSave: (String
     )
 }
 
-/** Il giorno dell'uscita, oggi già scelto. Restituisce la mezzanotte UTC di quel giorno. */
+/** The day of the outing, today preselected. Returns midnight UTC of that day. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 private fun DayPicker(onDismiss: () -> Unit, onPick: (Long) -> Unit) {
-    // Di solito il giro l'hai fatto oggi: parte già scelto. I giorni futuri non si possono scegliere.
+    // Usually you rode it today: it starts preselected. Future days cannot be chosen.
     val today = remember { Clock.System.now().toEpochMilliseconds().floorDiv(86_400_000L) * 86_400_000L }
     val state = rememberDatePickerState(
         initialSelectedDateMillis = today,
@@ -504,7 +504,7 @@ private fun DayPicker(onDismiss: () -> Unit, onPick: (Long) -> Unit) {
     }
 }
 
-/** Giorno, mese e anno (UTC) di un istante: niente librerie per tre numeri. */
+/** Day, month and year (UTC) of an instant: no libraries for three numbers. */
 internal fun civilDate(millis: Long): Triple<Int, Int, Int> {
     val days = millis.floorDiv(86_400_000L)
     val z = days + 719_468

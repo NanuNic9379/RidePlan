@@ -105,7 +105,7 @@
         <item quantity="many">%1$d étapes</item>
         <item quantity="other">%1$d étapes</item>
     </plurals>
-    <!-- Écran d’accueil et profil (#41) -->
+    <!-- Home screen and profile (#41) -->
     <string name="home_hello">Salut, %1$s</string>
     <string name="home_hello_anon">Salut, motard</string>
     <string name="home_add_profile">Ajoute ton nom et ta moto</string>

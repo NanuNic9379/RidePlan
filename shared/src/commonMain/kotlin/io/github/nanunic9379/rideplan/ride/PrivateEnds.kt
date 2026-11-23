@@ -1,11 +1,11 @@
 package io.github.nanunic9379.rideplan.ride
 
 /**
- * Partenza e arrivo sfumati prima di condividere (#12): spesso sono casa o garage.
+ * Start and finish fuzzed before sharing (#12): they are often home or the garage.
  *
- * Si tolgono i primi e gli ultimi [KM] lungo il giro (al massimo un quarto per parte, così un
- * giro corto non sparisce). Le tappe dentro i tratti tolti spariscono, quelle agli estremi
- * perdono il nome. È una prima versione: le zone private impostabili arriveranno con #12.
+ * The first and last [KM] along the ride are removed (at most a quarter on each side, so a
+ * short ride does not vanish). Stops inside the removed stretches disappear, those at the ends
+ * lose their name. This is a first version: configurable private zones will come with #12.
  */
 object PrivateEnds {
     const val KM = 1.0
@@ -40,7 +40,7 @@ object PrivateEnds {
         )
     }
 
-    /** Il punto a [km] dall'inizio della linea, seguendola. */
+    /** The point [km] from the start of the line, following it. */
     internal fun pointAt(line: List<LatLon>, km: Double): LatLon {
         var left = km
         for (i in 1 until line.size) {

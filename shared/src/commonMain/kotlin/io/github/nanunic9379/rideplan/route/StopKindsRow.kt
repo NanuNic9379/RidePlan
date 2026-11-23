@@ -21,8 +21,8 @@ import io.github.nanunic9379.rideplan.ride.Stop
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Le tappe intermedie con un nome: sosta (ci arrivi) o passa vicino, senza entrare in paese (#29).
- * Un tocco cambia; i punti trascinati sulla mappa non compaiono.
+ * The named intermediate stops: stop there (you reach it) or pass nearby without entering the town (#29).
+ * A tap switches; points dragged on the map are not listed.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -54,7 +54,7 @@ fun StopKindsRow(stops: List<Stop>, enabled: Boolean, onToggle: (Int) -> Unit) {
     }
 }
 
-/** La tappa [index] passa da sosta a "passa vicino" o viceversa (#29); il percorso va rifatto. */
+/** Stop [index] switches from "stop there" to "pass nearby" or back (#29); the route must be recalculated. */
 fun Ride.toggledStop(index: Int): Ride {
     val stop = stops.getOrNull(index) ?: return this
     val kind = when (stop.kind) {

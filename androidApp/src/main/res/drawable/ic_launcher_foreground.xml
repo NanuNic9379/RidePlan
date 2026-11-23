@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Icona: casco con strada in prospettiva e segnaposto. Sorgente: docs/icon/icon-foreground.svg -->
+<!-- Icon: helmet with a road in perspective and a location pin. Source: docs/icon/icon-foreground.svg -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"

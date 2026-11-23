@@ -13,9 +13,9 @@ import java.net.URLDecoder
 import java.util.zip.ZipInputStream
 
 /**
- * Lettura di file e link su Android (#27, #5). Da chiamare fuori dal thread principale.
- * Il contenuto non lascia il telefono. L'unica richiesta di rete è l'apertura del link corto
- * di Google (maps.app.goo.gl → link completo): si leggono solo i redirect, la pagina no.
+ * Reading files and links on Android (#27, #5). Call off the main thread.
+ * The content never leaves the phone. The only network request is opening Google's short link
+ * (maps.app.goo.gl → full link): only the redirects are read, not the page.
  */
 object RideIntake {
     private const val MAX_BYTES = 30 * 1024 * 1024
@@ -53,7 +53,7 @@ object RideIntake {
         return RideImport.parse(full)
     }
 
-    /** KMZ = zip con dentro un KML (export di Google My Maps). */
+    /** KMZ = zip with a KML inside (Google My Maps export). */
     private fun text(bytes: ByteArray): String {
         val isZip = bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()
         if (!isZip) return bytes.decodeToString()
@@ -68,7 +68,7 @@ object RideIntake {
         throw ImportException(ImportError.ZIP_WITHOUT_RIDE)
     }
 
-    /** Segue i redirect del link corto finché non arriva al link completo di Google Maps. */
+    /** Follows the short link's redirects until it reaches the full Google Maps link. */
     private fun resolve(shortUrl: String): String {
         var url = shortUrl
         repeat(MAX_REDIRECTS) {
@@ -93,7 +93,7 @@ object RideIntake {
         throw ImportException(ImportError.LINK_TOO_MANY_REDIRECTS)
     }
 
-    /** In Europa Google può passare dalla pagina dei cookie: il link vero è nel parametro "continue". */
+    /** In Europe Google may go through the cookie page: the real link is in the "continue" parameter. */
     private fun consentTarget(url: String): String {
         if (!url.contains("consent.google.")) return url
         val cont = url.substringAfter("continue=", "").substringBefore('&')

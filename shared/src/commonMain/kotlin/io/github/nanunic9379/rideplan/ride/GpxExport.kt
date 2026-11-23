@@ -4,13 +4,13 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /**
- * Giro in GPX 1.1, da mandare a Garmin, TomTom, Calimoto, Kurviger o a un amico (#5).
+ * Ride as GPX 1.1, to send to Garmin, TomTom, Calimoto, Kurviger or a friend (#5).
  *
- * - `wpt`: le tappe, con il loro nome (solo quando c'è anche la traccia).
- * - `rte`: le stesse tappe in ordine. I navigatori moto (Garmin Zūmo, TomTom Rider) ricalcolano
- *   la strada passando da qui.
- * - `trk`: la strada vera, quando c'è (GPX/KML importato o percorso calcolato sul telefono).
- *   Serve a chi vuole seguire esattamente quella strada.
+ * - `wpt`: the stops, with their names (only when there is also a track).
+ * - `rte`: the same stops in order. Motorcycle navigators (Garmin Zūmo, TomTom Rider) recalculate
+ *   the road through them.
+ * - `trk`: the actual road, when there is one (imported GPX/KML or route calculated on the phone).
+ *   For those who want to follow exactly that road.
  */
 object GpxExport {
     fun write(ride: Ride, fallbackName: String): String {
@@ -19,8 +19,8 @@ object GpxExport {
         sb.append("""<?xml version="1.0" encoding="UTF-8"?>""").append('\n')
         sb.append("""<gpx version="1.1" creator="RidePlan" xmlns="http://www.topografix.com/GPX/1/1">""").append('\n')
         sb.append("  <metadata><name>").append(escape(name)).append("</name></metadata>\n")
-        // Le tappe come wpt solo accanto a una traccia: senza traccia bastano i punti della rotta
-        // (e chi rilegge il file non scambia la rotta per la strada).
+        // Stops as wpt only next to a track: without a track the route points are enough
+        // (and whoever reads the file back does not mistake the route for the road).
         if (!ride.straightLines) ride.stops.forEachIndexed { i, stop ->
             sb.append("  <wpt ").append(attrs(stop.point)).append("><name>")
                 .append(escape(stopName(stop, i))).append("</name></wpt>\n")
@@ -42,7 +42,7 @@ object GpxExport {
         return sb.toString()
     }
 
-    /** Nome del file: niente caratteri che i file system o le app di chat rifiutano. */
+    /** File name: no characters that file systems or chat apps reject. */
     fun fileName(ride: Ride, fallbackName: String): String {
         val base = (ride.name ?: fallbackName)
             .replace(Regex("""[\\/:*?"<>|\p{Cntrl}]"""), " ")
@@ -58,7 +58,7 @@ object GpxExport {
 
     private fun attrs(p: LatLon) = """lat="${coord(p.lat)}" lon="${coord(p.lon)}""""
 
-    /** 7 decimali (circa 1 cm), senza notazione esponenziale e senza dipendere dalla lingua. */
+    /** 7 decimals (about 1 cm), no exponential notation and independent of the locale. */
     internal fun coord(d: Double): String {
         val n = (d * 10_000_000).roundToLong()
         val sign = if (n < 0) "-" else ""

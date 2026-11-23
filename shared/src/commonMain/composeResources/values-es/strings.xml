@@ -105,7 +105,7 @@
         <item quantity="many">%1$d paradas</item>
         <item quantity="other">%1$d paradas</item>
     </plurals>
-    <!-- Pantalla de inicio y perfil (#41) -->
+    <!-- Home screen and profile (#41) -->
     <string name="home_hello">Hola, %1$s</string>
     <string name="home_hello_anon">Hola, motero</string>
     <string name="home_add_profile">Añade tu nombre y tu moto</string>

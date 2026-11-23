@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Solo per lo stile mappa online provvisorio. La posizione si chiedera' quando serve. -->
+    <!-- Only for the temporary online map style. Location will be asked for when needed. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -23,27 +23,27 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Percorso condiviso da Google Maps (testo con il link), #5. -->
+            <!-- Route shared from Google Maps (text with the link), #5. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-            <!-- Link di un giro RidePlan (#6), anche da un QR inquadrato con la fotocamera. -->
+            <!-- Link to a RidePlan ride (#6), also from a QR scanned with the camera. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="nanunic9379.github.io" android:pathPrefix="/RidePlan/r" />
             </intent-filter>
-            <!-- Lo stesso giro passato dal pulsante "Apri in RidePlan" della pagina web. -->
+            <!-- The same ride passed by the "Open in RidePlan" button of the web page. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="rideplan" android:host="r" />
             </intent-filter>
-            <!-- File GPX, KML, KMZ condivisi o aperti da un'altra app, #27. -->
+            <!-- GPX, KML, KMZ files shared or opened from another app, #27. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.VIEW" />
@@ -58,7 +58,7 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
-        <!-- Il GPX da condividere (#5): solo la cartella cache/shared, solo in lettura e solo per l'app scelta. -->
+        <!-- The GPX to share (#5): only the cache/shared folder, read-only and only for the chosen app. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

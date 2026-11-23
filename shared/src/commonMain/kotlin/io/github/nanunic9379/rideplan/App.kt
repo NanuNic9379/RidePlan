@@ -40,14 +40,14 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 
 /**
- * L'app (#41): si apre sulla schermata iniziale con i tuoi giri; la mappa arriva
- * quando apri un giro o scegli "Esplora". Un giro aperto da un link va dritto sulla mappa.
+ * The app (#41): it opens on the home screen with your rides; the map comes
+ * when you open a ride or choose "Explore". A ride opened from a link goes straight to the map.
  *
- * [rides]: giro importato da file o link (#27, #5), gestito dalla piattaforma.
- * [store]: profilo e giri salvati sul telefono; null = solo la mappa, come prima.
- * [importActions]: come importare su questa piattaforma; null = pulsanti nascosti.
- * [routeActions]: download dei dati e calcolo del percorso (#3); null = non disponibile.
- * [overlay]: elementi della singola piattaforma sopra tutto (es. l'avviso di aggiornamento, #30).
+ * [rides]: ride imported from a file or link (#27, #5), handled by the platform.
+ * [store]: profile and rides saved on the phone; null = map only, as before.
+ * [importActions]: how to import on this platform; null = buttons hidden.
+ * [routeActions]: data download and route calculation (#3); null = not available.
+ * [overlay]: platform-specific elements on top of everything (e.g. the update banner, #30).
  */
 @Composable
 fun App(
@@ -61,8 +61,8 @@ fun App(
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
         val snackbar = remember { SnackbarHostState() }
         val ride = rides.ride
-        // Ogni giro aperto finisce in "I tuoi giri" e resta aggiornato (percorso, preferenze, nome).
-        // Un giro ricevuto con un link resta in anteprima finché non lo salvi tu (#48).
+        // Every opened ride ends up in "Your rides" and stays up to date (route, preferences, name).
+        // A ride received by link stays in preview until you save it (#48).
         LaunchedEffect(ride) {
             if (ride != null && store != null && !rides.isPreview) {
                 store.update { d ->
@@ -128,12 +128,12 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
     }
 }
 
-/** Valori di partenza della mappa. */
+/** Starting values of the map. */
 object MapDefaults {
-    /** OpenFreeMap: dati OpenStreetMap, nessuna chiave, nessun account. */
+    /** OpenFreeMap: OpenStreetMap data, no key, no account. */
     const val STYLE = "https://tiles.openfreemap.org/styles/liberty"
     const val START_LAT = 46.0
     const val START_LON = 10.0
-    /** Vista d'insieme: RidePlan e' globale, nessuna zona privilegiata. */
+    /** Overview: RidePlan is global, no privileged area. */
     const val START_ZOOM = 3.0
 }

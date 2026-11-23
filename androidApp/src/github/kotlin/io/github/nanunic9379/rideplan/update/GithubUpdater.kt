@@ -13,7 +13,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 
-/** Una Release piu' nuova di quella installata, con l'APK giusto per questo telefono. */
+/** A Release newer than the installed one, with the right APK for this phone. */
 data class ReleaseInfo(
     val tag: String,
     val apkName: String,
@@ -25,15 +25,15 @@ data class ReleaseInfo(
 }
 
 /**
- * Aggiornamento dalle Release di GitHub (#30).
- * Unica richiesta di rete: l'ultima Release pubblica del repo. Nessun dato inviato oltre
- * a quelli di ogni richiesta web (indirizzo IP, "RidePlan-Android" come client).
+ * Update from the GitHub Releases (#30).
+ * Only network request: the repo's latest public Release. No data sent beyond
+ * what every web request carries (IP address, "RidePlan-Android" as the client).
  */
 object GithubUpdater {
     private const val LATEST = "https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/latest"
     private const val TIMEOUT_MS = 15_000
 
-    /** Ultima Release se e' piu' nuova, altrimenti null. Da chiamare fuori dal thread principale. */
+    /** Latest Release if it is newer, otherwise null. Call off the main thread. */
     fun latestNewer(): ReleaseInfo? {
         val conn = open(LATEST).apply { setRequestProperty("Accept", "application/vnd.github+json") }
         try {
@@ -45,7 +45,7 @@ object GithubUpdater {
             val byName = (0 until assets.length()).map { assets.getJSONObject(it) }.associateBy { it.getString("name") }
             val name = UpdateRules.pickApk(byName.keys.toList(), Build.SUPPORTED_ABIS.toList()) ?: return null
             val asset = byName.getValue(name)
-            // Senza impronta non si installa: e' l'unica garanzia che il file sia quello pubblicato.
+            // No install without a checksum: it is the only guarantee that the file is the published one.
             val sha = UpdateRules.sha256FromDigest(asset.optString("digest").ifEmpty { null }) ?: return null
             return ReleaseInfo(tag, name, asset.getString("browser_download_url"), sha, asset.optLong("size", -1))
         } finally {
@@ -53,7 +53,7 @@ object GithubUpdater {
         }
     }
 
-    /** Scarica l'APK nella cache e ne controlla lo SHA-256. [onProgress] riceve 0..100 o null. */
+    /** Downloads the APK into the cache and checks its SHA-256. [onProgress] receives 0..100 or null. */
     fun download(context: Context, release: ReleaseInfo, onProgress: (Int?) -> Unit): File {
         val dir = File(context.cacheDir, "updates").apply { deleteRecursively(); mkdirs() }
         val file = File(dir, release.apkName)
@@ -87,7 +87,7 @@ object GithubUpdater {
         return file
     }
 
-    /** Passa l'APK ad Android. La conferma la chiede il sistema (vedi [InstallResultReceiver]). */
+    /** Hands the APK to Android. The system asks for confirmation (see [InstallResultReceiver]). */
     fun install(context: Context, apk: File) {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {

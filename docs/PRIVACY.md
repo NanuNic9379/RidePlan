@@ -1,52 +1,37 @@
 # Privacy
 
-*English below.*
+## In short
 
-## In breve
+RidePlan **collects no data**. It has no accounts, ads, usage statistics or automatic
+crash reporting. Rides, stops and settings stay on the phone.
 
-RidePlan **non raccoglie dati**. Non ha account, pubblicità, statistiche d'uso o segnalazioni
-automatiche di errori. I giri, le tappe e le impostazioni restano sul telefono.
+The app uses the internet only for the things below, and in those cases the server contacted sees,
+as with any web page, the phone's IP address and the time of the request.
 
-L'app usa internet solo per le cose qui sotto, e in quei casi il server contattato vede, come per
-ogni pagina web, l'indirizzo IP del telefono e l'ora della richiesta.
-
-| Quando | Chi viene contattato | Cosa riceve |
+| When | Who is contacted | What it receives |
 |---|---|---|
-| Mostri la mappa | OpenFreeMap (`tiles.openfreemap.org`) | La zona di mappa da disegnare |
-| Importi un link di Google Maps | Google (`maps.app.goo.gl`, `google.com`) | Il link che hai incollato o condiviso |
-| Scarichi i dati stradali attorno a un giro | GitHub (Release `routing-data` di questo repository) | I nomi dei file dei quadrati di circa 100 km che servono (dicono la zona, non le tappe) |
-| Controllo degli aggiornamenti (solo versione da GitHub) | GitHub (`api.github.com`) | Nessun dato oltre alla richiesta dell'ultima versione |
+| You show the map | OpenFreeMap (`tiles.openfreemap.org`) | The map area to draw |
+| You import a Google Maps link | Google (`maps.app.goo.gl`, `google.com`) | The link you pasted or shared |
+| You download the road data of an area | GitHub (`routing-data` Release of this repository) | The file name of the area |
+| Update check (GitHub version only) | GitHub (`api.github.com`) | No data beyond the request for the latest version |
 
-Il calcolo del percorso avviene **sul telefono**: le tappe non vengono inviate a nessun server.
+The route is computed **on the phone**: stops are not sent to any server.
 
-## Permessi
+## Permissions
 
-Solo `INTERNET`. L'app non legge la posizione, i contatti o le foto. I file (GPX, KML) li apri tu
-dalla finestra di sistema e l'app vede solo quelli.
+Only `INTERNET`. The app does not read your location, contacts or photos. You open files (GPX, KML)
+yourself from the system picker and the app sees only those.
 
-## Condivisione
+## Sharing
 
-Quando condividi un giro (file GPX) decidi tu a chi mandarlo. Prima di condividere, l'app propone
-di togliere il primo e l'ultimo km, perché partenza e arrivo sono spesso casa o il garage.
+When you share a ride (GPX file) you decide who to send it to. Before sharing, the app offers
+to remove the first and last km, because start and finish are often your home or garage.
 
-Quando arriverà la condivisione tramite Nostr: quello che pubblichi su Nostr è **pubblico** e
-copiato su più server (relay), che non possiamo cancellare. L'app te lo dirà prima di pubblicare.
+When sharing via Nostr arrives: what you publish on Nostr is **public** and
+copied to several servers (relays), which we cannot delete. The app will tell you before publishing.
 
 ## GDPR
 
-Non trattiamo dati personali: non c'è un titolare che li conservi. Per i servizi esterni elencati
-sopra valgono le loro informative (OpenFreeMap, Google, GitHub). Per domande apri una issue o
-scrivi tramite la scheda Security del repository.
-
----
-
-## English
-
-RidePlan **collects no data**: no accounts, ads, analytics or crash reporting. Rides, stops and
-settings stay on the phone. Internet is used only to: load map tiles from OpenFreeMap; resolve a
-Google Maps link you import; download the road data around a ride (squares of about 100 km, which reveal the area but not the stops) from this repository's
-`routing-data` Release on GitHub; and (GitHub build only) check GitHub for a newer version. Those
-servers see the phone's IP address and the time, like any web request. Routes are computed **on the
-phone**: stops are never sent to a server. The only permission is `INTERNET`. When you share a GPX
-the app offers to remove the first and last km, since they often reveal your home. Anything
-published on Nostr (when it lands) is public and replicated on relays outside our control.
+We do not process personal data: there is no controller that stores it. For the external services listed
+above their own privacy policies apply (OpenFreeMap, Google, GitHub). For questions open an issue or
+write via the Security tab of the repository.

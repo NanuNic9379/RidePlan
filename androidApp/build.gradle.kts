@@ -13,9 +13,9 @@ dependencies {
 }
 
 /**
- * Numero di versione = numero di commit su main. Cresce a ogni merge, quindi
- * la Release vN+1 e' sempre "piu' nuova" della vN (serve all'aggiornamento, #30).
- * Senza git (es. sorgenti in zip) si parte da 1.
+ * Version number = number of commits on main. It grows with every merge, so
+ * Release vN+1 is always "newer" than vN (needed by the update, #30).
+ * Without git (e.g. sources from a zip) it starts from 1.
  */
 val commitCount: Int = runCatching {
     providers.exec { commandLine("git", "rev-list", "--count", "HEAD") }
@@ -23,16 +23,16 @@ val commitCount: Int = runCatching {
 }.getOrDefault(1)
 
 /**
- * Le Release ufficiali (pipeline, #46) partono da 100 in su: così sono sempre "più nuove"
- * di qualunque APK di prova compilato su un ramo di lavoro, che ha solo [commitCount]
- * (sui rami i commit sono di più che su main, dove le PR diventano un commit solo).
+ * Official Releases (pipeline, #46) start from 100 upwards: so they are always "newer"
+ * than any test APK built on a work branch, which only has [commitCount]
+ * (branches have more commits than main, where each PR becomes a single commit).
  */
 val officialOffset: Int = if (providers.environmentVariable("RIDEPLAN_OFFICIAL_RELEASE").orNull == "true") 100 else 0
 val appVersionCode: Int = commitCount + officialOffset
 
 /**
- * Chiave di firma delle Release: arriva solo da variabili d'ambiente (secret della pipeline).
- * Mai nel repo. Senza, la release si firma con la chiave debug e non si aggiorna dalle Release.
+ * Release signing key: it comes only from environment variables (pipeline secrets).
+ * Never in the repo. Without it, the release is signed with the debug key and does not update from the Releases.
  */
 val releaseKeystore: String? = System.getenv("RIDEPLAN_KEYSTORE_FILE")?.takeIf { file(it).exists() }
 
@@ -46,7 +46,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = "0.1.$appVersionCode"
-        // Dati stradali per il calcolo del percorso (#3), Release "routing-data" di routing-data.yml
+        // Road data for route calculation (#3), "routing-data" Release from routing-data.yml
         buildConfigField("String", "ROUTING_DATA_URL", "\"https://github.com/NanuNic9379/RidePlan/releases/download/routing-data/\"")
     }
 
@@ -73,8 +73,8 @@ android {
     }
 
     /**
-     * github: APK delle Release, con aggiornamento dall'app (#30).
-     * fdroid: senza aggiornamento interno ne' permesso di installare app (lo fa F-Droid).
+     * github: Release APKs, with in-app update (#30).
+     * fdroid: no in-app update and no permission to install apps (F-Droid does that).
      */
     flavorDimensions += "distribution"
     productFlavors {
@@ -87,7 +87,7 @@ android {
         }
     }
 
-    /** Un APK per processore: piu' piccolo da scaricare. */
+    /** One APK per processor: smaller to download. */
     splits {
         abi {
             isEnable = true

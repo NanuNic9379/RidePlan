@@ -1,20 +1,20 @@
-# Contribuire a RidePlan
+# Contributing to RidePlan
 
-- Ogni modifica parte da una issue, poi un branch e una pull request.
-- Scrivi dal punto di vista di chi guida la moto: cosa cambia per lui in strada.
-- Niente librerie che raccolgono dati o richiedono account a servizi esterni.
-- Le dipendenze devono essere compatibili con la GPL-3.0.
-- Testi dell'app in italiano e inglese.
+- Every change starts from an issue, then a branch and a pull request.
+- Write from the point of view of the person riding the bike: what changes for them on the road.
+- No libraries that collect data or require accounts with external services.
+- Dependencies must be compatible with GPL-3.0.
+- Code, comments and documentation in English; app texts in English and Italian.
 
-Contribuendo accetti che il tuo codice sia distribuito con la licenza GPL-3.0 e il permesso
-aggiuntivo per gli store descritto in [LICENSE-STORE.md](LICENSE-STORE.md).
+By contributing you agree that your code is distributed under the GPL-3.0 license and the
+additional store permission described in [LICENSE-STORE.md](LICENSE-STORE.md).
 
-## Traduzioni
+## Translations
 
-L'app è pensata per più lingue. La lingua di base è l'inglese; oggi ci sono anche italiano, tedesco, francese e spagnolo.
+The app is designed for several languages. The base language is English; today there are also Italian, German, French and Spanish.
 
-- I testi stanno in `shared/src/commonMain/composeResources/values/strings.xml` (inglese) e in una cartella `values-xx` per ogni lingua (codice ISO 639-1, es. `values-pt`, oppure con la regione, es. `values-pt-rBR`). Sono condivisi fra Android e iOS.
-- Nel codice niente frasi scritte a mano: solo `stringResource(Res.string.chiave)`. Gli errori del codice condiviso sono codici (`ImportError`, `UpdateError`) e il testo lo sceglie l'interfaccia.
-- **Aggiungere una lingua:** copia `values/strings.xml` in `values-xx/strings.xml`, traduci i testi lasciando uguali i nomi delle chiavi e i segnaposto (`%1$s`, `%1$d`), e aggiungi `xx` in `androidApp/src/main/res/xml/locales_config.xml`. Per i plurali usa le categorie della lingua (`one`, `few`, `many`, `other`).
-- Apostrofo tipografico (’) al posto di `'`, virgolette della lingua (“ ”, « », „ “) al posto di `"`.
-- `./gradlew :shared:testAndroidHostTest` controlla che ogni lingua abbia tutte le chiavi e gli stessi segnaposto.
+- Texts live in `shared/src/commonMain/composeResources/values/strings.xml` (English) and in one `values-xx` folder per language (ISO 639-1 code, e.g. `values-pt`, or with the region, e.g. `values-pt-rBR`). They are shared between Android and iOS.
+- No hand-written sentences in the code: only `stringResource(Res.string.key)`. Errors from the shared code are codes (`ImportError`, `UpdateError`) and the UI picks the text.
+- **Adding a language:** copy `values/strings.xml` to `values-xx/strings.xml`, translate the texts keeping the key names and placeholders (`%1$s`, `%1$d`) unchanged, and add `xx` to `androidApp/src/main/res/xml/locales_config.xml`. For plurals use the language's categories (`one`, `few`, `many`, `other`).
+- Typographic apostrophe (’) instead of `'`, the language's quotation marks (“ ”, « », „ “) instead of `"`.
+- `./gradlew :shared:testAndroidHostTest` checks that every language has all the keys and the same placeholders.

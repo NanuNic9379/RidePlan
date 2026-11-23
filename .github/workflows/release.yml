@@ -1,13 +1,13 @@
 name: Release
 
-# A ogni merge su main: APK firmati, uno per processore, pubblicati come Release "v0.1.N"
-# (N = numero di commit + 100). Si scaricano direttamente, senza login, e l'app li usa
-# per aggiornarsi (#30).
+# On every merge to main: signed APKs, one per processor, published as Release "v0.1.N"
+# (N = number of commits + 100). They download directly, without login, and the app uses them
+# to update itself (#30).
 
 on:
   push:
     branches: [main]
-    # Solo documentazione: nessun nuovo APK da far scaricare.
+    # Documentation only: no new APK to download.
     paths-ignore: ["**.md", "docs/**"]
   workflow_dispatch:
 
@@ -20,30 +20,30 @@ concurrency:
 
 jobs:
   android:
-    name: APK firmati nella Release
+    name: Signed APKs in the Release
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # serve tutta la storia per contare i commit
+          fetch-depth: 0 # the full history is needed to count the commits
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: NDK per togliere i simboli di debug dal motore di percorso (133 MB -> 8 MB)
+      - name: NDK to strip debug symbols from the routing engine (133 MB -> 8 MB)
         run: |
-          # Stessa versione che si aspetta AGP 9.5 (android.ndkVersion predefinito).
+          # Same version AGP 9.5 expects (default android.ndkVersion).
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" > /dev/null
 
-      - name: Chiave di firma
+      - name: Signing key
         id: key
         env:
           KEYSTORE_B64: ${{ secrets.RIDEPLAN_KEYSTORE_B64 }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
-            echo "::warning::Secret RIDEPLAN_KEYSTORE_B64 mancante: nessuna Release pubblicata."
+            echo "::warning::Secret RIDEPLAN_KEYSTORE_B64 missing: no Release published."
             echo "ok=false" >> "$GITHUB_OUTPUT"
           else
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
@@ -60,13 +60,13 @@ jobs:
           RIDEPLAN_OFFICIAL_RELEASE: "true"
         run: ./gradlew --console=plain :androidApp:assembleGithubRelease
 
-      - name: Pubblica la Release
+      - name: Publish the Release
         if: steps.key.outputs.ok == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           rm -f "$RUNNER_TEMP/release.jks"
-          # Stesso numero dell'app: commit su main + 100 (vedi androidApp/build.gradle.kts, #46).
+          # Same number as the app: commits on main + 100 (see androidApp/build.gradle.kts, #46).
           VERSION="0.1.$(( $(git rev-list --count HEAD) + 100 ))"
           mkdir -p out
           for f in androidApp/build/outputs/apk/github/release/*.apk; do
@@ -74,18 +74,18 @@ jobs:
             cp "$f" "out/RidePlan-$VERSION-$abi.apk"
           done
           ls -la out
-          # Senza strip l'APK supera i 150 MB: meglio nessuna Release che una enorme.
+          # Without strip the APK exceeds 150 MB: better no Release than a huge one.
           big=$(find out -name '*.apk' -size +60M)
-          if [ -n "$big" ]; then echo "::error::APK troppo grandi (simboli non tolti?): $big"; exit 1; fi
+          if [ -n "$big" ]; then echo "::error::APKs too large (symbols not stripped?): $big"; exit 1; fi
           {
             echo "$(git log -1 --format=%s)"
             echo
-            echo "**Quale APK scaricare**"
-            echo "- \`arm64-v8a\`: quasi tutti i telefoni Android dal 2017 in poi."
-            echo "- \`armeabi-v7a\`: telefoni vecchi a 32 bit."
-            echo "- \`x86_64\`: emulatori e pochi tablet."
+            echo "**Which APK to download**"
+            echo "- \`arm64-v8a\`: almost all Android phones from 2017 onwards."
+            echo "- \`armeabi-v7a\`: old 32-bit phones."
+            echo "- \`x86_64\`: emulators and a few tablets."
             echo
-            echo "Se RidePlan e' gia' installato da una Release, l'app propone da sola l'aggiornamento."
+            echo "If RidePlan is already installed from a Release, the app offers the update by itself."
           } > notes.md
           gh release create "v$VERSION" out/*.apk \
             --target "$GITHUB_SHA" \

@@ -104,7 +104,7 @@
         <item quantity="one">%1$d Stopp</item>
         <item quantity="other">%1$d Stopps</item>
     </plurals>
-    <!-- Startbildschirm und Profil (#41) -->
+    <!-- Home screen and profile (#41) -->
     <string name="home_hello">Hallo, %1$s</string>
     <string name="home_hello_anon">Hallo, Biker</string>
     <string name="home_add_profile">Namen und Motorrad hinzufügen</string>

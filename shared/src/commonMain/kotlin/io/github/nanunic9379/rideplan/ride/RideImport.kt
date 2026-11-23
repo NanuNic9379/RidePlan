@@ -1,6 +1,6 @@
 package io.github.nanunic9379.rideplan.ride
 
-/** Motivi per cui un giro non si importa. Il testo, tradotto, lo sceglie l'interfaccia (#33). */
+/** Reasons why a ride cannot be imported. The UI picks the translated text (#33). */
 enum class ImportError {
     UNKNOWN_FORMAT, GPX_EMPTY, KML_EMPTY, NOT_GOOGLE_MAPS, NO_STOPS, SINGLE_PLACE,
     STOP_WITHOUT_COORDS, LINK_NAMES_WITHOUT_COORDS, INVALID_COORDS,
@@ -8,25 +8,25 @@ enum class ImportError {
     LINK_BROKEN,
 }
 
-/** Errore di importazione. [detail]: dato tecnico facoltativo (es. codice HTTP), non tradotto. */
+/** Import error. [detail]: optional technical detail (e.g. HTTP code), not translated. */
 class ImportException(val error: ImportError, val detail: String? = null) : Exception("$error${detail?.let { ": $it" } ?: ""}")
 
 /**
- * Lettura di un giro da GPX, KML o link di Google Maps (#27, #5).
- * Tutto avviene nel telefono. L'unica cosa che passa dalla rete è l'apertura di un link
- * corto di Google (maps.app.goo.gl), e quella la fa la piattaforma.
+ * Reading a ride from GPX, KML or a Google Maps link (#27, #5).
+ * Everything happens on the phone. The only thing that goes over the network is opening a
+ * Google short link (maps.app.goo.gl), and the platform does that.
  */
 object RideImport {
     private val urlPattern = Regex("""https?://\S+""")
     private val shortLinkHosts = listOf("maps.app.goo.gl", "goo.gl/maps")
 
-    /** Il primo link nel testo condiviso (Google Maps manda "nome del posto + link"). */
+    /** The first link in the shared text (Google Maps sends "place name + link"). */
     fun findUrl(text: String): String? = urlPattern.find(text)?.value?.trimEnd('.', ',', ')')
 
-    /** Link corto da aprire in rete per scoprire il link completo. */
+    /** Short link to open over the network to find the full link. */
     fun isShortLink(url: String): Boolean = shortLinkHosts.any { url.contains("://$it") }
 
-    /** Riconosce da solo il formato. [text] è il contenuto di un file o un link completo. */
+    /** Detects the format by itself. [text] is the content of a file or a full link. */
     fun parse(text: String): Ride {
         val trimmed = text.trim().removePrefix("﻿")
         val url = findUrl(trimmed)
@@ -40,14 +40,14 @@ object RideImport {
     }
 }
 
-/** Lettore XML minimo per GPX e KML: niente librerie, solo le parti che servono. */
+/** Minimal XML reader for GPX and KML: no libraries, only the parts needed. */
 internal object Xml {
     private val cdata = Regex("""<!\[CDATA\[(.*?)]]>""", RegexOption.DOT_MATCHES_ALL)
     private val comment = Regex("""<!--.*?-->""", RegexOption.DOT_MATCHES_ALL)
 
     fun stripComments(xml: String) = comment.replace(xml, "")
 
-    /** Blocchi `<tag ...>...</tag>` o `<tag .../>`, con il prefisso di namespace facoltativo. */
+    /** `<tag ...>...</tag>` or `<tag .../>` blocks, with an optional namespace prefix. */
     fun elements(xml: String, tag: String): List<Element> =
         Regex("""<(?:\w+:)?$tag\b([^>]*?)(?:/>|>(.*?)</(?:\w+:)?$tag\s*>)""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
             .findAll(xml).map { Element(it.groupValues[1], it.groupValues[2]) }.toList()
@@ -73,7 +73,7 @@ internal object Gpx {
         val routePoints = Xml.elements(xml, "rtept").map { it to point(it) }
         val waypoints = Xml.elements(xml, "wpt").mapNotNull { e -> point(e)?.let { Stop(Xml.text(e.body, "name"), it) } }
 
-        // Una rotta (rte) senza traccia: i suoi punti sono le tappe.
+        // A route (rte) without a track: its points are the stops.
         val stops = waypoints.ifEmpty {
             if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { Stop(Xml.text(e.body, "name"), it) } } else emptyList()
         }
@@ -81,7 +81,7 @@ internal object Gpx {
         if (track.size < 2 && stops.size < 2) throw ImportException(ImportError.GPX_EMPTY)
 
         val name = listOf("metadata", "trk", "rte").firstNotNullOfOrNull { tag ->
-            // Solo il <name> del giro: tolgo prima i punti, che hanno il loro <name>.
+            // Only the ride's <name>: strip the points first, they have their own <name>.
             Xml.elements(xml, tag).firstOrNull()?.body?.let { body -> Xml.text(withoutPoints(body), "name") }
         }
         return Ride(name, track, Stop.guessKinds(stops, towns = false), Ride.Source.GPX)
@@ -108,7 +108,7 @@ internal object Kml {
             for (line in Xml.elements(placemark.body, "LineString")) {
                 Xml.elements(line.body, "coordinates").forEach { track += coordinates(it.body) }
             }
-            // Traccia registrata (gx:Track): "lon lat alt" per riga.
+            // Recorded track (gx:Track): "lon lat alt" per line.
             Xml.elements(placemark.body, "coord").forEach { c ->
                 val parts = c.body.trim().split(Regex("\\s+"))
                 coord(parts.getOrNull(0), parts.getOrNull(1))?.let { track += it }
@@ -140,10 +140,10 @@ internal object Kml {
 }
 
 /**
- * Link di Google Maps già completi (dopo aver aperto quello corto).
- * Formati: /maps/dir/A/B/C/data=...!3d<lat>!4d<lon>..., /maps/place/Nome/@lat,lon,
+ * Google Maps links that are already full (after opening the short one).
+ * Formats: /maps/dir/A/B/C/data=...!3d<lat>!4d<lon>..., /maps/place/Name/@lat,lon,
  * ?api=1&origin=..&destination=..&waypoints=a|b.
- * Google non dà la strada ma solo le tappe: la strada si ricalcola (#3).
+ * Google gives only the stops, not the road: the road is recalculated (#3).
  */
 internal object GoogleMapsLink {
     private val coordPair = Regex("""^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$""")
@@ -201,7 +201,7 @@ internal object GoogleMapsLink {
     private fun latLon(lat: String, lon: String): LatLon? =
         runCatching { LatLon(lat.toDouble(), lon.toDouble()) }.getOrNull()
 
-    /** Decodifica %XX (UTF-8) e '+'. */
+    /** Decodes %XX (UTF-8) and '+'. */
     fun urlDecode(s: String): String {
         val bytes = ArrayList<Byte>(s.length)
         var i = 0
