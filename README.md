@@ -32,3 +32,15 @@ I dati delle mappe sono © i contributori di OpenStreetMap, licenza ODbL.
 *English:* RidePlan is a free, open-source motorcycle route planner for Android and iPhone.
 Plan rides with offline OpenStreetMap maps, prefer twisty roads, and share routes rider-to-rider
 (QR, link, GPX, or signed posts on the open Nostr network) — no accounts, no ads, no tracking.
+
+## Compilare
+
+Serve JDK 21 e l'SDK Android (piattaforma 37).
+
+```
+./gradlew :androidApp:assembleDebug        # APK in androidApp/build/outputs/apk/debug
+./gradlew :shared:testAndroidHostTest      # test del codice comune
+```
+
+L'app per iPhone (`iosApp/`) si compila solo su macOS con Xcode; la pipeline lo fa a ogni PR
+per il simulatore, senza firma.
