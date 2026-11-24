@@ -535,4 +535,19 @@
     <string name="day_time_estimate">~%1$s</string>
     <string name="day_share">Tag %1$d als GPX teilen</string>
     <string name="days_share_all">Jeden Tag als GPX teilen</string>
+    <string name="fuel_title">Kraftstoff</string>
+    <string name="fuel_longest">Längste Strecke ohne Tankstelle: %1$s</string>
+    <string name="fuel_over_range">Länger als die Reichweite deines Motorrads (%1$s):</string>
+    <string name="fuel_stretch">von %1$s bis %2$s ab dem Start</string>
+    <string name="fuel_within_range">Innerhalb der Reichweite deines Motorrads (%1$s).</string>
+    <string name="fuel_no_range">Gib in der Garage Tankinhalt und Verbrauch deines Motorrads ein, um bei zu langen Strecken gewarnt zu werden.</string>
+    <string name="fuel_none">Keine Tankstellen an der Strecke.</string>
+    <string name="fuel_unknown">Tankstellen hier unbekannt: Die Straßendaten auf dem Telefon enthalten sie nicht.</string>
+    <string name="fuel_hide">Tankstellen ausblenden</string>
+    <string name="fuel_station">Tankstelle</string>
+    <string name="fuel_refuel_here">Hier tanken</string>
+    <plurals name="fuel_show">
+        <item quantity="one">1 Tankstelle an der Tour anzeigen</item>
+        <item quantity="other">%1$d Tankstellen an der Tour anzeigen</item>
+    </plurals>
 </resources>

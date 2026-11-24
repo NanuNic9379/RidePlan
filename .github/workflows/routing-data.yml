@@ -62,6 +62,16 @@ jobs:
           [ -n "$d" ] || d=$(osmium fileinfo -g header.option.timestamp osm/all.osm.pbf || true)
           echo "date=${d:-unknown}" >> "$GITHUB_OUTPUT"
           echo "OpenStreetMap data from $d"
+      # Fuel stations (#7): Valhalla keeps no points of interest, so they travel in a small
+      # list per cell next to the road packs. Points and areas (stations drawn as a building).
+      - name: Fuel stations
+        run: |
+          osmium tags-filter osm/all.osm.pbf nwr/amenity=fuel -o osm/fuel.osm.pbf
+          mkdir -p data-build
+          osmium export osm/fuel.osm.pbf -f geojsonseq -x print_record_separator=false \
+            --geometry-types=point,polygon -o data-build/fuel.geojsonseq
+          rm osm/fuel.osm.pbf
+          wc -l data-build/fuel.geojsonseq
       - name: Only roads, ferries, turn restrictions and boundaries
         run: |
           /usr/bin/time -v osmium tags-filter osm/all.osm.pbf \
@@ -87,7 +97,8 @@ jobs:
       - name: Grid cells
         run: |
           python3 data/routing_data.py cells data/routing-data.json data-build/tiles out \
-            "${{ github.run_id }}" "${{ steps.osm.outputs.date }}" "$VALHALLA_VERSION"
+            "${{ github.run_id }}" "${{ steps.osm.outputs.date }}" "$VALHALLA_VERSION" \
+            data-build/fuel.geojsonseq
           ls -la out | head -20
       - name: Publish
         env:
@@ -106,9 +117,9 @@ jobs:
           # File names carry the build number: the new files sit next to the old ones until the
           # manifest changes, so a download in progress still finds the files it expects.
           gh release upload routing-data out/*.zip --clobber
+          gh release upload routing-data out/*.tsv --clobber
           gh release upload routing-data out/cells.json --clobber
-          # Then remove the packs of earlier builds (a Release holds at most 1000 files).
-
+          # Then remove the packs and fuel lists of earlier builds (a Release holds at most 1000 files).
           gh release view routing-data --json assets -q '.assets[].name' \
             | python3 data/routing_data.py stale out/cells.json \
             | while read -r name; do gh release delete-asset routing-data "$name" -y; done

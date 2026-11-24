@@ -536,4 +536,19 @@
     <string name="day_time_estimate">~%1$s</string>
     <string name="day_share">Partager le jour %1$d en GPX</string>
     <string name="days_share_all">Partager chaque jour en GPX</string>
+    <string name="fuel_title">Carburant</string>
+    <string name="fuel_longest">Plus long tronçon sans station : %1$s</string>
+    <string name="fuel_over_range">Plus long que l\'autonomie de ta moto (%1$s) :</string>
+    <string name="fuel_stretch">de %1$s à %2$s depuis le départ</string>
+    <string name="fuel_within_range">Dans l\'autonomie de ta moto (%1$s).</string>
+    <string name="fuel_no_range">Indique le réservoir et la consommation de ta moto dans le garage pour être averti quand un tronçon est trop long.</string>
+    <string name="fuel_none">Aucune station-service le long de la route.</string>
+    <string name="fuel_unknown">Stations-service inconnues ici : les données routières du téléphone ne les contiennent pas.</string>
+    <string name="fuel_hide">Masquer les stations</string>
+    <string name="fuel_station">Station-service</string>
+    <string name="fuel_refuel_here">Faire le plein ici</string>
+    <plurals name="fuel_show">
+        <item quantity="one">Afficher 1 station sur la balade</item>
+        <item quantity="other">Afficher %1$d stations sur la balade</item>
+    </plurals>
 </resources>

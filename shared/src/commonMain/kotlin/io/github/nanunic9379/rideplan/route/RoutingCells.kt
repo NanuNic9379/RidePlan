@@ -34,6 +34,8 @@ data class RoutingPack(
     /** Space used on the phone once extracted. */
     val tileBytes: Long,
     val sha256: String,
+    /** The fuel stations of the cell (#7): only level 1, only builds made after #7. */
+    val fuel: FuelFile? = null,
 ) {
     fun contains(p: LatLon): Boolean = p.lon >= bbox[0] && p.lat >= bbox[1] && p.lon <= bbox[2] && p.lat <= bbox[3]
 
@@ -90,6 +92,13 @@ data class RoutingCells(
                     put("bytes", p.bytes)
                     put("tileBytes", p.tileBytes)
                     put("sha256", p.sha256)
+                    p.fuel?.let { f ->
+                        put("fuel", buildJsonObject {
+                            put("file", f.file)
+                            put("bytes", f.bytes)
+                            put("sha256", f.sha256)
+                        })
+                    }
                 })
             }
         })
@@ -117,7 +126,15 @@ data class RoutingCells(
             bytes = getValue("bytes").jsonPrimitive.long,
             tileBytes = getValue("tileBytes").jsonPrimitive.long,
             sha256 = str("sha256"),
+            // Optional and never fatal: a manifest without it, or with a broken one, still routes.
+            fuel = runCatching { get("fuel")?.jsonObject?.toFuelFile() }.getOrNull(),
         ).also { require(Regex("""l[01]-\d+""").matches(it.id)) { "Invalid pack" } }
+
+        private fun JsonObject.toFuelFile() = FuelFile(
+            file = str("file"),
+            bytes = getValue("bytes").jsonPrimitive.long,
+            sha256 = str("sha256"),
+        ).takeIf { FuelFile.NAME.matches(it.file) }
 
         private fun JsonObject.str(key: String) = getValue(key).jsonPrimitive.content
     }
@@ -143,7 +160,7 @@ data class RegionDownload(val region: RoutingRegion) : DataDownload {
  * an older build and must be replaced (they cannot be mixed with the new ones).
  */
 data class CellsDownload(val cells: RoutingCells, val packs: List<RoutingPack>, val wipe: Boolean) : DataDownload {
-    override val bytes: Long get() = packs.sumOf { it.bytes }
+    override val bytes: Long get() = packs.sumOf { it.bytes + (it.fuel?.bytes ?: 0) }
     override val tileBytes: Long get() = packs.sumOf { it.tileBytes }
 
     companion object {

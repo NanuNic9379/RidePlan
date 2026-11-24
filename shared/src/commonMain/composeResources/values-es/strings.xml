@@ -536,4 +536,19 @@
     <string name="day_time_estimate">~%1$s</string>
     <string name="day_share">Compartir el día %1$d en GPX</string>
     <string name="days_share_all">Compartir cada día en GPX</string>
+    <string name="fuel_title">Combustible</string>
+    <string name="fuel_longest">Tramo más largo sin gasolineras: %1$s</string>
+    <string name="fuel_over_range">Más largo que la autonomía de tu moto (%1$s):</string>
+    <string name="fuel_stretch">de %1$s a %2$s desde la salida</string>
+    <string name="fuel_within_range">Dentro de la autonomía de tu moto (%1$s).</string>
+    <string name="fuel_no_range">Añade el depósito y el consumo de tu moto en el garaje para recibir un aviso cuando un tramo sea demasiado largo.</string>
+    <string name="fuel_none">No hay gasolineras a lo largo de la carretera.</string>
+    <string name="fuel_unknown">Gasolineras desconocidas aquí: los datos de carreteras del teléfono no las incluyen.</string>
+    <string name="fuel_hide">Ocultar gasolineras</string>
+    <string name="fuel_station">Gasolinera</string>
+    <string name="fuel_refuel_here">Repostar aquí</string>
+    <plurals name="fuel_show">
+        <item quantity="one">Mostrar 1 gasolinera en la ruta</item>
+        <item quantity="other">Mostrar %1$d gasolineras en la ruta</item>
+    </plurals>
 </resources>

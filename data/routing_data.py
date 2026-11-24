@@ -1,8 +1,9 @@
 """Helpers for the routing data pipeline (#3, #45). Standard library only.
 
   python routing_data.py source CONFIG.json                     -> URL of the OpenStreetMap data
-  python routing_data.py cells  CONFIG.json TILES_DIR OUTDIR BUILD OSM_DATE VALHALLA
+  python routing_data.py cells  CONFIG.json TILES_DIR OUTDIR BUILD OSM_DATE VALHALLA [FUEL.geojsonseq]
                                                                -> one .zip pack per grid cell, plus cells.json
+                                                                  (and one fuel station list per cell, #7)
   python routing_data.py stale  CELLS.json < NAMES             -> old packs to remove from the Release
 
 The data is built once for the whole of Italy, so downloaded cells always fit together
@@ -11,6 +12,11 @@ The Valhalla tile directory is then split into packs:
   - one pack per 1-degree cell (the level-1 tile plus its 16 level-2 tiles);
   - one pack per 4-degree block with the main roads (level 0), shared by the cells inside it.
 The app downloads only the packs around the ride and puts them all into the same directory.
+
+Fuel stations (#7): Valhalla keeps no points of interest, so the stations (amenity=fuel, from
+`osmium export ... -f geojsonseq`) go into a small text file per 1-degree cell, listed in the
+cell's manifest entry under "fuel". Every cell gets one, even an empty one: on the phone a missing
+file means "unknown", never "no stations". App versions without #7 ignore the extra field.
 """
 import hashlib
 import json
@@ -30,6 +36,15 @@ TILE_PATH = re.compile(r"^([012])/((?:\d{3}/)*\d{3})\.gph$")
 # A published pack: l<level>-<tile id>-<build>.zip
 PACK_FILE = re.compile(r"^l[01]-\d+-[\w.]+\.zip$")
 
+# A published fuel station list (#7): fuel-l1-<tile id>-<build>.tsv
+FUEL_FILE = re.compile(r"^fuel-l1-\d+-[\w.]+\.tsv$")
+
+# First line of a fuel file: format and columns. Change the number only if the app can no longer read it.
+FUEL_HEADER = "#rideplan-fuel 1\tlat\tlon\tbrand\tname"
+
+# Stations closer than this (degrees, about 30 m) are the same one mapped twice (point and area).
+FUEL_SAME = 0.0003
+
 # GitHub Release limits (#14): each file under 2 GiB, at most 1000 files per Release. During an
 # update the new packs sit next to the old ones before these are removed, so twice the packs
 # (plus cells.json) must fit. Checked before publishing, so a too-big area fails the build
@@ -42,8 +57,10 @@ def release_problems(packs):
     """What would not fit in one Release; empty list if everything is fine."""
     problems = [f"{p['file']} is {p['bytes'] / 1e9:.2f} GB, over the 2 GiB per-file limit"
                 for p in packs if p["bytes"] >= MAX_ASSET_BYTES]
-    if 2 * len(packs) + 1 > MAX_RELEASE_ASSETS:
-        problems.append(f"{len(packs)} packs: an update needs {2 * len(packs) + 1} files, "
+    # Each cell can also carry a fuel station list (#7): one more file in the Release.
+    files = len(packs) + sum(1 for p in packs if "fuel" in p)
+    if 2 * files + 1 > MAX_RELEASE_ASSETS:
+        problems.append(f"{len(packs)} packs and their side files: an update needs {2 * files + 1} files, "
                         f"over the {MAX_RELEASE_ASSETS}-file limit of a Release; split the area")
     return problems
 
@@ -84,7 +101,85 @@ def sha256(path):
     return h.hexdigest()
 
 
-def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
+def centroid(geometry):
+    """A representative point of a GeoJSON geometry: the point itself, or the mean of the outer ring's vertices."""
+    kind, coords = geometry.get("type"), geometry.get("coordinates")
+    if kind == "Point":
+        return coords
+    if kind == "LineString":
+        ring = coords
+    elif kind == "Polygon":
+        ring = coords[0] if coords else None
+    elif kind == "MultiPolygon":
+        ring = coords[0][0] if coords and coords[0] else None
+    else:
+        return None
+    if not ring:
+        return None
+    if len(ring) > 1 and ring[0] == ring[-1]:
+        ring = ring[:-1]
+    return [sum(p[0] for p in ring) / len(ring), sum(p[1] for p in ring) / len(ring)]
+
+
+def clean(text):
+    """A tag value fit for one TSV field."""
+    return " ".join(str(text or "").replace("\t", " ").split())[:80]
+
+
+def sells_petrol(tags):
+    """False only when the tags say there is no petrol (e.g. gas only): unknown counts as yes."""
+    petrol = ("fuel:octane_95", "fuel:octane_98", "fuel:octane_100", "fuel:e5", "fuel:e10")
+    if any(tags.get(k) == "yes" for k in petrol):
+        return True
+    return tags.get("fuel:octane_95") != "no"
+
+
+def fuel_stations(path):
+    """Stations from a GeoJSON sequence: [(lon, lat, brand, name)], without private, disused or duplicate ones."""
+    stations, seen = [], set()
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip().lstrip("\x1e")
+            if not line:
+                continue
+            feature = json.loads(line)
+            tags = feature.get("properties") or {}
+            if tags.get("amenity") != "fuel" or tags.get("access") in ("private", "no"):
+                continue
+            if tags.get("disused") == "yes" or not sells_petrol(tags):
+                continue
+            point = centroid(feature.get("geometry") or {})
+            if not point:
+                continue
+            lon, lat = round(point[0], 5), round(point[1], 5)
+            key = (round(lon / FUEL_SAME), round(lat / FUEL_SAME))
+            if key in seen:
+                continue
+            seen.add(key)
+            stations.append((lon, lat, clean(tags.get("brand") or tags.get("operator")), clean(tags.get("name"))))
+    return stations
+
+
+def write_fuel(outdir, build, cell_ids, stations):
+    """One TSV per 1-degree cell, empty ones too: {cell id: manifest entry}."""
+    by_cell = {cell: [] for cell in cell_ids}
+    for lon, lat, brand, name in stations:
+        cell = tile_id_at(1, lon, lat)
+        if cell in by_cell:
+            by_cell[cell].append((lat, lon, brand, name))
+    entries = {}
+    for cell, rows in by_cell.items():
+        file = f"fuel-l1-{cell}-{build}.tsv"
+        path = os.path.join(outdir, file)
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(FUEL_HEADER + "\n")
+            for lat, lon, brand, name in sorted(rows):
+                f.write(f"{lat}\t{lon}\t{brand}\t{name}\n")
+        entries[cell] = {"file": file, "bytes": os.path.getsize(path), "sha256": sha256(path)}
+    return entries
+
+
+def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla, fuel_path=None):
     area = load(config_path)["bbox"]
     groups = {}  # (pack level, id) -> [relative paths]
     for root, _, files in os.walk(tiles_dir):
@@ -113,6 +208,11 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
         sys.exit(f"{len(outside)} of {len(groups)} packs outside the covered area: wrong tile numbering?")
 
     os.makedirs(outdir, exist_ok=True)
+    fuel = {}
+    if fuel_path:
+        stations = fuel_stations(fuel_path)
+        fuel = write_fuel(outdir, build, [tile_id for level, tile_id in groups if level == 1], stations)
+        print(f"{len(stations)} fuel stations in {len(fuel)} cells")
     packs = []
     for (level, tile_id), rels in sorted(groups.items()):
         bbox = tile_bbox(level, tile_id)
@@ -124,7 +224,7 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
                 full = os.path.join(tiles_dir, rel)
                 tile_bytes += os.path.getsize(full)
                 z.write(full, rel)
-        packs.append({
+        pack = {
             "id": f"l{level}-{tile_id}",
             "level": level,
             "bbox": bbox,
@@ -132,7 +232,10 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
             "bytes": os.path.getsize(path),
             "tileBytes": tile_bytes,  # space used on the phone after extraction
             "sha256": sha256(path),
-        })
+        }
+        if level == 1 and tile_id in fuel:
+            pack["fuel"] = fuel[tile_id]
+        packs.append(pack)
     problems = release_problems(packs)
     if problems:
         sys.exit("\n".join(problems))
@@ -150,10 +253,11 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
 def stale(manifest_path):
     """From the Release file names (one per line), those of packs no longer in the manifest."""
 
-    keep = {p["file"] for p in load(manifest_path)["packs"]}
+    packs = load(manifest_path)["packs"]
+    keep = {p["file"] for p in packs} | {p["fuel"]["file"] for p in packs if "fuel" in p}
     for line in sys.stdin:
         name = line.strip()
-        if PACK_FILE.match(name) and name not in keep:
+        if (PACK_FILE.match(name) or FUEL_FILE.match(name)) and name not in keep:
             print(name)
 
 

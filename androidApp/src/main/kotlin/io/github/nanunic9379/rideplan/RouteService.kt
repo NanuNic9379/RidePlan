@@ -12,6 +12,11 @@ import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
 import io.github.nanunic9379.rideplan.route.RouteOptions
 import io.github.nanunic9379.rideplan.route.CellsDownload
+import io.github.nanunic9379.rideplan.route.FuelData
+import io.github.nanunic9379.rideplan.route.FuelFile
+import io.github.nanunic9379.rideplan.route.FuelStation
+import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.route.RoutingPack
 import io.github.nanunic9379.rideplan.route.RoutingCells
 import io.github.nanunic9379.rideplan.route.RoutingData
 import io.github.nanunic9379.rideplan.route.RoutingRegion
@@ -47,6 +52,8 @@ class RouteService(context: Context) {
     private val tilesDir = File(cellsDir, "tiles")
     private val cellsManifest = File(cellsDir, "manifest.json")
     private val cellsInstalled = File(cellsDir, "installed.txt")
+    /** Fuel stations of each installed cell (#7): <pack id>.tsv, only for builds that publish them. */
+    private val fuelDir = File(cellsDir, "fuel")
 
     private var engine: Valhalla? = null
     private var engineData: String? = null
@@ -80,6 +87,7 @@ class RouteService(context: Context) {
                 // New build: the old cells do not match the new ones.
                 cellsInstalled.delete()
                 tilesDir.deleteRecursively()
+                fuelDir.deleteRecursively()
                 cellsDir.mkdirs()
                 cellsManifest.writeText(plan.cells.toJson())
             }
@@ -115,13 +123,51 @@ class RouteService(context: Context) {
                     target.delete()
                     if (!f.renameTo(target)) throw IOException("rename")
                 }
+                pack.fuel?.let { downloadFuel(pack, it) }
                 cellsInstalled.appendText(pack.id + "\n")
-                base += pack.bytes
+                base += pack.bytes + (pack.fuel?.bytes ?: 0)
             }
         } catch (e: IOException) {
             throw RouteException(if (dir.usableSpace < 50_000_000) RouteError.NO_SPACE else RouteError.NETWORK, e.javaClass.simpleName)
         } finally {
             staging.deleteRecursively()
+        }
+    }
+
+    /**
+     * The fuel stations of one cell (#7), checked like the road packs. Never fatal: without the
+     * list the ride still routes, and the ride sheet says the stations are unknown there.
+     */
+    private fun downloadFuel(pack: RoutingPack, fuel: FuelFile) {
+        val part = File(fuelDir, pack.id + ".tsv.part")
+        try {
+            fuelDir.mkdirs()
+            val bytes = get(BuildConfig.ROUTING_DATA_URL + fuel.file).use { it.readCapped(MAX_FUEL_BYTES) }
+            val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+            if (sha != fuel.sha256) return
+            FuelData.parse(bytes.decodeToString())
+            part.writeBytes(bytes)
+            val target = File(fuelDir, pack.id + ".tsv")
+            target.delete()
+            part.renameTo(target)
+        } catch (e: IOException) {
+            // Only the station list is missing.
+        } catch (e: IllegalArgumentException) {
+            // Unknown list format: same as missing.
+        } finally {
+            part.delete()
+        }
+    }
+
+    /**
+     * The fuel stations that may be near [line] (#7), from the lists of the installed cells.
+     * Null when part of the line has no list on the phone: then nothing is said about fuel.
+     */
+    fun fuelNear(line: List<LatLon>): List<FuelStation>? {
+        val cells = localCells() ?: return null
+        val installed = installedPacks()
+        return FuelData.stationsAlong(cells, line) { id ->
+            if (id in installed) File(fuelDir, "$id.tsv").takeIf { it.isFile }?.readText() else null
         }
     }
 
@@ -292,10 +338,24 @@ class RouteService(context: Context) {
 
     private companion object {
         const val CELLS_ID = "cells"
+        /** A cell's fuel list is a few kB: anything this big is not one. */
+        const val MAX_FUEL_BYTES = 4_000_000
         val TILE = Regex("""[012](/\d{3})+\.gph""")
     }
 
     private class NotFound : IOException("HTTP 404")
+
+    private fun InputStream.readCapped(max: Int): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        val buf = ByteArray(1 shl 14)
+        while (true) {
+            val n = read(buf)
+            if (n < 0) break
+            out.write(buf, 0, n)
+            if (out.size() > max) throw IOException("fuel list too big")
+        }
+        return out.toByteArray()
+    }
 
     private class CountingStream(private val inner: InputStream, private val progress: (Long) -> Unit) : InputStream() {
         private var count = 0L

@@ -158,6 +158,7 @@ class MainActivity : ComponentActivity() {
             deletePreset = { id -> saveRouteSettings(routeSettings().withoutPreset(id)) },
             toggleStop = { i -> rides.ride?.let { reroute(it.toggledStop(i)) } },
             editStops = ::editStops,
+            fuelStations = { line -> withContext(Dispatchers.IO) { router.fuelNear(line) } },
         )
         val fresh = session.store == null
         store = session.store ?: profileStore().also { session.store = it }

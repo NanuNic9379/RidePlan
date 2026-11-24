@@ -536,4 +536,19 @@
     <string name="day_time_estimate">~%1$s</string>
     <string name="day_share">Share day %1$d as GPX</string>
     <string name="days_share_all">Share each day as GPX</string>
+    <string name="fuel_title">Fuel</string>
+    <string name="fuel_longest">Longest stretch without fuel: %1$s</string>
+    <string name="fuel_over_range">Longer than your bike\'s range (%1$s):</string>
+    <string name="fuel_stretch">from %1$s to %2$s from the start</string>
+    <string name="fuel_within_range">Within your bike\'s range (%1$s).</string>
+    <string name="fuel_no_range">Add tank size and consumption to your bike in the garage to be warned when a stretch is too long.</string>
+    <string name="fuel_none">No fuel stations along the road.</string>
+    <string name="fuel_unknown">Fuel stations unknown here: the road data on the phone does not list them.</string>
+    <string name="fuel_hide">Hide stations</string>
+    <string name="fuel_station">Fuel station</string>
+    <string name="fuel_refuel_here">Refuel here</string>
+    <plurals name="fuel_show">
+        <item quantity="one">Show 1 station along the ride</item>
+        <item quantity="other">Show %1$d stations along the ride</item>
+    </plurals>
 </resources>

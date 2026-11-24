@@ -535,4 +535,19 @@
     <string name="day_time_estimate">~%1$s</string>
     <string name="day_share">Condividi il giorno %1$d in GPX</string>
     <string name="days_share_all">Condividi ogni giorno in GPX</string>
+    <string name="fuel_title">Carburante</string>
+    <string name="fuel_longest">Tratto più lungo senza distributori: %1$s</string>
+    <string name="fuel_over_range">Più lungo dell\'autonomia della moto (%1$s):</string>
+    <string name="fuel_stretch">da %1$s a %2$s dalla partenza</string>
+    <string name="fuel_within_range">Entro l\'autonomia della moto (%1$s).</string>
+    <string name="fuel_no_range">Inserisci serbatoio e consumo della moto nel garage per essere avvisato quando un tratto è troppo lungo.</string>
+    <string name="fuel_none">Nessun distributore lungo la strada.</string>
+    <string name="fuel_unknown">Distributori non noti qui: i dati stradali sul telefono non li contengono.</string>
+    <string name="fuel_hide">Nascondi distributori</string>
+    <string name="fuel_station">Distributore</string>
+    <string name="fuel_refuel_here">Fai benzina qui</string>
+    <plurals name="fuel_show">
+        <item quantity="one">Mostra 1 distributore lungo il giro</item>
+        <item quantity="other">Mostra %1$d distributori lungo il giro</item>
+    </plurals>
 </resources>
