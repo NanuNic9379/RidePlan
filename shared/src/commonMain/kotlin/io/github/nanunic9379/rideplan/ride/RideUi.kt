@@ -305,6 +305,8 @@ class ImportActions(
     val shareGpx: ((ride: Ride, fallbackName: String) -> Unit)? = null,
     /** Sends a text (the ride link, #6) with the system share sheet. */
     val shareText: ((String) -> Unit)? = null,
+    /** Sends several GPX files at once (name, content): the days of a trip, #12. */
+    val shareFiles: ((List<Pair<String, String>>) -> Unit)? = null,
 )
 
 private val RouteColor = Brand.Orange
@@ -517,6 +519,7 @@ fun RideSheet(
                     Text(stringResource(Res.string.stop_edit_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            DaysSection(ride, enabled = !busy, fallbackName = title, onChange = { state.ride = it }, share = actions?.shareFiles)
             HorizontalDivider()
             saved()
             if (actions != null) {

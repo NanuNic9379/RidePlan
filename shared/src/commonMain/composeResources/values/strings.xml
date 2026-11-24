@@ -521,4 +521,19 @@
     <string name="units_auto">Auto</string>
     <string name="units_note">Automatic follows the country of the phone: miles in the US and the UK, kilometres elsewhere.</string>
     <string name="nav_say_continue">Continue for %1$s.</string>
+    <string name="days_title">Days</string>
+    <string name="days_hint">Split a long trip: each day ends where you sleep.</string>
+    <string name="days_cap_switch">Daily limit</string>
+    <string name="days_cap_km">Distance</string>
+    <string name="days_cap_hours">Riding time</string>
+    <string name="days_cap_value">%1$s a day</string>
+    <string name="days_cap_less">Less per day</string>
+    <string name="days_cap_more">More per day</string>
+    <string name="days_overnights">Overnight stops</string>
+    <string name="days_overnights_hint">Tap where you sleep: the day ends there.</string>
+    <string name="day_title">Day %1$d</string>
+    <string name="day_on_road">on the road at %1$s</string>
+    <string name="day_time_estimate">~%1$s</string>
+    <string name="day_share">Share day %1$d as GPX</string>
+    <string name="days_share_all">Share each day as GPX</string>
 </resources>

@@ -18,8 +18,9 @@ data class LatLon(val lat: Double, val lon: Double) {
 /**
  * A stop with its name, if the source provides one.
  * [kind]: how much the exact point matters (#29).
+ * [overnight]: the rider sleeps here: a day of a multi-day trip ends at this stop (#12).
  */
-data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP) {
+data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP, val overnight: Boolean = false) {
     enum class Kind {
         /** I really go there (bar, fuel, farm restaurant): the route gets there and stops. */
         STOP,
@@ -86,6 +87,8 @@ data class Ride(
     val maneuvers: List<Maneuver> = emptyList(),
     /** Speed limits along the computed road (#31). Not saved, like [maneuvers]. */
     val speedLimits: SpeedLimits = SpeedLimits.NONE,
+    /** Daily cap of a multi-day trip (#12); null = no automatic split into days. */
+    val dayCap: DayCap? = null,
 ) {
     enum class Source {
         GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,
