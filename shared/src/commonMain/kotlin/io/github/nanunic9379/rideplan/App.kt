@@ -24,7 +24,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,15 +40,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.HomeButton
-import io.github.nanunic9379.rideplan.profile.HomeScreen
-import io.github.nanunic9379.rideplan.profile.ProfileScreen
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.SavedRow
+import io.github.nanunic9379.rideplan.profile.ThemeMode
 import io.github.nanunic9379.rideplan.profile.WelcomeScreen
+import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.personal.MainNavBar
+import io.github.nanunic9379.rideplan.personal.PersonalArea
+import io.github.nanunic9379.rideplan.personal.PlatformActions
 import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.ImportFab
 import io.github.nanunic9379.rideplan.ride.ImportStatus
-import io.github.nanunic9379.rideplan.ride.Page
 import io.github.nanunic9379.rideplan.ride.RideLayers
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
@@ -95,17 +99,25 @@ fun App(
     mapViews: MapViewMemory? = null,
     /** Turn-by-turn navigation on this platform (#5); null = no "Navigate" button. */
     navigation: NavigationPlatform? = null,
+    platform: PlatformActions? = null,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
-    RidePlanTheme {
+    val settings = store?.data?.settings
+    val dark = when (settings?.theme) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        else -> isSystemInDarkTheme()
+    }
+    RidePlanTheme(dark = dark) {
+      CompositionLocalProvider(LocalUnits provides (settings?.units ?: io.github.nanunic9379.rideplan.profile.Units.KM)) {
         val snackbar = remember { SnackbarHostState() }
         val ride = rides.ride
         // Every opened ride ends up in "Your rides" and stays up to date (route, preferences, name).
-        // A ride received by link stays in preview until you save it (#48).
+        // A ride received by link waits in "Received" until you keep or discard it (#48, #21).
         LaunchedEffect(ride) {
-            if (ride != null && store != null && !rides.isPreview) {
+            if (ride != null && store != null) {
                 store.update { d ->
-                    val (fresh, id) = d.save(ride, rides.savedId, store.time())
+                    val (fresh, id) = if (rides.isPreview) d.receive(ride, store.time()) else d.save(ride, rides.savedId, store.time())
                     rides.savedId = id
                     fresh
                 }
@@ -121,14 +133,18 @@ fun App(
                         onExit = { rides.navigating = false },
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
-                    store == null || rides.onMap -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation)
+                    store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false)
                     !store.data.profile.welcomed -> Surface(Modifier.fillMaxSize()) { WelcomeScreen(store) }
-                    rides.page == Page.PROFILE -> Surface(Modifier.fillMaxSize()) { ProfileScreen(store, onBack = { rides.page = Page.HOME }, backup = backupActions) }
-                    else -> Surface(Modifier.fillMaxSize()) { HomeScreen(store, rides, importActions, snackbar) }
+                    rides.onMap -> Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(1f)) { MapScreen(rides, store, importActions, routeActions, mapViews, tabs = true) }
+                        MainNavBar(rides)
+                    }
+                    else -> PersonalArea(store, rides, importActions, backupActions, platform, snackbar)
                 }
                 overlay()
             }
         }
+      }
     }
 }
 
@@ -146,6 +162,8 @@ private fun MapScreen(
     routeActions: RouteActions?,
     mapViews: MapViewMemory?,
     navigation: NavigationPlatform? = null,
+    /** Explore with the bottom bar under the map: it already keeps clear of the system bar. */
+    tabs: Boolean,
 ) {
     val ride = rides.ride
     // Explore opens where you looked last, or around your rides: not on a whole continent.
@@ -187,7 +205,7 @@ private fun MapScreen(
     )
     val scaffold = rememberBottomSheetScaffoldState(sheet)
     val density = LocalDensity.current
-    val navBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navBar = if (tabs) 0.dp else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     // Height of the sheet header, measured: the collapsed sheet shows exactly that.
     var header by remember { mutableStateOf(0.dp) }
@@ -236,7 +254,8 @@ private fun MapScreen(
                                     store,
                                     rides.savedId,
                                     rides.ride?.name,
-                                    onSave = if (rides.isPreview) ({ rides.ride?.let { r -> store.update { d -> d.save(r, null, store.time()).also { rides.savedId = it.second }.first } } }) else null,
+                                    onSave = store.data.rides.firstOrNull { it.id == rides.savedId }?.takeIf { it.received != null }
+                                        ?.let { saved -> { store.update { d -> d.keep(saved.id) } } },
                                 ) { name ->
                                     rides.ride = rides.ride?.copy(name = name.trim().ifEmpty { null })
                                 }
@@ -278,7 +297,7 @@ private fun MapScreen(
                     Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (store != null) HomeButton(onClick = { routeActions?.cancel?.invoke(); rides.goHome() })
+                    if (store != null && !tabs) HomeButton(onClick = { routeActions?.cancel?.invoke(); rides.goHome() })
                     ImportStatus(rides)
                 }
                 if (ride != null && selectedStop != null) {
