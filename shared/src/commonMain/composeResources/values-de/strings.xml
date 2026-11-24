@@ -346,7 +346,10 @@
     <string name="theme_dark">Dunkel</string>
     <string name="theme_note">Dunkel schont abends die Augen; Hell ist in der Sonne besser lesbar.</string>
     <string name="wifi_only">Nur über WLAN laden</string>
-    <string name="wifi_only_text">Straßendaten können Dutzende MB groß sein</string>
+    <string name="wifi_only_text">Straßendaten können Dutzende MB groß sein: im Mobilfunknetz fragt die App vorher</string>
+    <string name="route_mobile_ask">Du bist im Mobilfunknetz. Straßendaten trotzdem herunterladen? Das verbraucht etwa %1$s deines Datenvolumens.</string>
+    <string name="route_mobile_confirm">Über Mobilfunk laden</string>
+    <string name="route_mobile_wait">Auf WLAN warten</string>
     <string name="route_err_wifi">Straßendaten werden nur über WLAN geladen. Verbinde dich mit einem WLAN oder ändere es in den Einstellungen.</string>
     <string name="mapdata_title">Geladene Kartendaten</string>
     <string name="mapdata_none">Keine Straßendaten auf dem Handy</string>

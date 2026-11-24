@@ -146,7 +146,8 @@ class MainActivity : ComponentActivity() {
             shareText = ::shareText,
         )
         val routeActions = RouteActions(
-            download = ::download,
+            download = { download(it) },
+            downloadOnMobile = { download(it, mobileConfirmed = true) },
             cancel = ::cancelRoute,
             retry = { rides.ride?.let(::planRoute) },
             changeOptions = ::changeOptions,
@@ -362,11 +363,14 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
     }
 
-    /** Road data only on Wi-Fi (#21): checked before every download, metered networks refused. */
-    private fun checkNetwork() {
-        if (!store.data.settings.wifiOnly) return
-        val cm = getSystemService(ConnectivityManager::class.java) ?: return
-        if (cm.isActiveNetworkMetered) throw RouteException(RouteError.WIFI_ONLY)
+    /**
+     * Road data only on Wi-Fi (#21): on a metered network the download waits for a confirmation
+     * in the ride sheet instead of failing.
+     */
+    private fun mustAskForMobile(): Boolean {
+        if (!store.data.settings.wifiOnly) return false
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return false
+        return cm.isActiveNetworkMetered
     }
 
     private fun load(block: () -> Ride) {
@@ -417,13 +421,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun download(data: DataDownload) {
+    private fun download(data: DataDownload, mobileConfirmed: Boolean = false) {
         val ride = rides.ride ?: return
+        if (!mobileConfirmed && mustAskForMobile()) {
+            rides.route = RouteState.NeedsData(data, onMobile = true)
+            return
+        }
         routeJob?.cancel()
         routeJob = session.viewModelScope.launch {
             rides.route = RouteState.Downloading(data, 0)
             routeStep(ride) {
-                checkNetwork()
                 val progress = { done: Long -> rides.route = RouteState.Downloading(data, done) }
                 when (data) {
                     is RegionDownload -> {

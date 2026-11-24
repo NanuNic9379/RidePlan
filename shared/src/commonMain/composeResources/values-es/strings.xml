@@ -347,7 +347,10 @@
     <string name="theme_dark">Oscuro</string>
     <string name="theme_note">El oscuro cansa menos la vista por la noche; el claro se lee mejor al sol.</string>
     <string name="wifi_only">Descargar solo con Wi-Fi</string>
-    <string name="wifi_only_text">Los datos de carreteras pueden pesar decenas de MB</string>
+    <string name="wifi_only_text">Los datos de carreteras pueden pesar decenas de MB: con datos móviles la app pregunta antes</string>
+    <string name="route_mobile_ask">Estás con datos móviles. ¿Descargar igualmente los datos de carreteras? Usan unos %1$s de tu tarifa de datos.</string>
+    <string name="route_mobile_confirm">Descargar con datos móviles</string>
+    <string name="route_mobile_wait">Esperar al Wi-Fi</string>
     <string name="route_err_wifi">Los datos de carreteras solo se descargan con Wi-Fi. Conéctate a una red Wi-Fi o cámbialo en Ajustes.</string>
     <string name="mapdata_title">Datos de mapa descargados</string>
     <string name="mapdata_none">No hay datos de carreteras en el móvil</string>
