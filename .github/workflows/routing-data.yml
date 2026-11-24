@@ -11,6 +11,8 @@ name: Routing data
 on:
   workflow_dispatch:
   push:
+    # Only main: a push to a pull request branch must never rebuild or publish the data.
+    branches: [main]
     paths:
       - .github/workflows/routing-data.yml
       - data/routing-data.json
