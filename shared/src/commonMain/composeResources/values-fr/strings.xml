@@ -706,4 +706,31 @@
     <string name="nostr_err_too_big">Cette balade est trop grande pour un relais.</string>
     <string name="nostr_err_no_relays">Ajoutez au moins un relais.</string>
     <string name="nostr_err_nobody">Aucun relais n'a accepté la balade. Vérifiez la connexion et réessayez.</string>
+    <string name="closure_title">Fermetures saisonnières</string>
+    <string name="closure_closed">Selon OpenStreetMap, %1$s est fermé %2$s : vérifiez avant de partir.</string>
+    <string name="closure_partly_period">Selon OpenStreetMap, %1$s est fermé à certaines heures %2$s : vérifiez avant de partir.</string>
+    <string name="closure_partly">Selon OpenStreetMap, %1$s est fermé à certaines heures : vérifiez avant de partir.</string>
+    <string name="closure_unknown">Selon OpenStreetMap, %1$s est fermé une partie de l'année : vérifiez avant de partir.</string>
+    <string name="closure_period">du %1$s au %2$s</string>
+    <string name="closure_day">%1$d %2$s</string>
+    <string name="closure_on_closed">La date de votre balade (%1$s) tombe dans la période de fermeture.</string>
+    <string name="closure_on_partly">À la date de votre balade (%1$s), il peut être fermé à certaines heures.</string>
+    <string name="closure_on_outside">La date de votre balade (%1$s) est hors de cette période, mais les dates d'ouverture changent chaque année avec la neige.</string>
+    <string name="closure_where">de %1$s à %2$s du départ</string>
+    <string name="closure_unnamed">Une route de cette balade</string>
+    <string name="closure_osm">OpenStreetMap : %1$s</string>
+    <string name="closure_avoid">Itinéraire qui l'évite</string>
+    <string name="closure_avoiding">L'itinéraire évite %1$s.</string>
+    <string name="closure_allow">Y passer à nouveau</string>
+    <string name="closure_date">Date de la balade : %1$s</string>
+    <string name="closure_date_change">Changer la date</string>
+    <string name="speed_cameras">Radars</string>
+    <string name="speed_cameras_text">Radars fixes d'OpenStreetMap, sur la carte de la balade et pendant la navigation. Seulement en Italie : dans d'autres pays ces alertes peuvent être interdites.</string>
+    <string name="nav_camera">Radar dans %1$s</string>
+    <string name="nav_say_camera">Radar devant</string>
+    <string name="nav_say_camera_limit">Radar devant, limite %1$d</string>
+    <plurals name="cameras_on_ride">
+        <item quantity="one">%1$d radar fixe sur cette balade, d'OpenStreetMap.</item>
+        <item quantity="other">%1$d radars fixes sur cette balade, d'OpenStreetMap.</item>
+    </plurals>
 </resources>

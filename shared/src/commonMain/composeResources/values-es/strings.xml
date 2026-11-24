@@ -706,4 +706,31 @@
     <string name="nostr_err_too_big">Esta ruta es demasiado grande para un relay.</string>
     <string name="nostr_err_no_relays">Añade al menos un relay.</string>
     <string name="nostr_err_nobody">Ningún relay aceptó la ruta. Comprueba la conexión y vuelve a intentarlo.</string>
+    <string name="closure_title">Cierres de temporada</string>
+    <string name="closure_closed">Según OpenStreetMap, %1$s está cerrado %2$s: compruébalo antes de salir.</string>
+    <string name="closure_partly_period">Según OpenStreetMap, %1$s está cerrado en ciertos horarios %2$s: compruébalo antes de salir.</string>
+    <string name="closure_partly">Según OpenStreetMap, %1$s está cerrado en ciertos horarios: compruébalo antes de salir.</string>
+    <string name="closure_unknown">Según OpenStreetMap, %1$s está cerrado parte del año: compruébalo antes de salir.</string>
+    <string name="closure_period">del %1$s al %2$s</string>
+    <string name="closure_day">%1$d de %2$s</string>
+    <string name="closure_on_closed">La fecha de tu ruta (%1$s) cae en el periodo de cierre.</string>
+    <string name="closure_on_partly">En la fecha de tu ruta (%1$s) puede estar cerrado a ciertas horas.</string>
+    <string name="closure_on_outside">La fecha de tu ruta (%1$s) está fuera de ese periodo, pero las fechas de apertura cambian cada año con la nieve.</string>
+    <string name="closure_where">de %1$s a %2$s desde la salida</string>
+    <string name="closure_unnamed">Una carretera de esta ruta</string>
+    <string name="closure_osm">OpenStreetMap: %1$s</string>
+    <string name="closure_avoid">Ruta que lo evita</string>
+    <string name="closure_avoiding">La ruta evita %1$s.</string>
+    <string name="closure_allow">Volver a pasar por ahí</string>
+    <string name="closure_date">Fecha de la ruta: %1$s</string>
+    <string name="closure_date_change">Cambiar fecha</string>
+    <string name="speed_cameras">Radares</string>
+    <string name="speed_cameras_text">Radares fijos de OpenStreetMap, en el mapa de la ruta y durante la navegación. Solo en Italia: en otros países estos avisos pueden estar prohibidos.</string>
+    <string name="nav_camera">Radar a %1$s</string>
+    <string name="nav_say_camera">Radar más adelante</string>
+    <string name="nav_say_camera_limit">Radar más adelante, límite %1$d</string>
+    <plurals name="cameras_on_ride">
+        <item quantity="one">%1$d radar fijo en esta ruta, de OpenStreetMap.</item>
+        <item quantity="other">%1$d radares fijos en esta ruta, de OpenStreetMap.</item>
+    </plurals>
 </resources>

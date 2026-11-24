@@ -136,7 +136,7 @@ object FuelAlong {
     }
 
     /** The line's segments in a grid of [GRID_KM] squares, to look only at those near a station. */
-    private class SegmentGrid(line: List<LatLon>) {
+    internal class SegmentGrid(line: List<LatLon>) {
         private val maxLat = line.maxOf { abs(it.lat) }.coerceAtMost(85.0)
         private val gLat = GRID_KM / FuelData.KM_PER_DEG_LAT
         // Widest at the highest latitude of the ride: never narrower than GRID_KM anywhere on it.

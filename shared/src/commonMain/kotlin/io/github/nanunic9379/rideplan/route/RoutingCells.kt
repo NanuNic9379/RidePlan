@@ -51,6 +51,8 @@ data class RoutingCells(
     val osmDate: String,
     val valhalla: String,
     val packs: List<RoutingPack>,
+    /** Closures and speed cameras (#13), when the manifest lists them with a checksum. */
+    val roadNotes: RoadNotesFile? = null,
 ) {
     /**
      * The packs a ride needs: the cells near the straight line between consecutive stops, with a
@@ -102,6 +104,13 @@ data class RoutingCells(
                 })
             }
         })
+        roadNotes?.let { n ->
+            put("roadNotes", buildJsonObject {
+                put("file", n.file)
+                put("bytes", n.bytes)
+                put("sha256", n.sha256)
+            })
+        }
     }.toString()
 
     companion object {
@@ -115,6 +124,8 @@ data class RoutingCells(
                 osmDate = root.str("osmDate"),
                 valhalla = root.str("valhalla"),
                 packs = root.getValue("packs").jsonArray.map { it.jsonObject.toPack() },
+                // Optional and never fatal, like the fuel lists.
+                roadNotes = runCatching { root["roadNotes"]?.jsonObject?.let(RoadNotesFile::of) }.getOrNull(),
             )
         }
 

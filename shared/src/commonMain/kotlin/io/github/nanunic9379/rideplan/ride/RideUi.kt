@@ -521,6 +521,7 @@ fun RideSheet(
             RouteSection(route, routeActions)
             RideNotes(ride, route)
             FuelSection(state, routeActions, bike)
+            RoadNotesSection(state, routeActions)
             CountryWarningsSection(ride)
             if (route == RouteState.Idle) offlineMap(ride)
             if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {

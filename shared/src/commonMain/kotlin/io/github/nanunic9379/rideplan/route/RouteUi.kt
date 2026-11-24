@@ -105,6 +105,11 @@ class RouteActions(
     val editStops: (Ride) -> Unit = {},
     /** Fuel stations that may be near a line (#7), from the data on the phone; null = unknown. */
     val fuelStations: (suspend (List<io.github.nanunic9379.rideplan.ride.LatLon>) -> List<FuelStation>?)? = null,
+    /**
+     * Seasonal closures and fixed speed cameras (#13), from the file on the phone; null = not
+     * known (no file): then nothing is said. Cameras are left out when the rider turned them off.
+     */
+    val roadNotes: (suspend () -> RoadNotes?)? = null,
 )
 
 /**

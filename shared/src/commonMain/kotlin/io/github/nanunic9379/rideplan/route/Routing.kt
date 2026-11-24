@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
@@ -168,6 +169,8 @@ object ValhallaRoute {
         options: RouteOptions = RouteOptions(),
         language: String? = null,
         startHeading: Double? = null,
+        /** Areas the route must not cross (#13): Valhalla `exclude_polygons`, closed rings. */
+        avoid: List<List<LatLon>> = emptyList(),
     ): String = buildJsonObject {
         put("locations", buildJsonArray {
             stops.forEachIndexed { i, stop ->
@@ -216,6 +219,13 @@ object ValhallaRoute {
                 }
             })
         })
+        if (avoid.isNotEmpty()) {
+            put("exclude_polygons", buildJsonArray {
+                avoid.forEach { ring ->
+                    add(buildJsonArray { ring.forEach { p -> add(buildJsonArray { add(JsonPrimitive(p.lon)); add(JsonPrimitive(p.lat)) }) } })
+                }
+            })
+        }
         put("units", "kilometers")
         put("shape_format", "polyline6")
         if (language == null) {

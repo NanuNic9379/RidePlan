@@ -705,4 +705,31 @@
     <string name="nostr_err_too_big">Questo giro è troppo grande per un relay.</string>
     <string name="nostr_err_no_relays">Aggiungi almeno un relay.</string>
     <string name="nostr_err_nobody">Nessun relay ha accettato il giro. Controlla la connessione e riprova.</string>
+    <string name="closure_title">Chiusure stagionali</string>
+    <string name="closure_closed">Secondo OpenStreetMap, %1$s è chiuso %2$s: controlla prima di partire.</string>
+    <string name="closure_partly_period">Secondo OpenStreetMap, %1$s è chiuso in certi orari %2$s: controlla prima di partire.</string>
+    <string name="closure_partly">Secondo OpenStreetMap, %1$s è chiuso in certi orari: controlla prima di partire.</string>
+    <string name="closure_unknown">Secondo OpenStreetMap, %1$s è chiuso per una parte dell'anno: controlla prima di partire.</string>
+    <string name="closure_period">da %1$s a %2$s</string>
+    <string name="closure_day">%1$d %2$s</string>
+    <string name="closure_on_closed">La data del giro (%1$s) cade nel periodo di chiusura.</string>
+    <string name="closure_on_partly">Nella data del giro (%1$s) può essere chiuso in certi orari.</string>
+    <string name="closure_on_outside">La data del giro (%1$s) è fuori da quel periodo, ma le date di apertura cambiano ogni anno con la neve.</string>
+    <string name="closure_where">da %1$s a %2$s dalla partenza</string>
+    <string name="closure_unnamed">Una strada del giro</string>
+    <string name="closure_osm">OpenStreetMap: %1$s</string>
+    <string name="closure_avoid">Percorso che lo evita</string>
+    <string name="closure_avoiding">Il percorso evita %1$s.</string>
+    <string name="closure_allow">Passaci di nuovo</string>
+    <string name="closure_date">Data del giro: %1$s</string>
+    <string name="closure_date_change">Cambia data</string>
+    <string name="speed_cameras">Autovelox</string>
+    <string name="speed_cameras_text">Autovelox fissi da OpenStreetMap, sulla mappa del giro e durante la navigazione. Solo in Italia: in altri paesi questi avvisi possono essere vietati.</string>
+    <string name="nav_camera">Autovelox tra %1$s</string>
+    <string name="nav_say_camera">Autovelox più avanti</string>
+    <string name="nav_say_camera_limit">Autovelox più avanti, limite %1$d</string>
+    <plurals name="cameras_on_ride">
+        <item quantity="one">%1$d autovelox fisso su questo giro, da OpenStreetMap.</item>
+        <item quantity="other">%1$d autovelox fissi su questo giro, da OpenStreetMap.</item>
+    </plurals>
 </resources>

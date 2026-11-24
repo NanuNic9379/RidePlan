@@ -18,6 +18,7 @@ import io.github.nanunic9379.rideplan.route.FuelStation
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.route.LocalArea
 import io.github.nanunic9379.rideplan.route.PublishedArea
+import io.github.nanunic9379.rideplan.route.RoadNotes
 import io.github.nanunic9379.rideplan.route.RoutingArea
 import io.github.nanunic9379.rideplan.route.RoutingAreas
 import io.github.nanunic9379.rideplan.route.RoutingPack
@@ -70,6 +71,8 @@ class RouteService(context: Context) {
         val manifest = File(root, "manifest.json")
         val installed = File(root, "installed.txt")
         val fuel = File(root, "fuel")
+        /** Seasonal closures and speed cameras of this area (#13), from its Release. */
+        val notes = File(root, RoadNotes.FILE)
 
         fun cells(): RoutingCells? = runCatching { RoutingCells.parse(manifest.readText()) }.getOrNull()
 
@@ -87,6 +90,12 @@ class RouteService(context: Context) {
     private fun areaIds(): List<String> = listOf(RoutingAreas.ITALY) +
         areasDir.listFiles { f -> f.isDirectory }.orEmpty().map { it.name }
             .filter { RoutingAreas.AREA_ID.matches(it) && it != RoutingAreas.ITALY }.sorted()
+
+    /** Road notes read from each area's file, by file and modification time. */
+    private val notesCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, RoadNotes>>()
+
+    /** Areas whose road notes were already fetched in this run of the app. */
+    private val notesTried = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
     private var engine: Valhalla? = null
     private var engineData: String? = null
@@ -208,6 +217,7 @@ class RouteService(context: Context) {
                 area.installed.appendText(pack.id + "\n")
                 done += pack.bytes + (pack.fuel?.bytes ?: 0)
             }
+            downloadRoadNotes(area, base, plan.cells)
         } catch (e: IOException) {
             throw RouteException(if (dir.usableSpace < 50_000_000) RouteError.NO_SPACE else RouteError.NETWORK, e.javaClass.simpleName)
         } finally {
@@ -255,6 +265,71 @@ class RouteService(context: Context) {
             }?.let { return it }
         }
         return null
+    }
+
+    /**
+     * Closures and speed cameras (#13) of one area, from its Release ([base]), checked with the
+     * manifest's SHA-256 when it lists one, otherwise kept only if the file reads correctly. Never
+     * fatal: without it the ride routes the same and nothing is said about closures or cameras.
+     */
+    private fun downloadRoadNotes(area: AreaFiles, base: String, cells: RoutingCells?) {
+        notesTried += area.id
+        val part = File(area.root, RoadNotes.FILE + ".part")
+        try {
+            area.root.mkdirs()
+            val listed = cells?.roadNotes
+            val bytes = get(base + (listed?.file ?: RoadNotes.FILE)).use { it.readCapped(RoadNotes.MAX_BYTES) }
+            if (listed != null) {
+                val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+                if (sha != listed.sha256) return
+            }
+            RoadNotes.parse(bytes.decodeToString())
+            part.writeBytes(bytes)
+            area.notes.delete()
+            part.renameTo(area.notes)
+        } catch (e: IOException) {
+            // Not published for this area, or no network: the old file (if any) stays.
+        } catch (e: IllegalArgumentException) {
+            // Unknown format: same as missing.
+        } catch (e: kotlinx.serialization.SerializationException) {
+            // Not JSON.
+        } finally {
+            part.delete()
+        }
+    }
+
+    /**
+     * The closures and cameras of every area on the phone (#13), merged (areas overlap: each road
+     * or camera once); null when no area has the file. With [fetch], each area's file is
+     * downloaded once per app run when it is missing or older than that area's road data (cells
+     * downloaded before #13).
+     */
+    fun roadNotes(fetch: Boolean): RoadNotes? {
+        val releases = areas().associate { it.id to it.release }
+        val all = localAreas().mapNotNull { local ->
+            val area = files(local.id)
+            val cells = local.cells
+            val release = releases[local.id] ?: if (local.id == RoutingAreas.ITALY) RoutingAreas.ITALY_RELEASE else null
+            if (fetch && cells != null && release != null && RoutingAreas.RELEASE.matches(release) && local.id !in notesTried &&
+                (!area.notes.isFile || readNotes(area)?.osmDate != cells.osmDate)
+            ) downloadRoadNotes(area, releaseUrl(release), cells)
+            readNotes(area)
+        }
+        if (all.isEmpty()) return null
+        if (all.size == 1) return all.single()
+        return RoadNotes(
+            osmDate = all.first().osmDate,
+            closures = all.flatMap { it.closures }.distinctBy { it.id },
+            cameras = all.flatMap { it.cameras }.distinctBy { it.id },
+        )
+    }
+
+    private fun readNotes(area: AreaFiles): RoadNotes? {
+        val file = area.notes
+        if (!file.isFile) return null
+        val stamp = file.lastModified()
+        notesCache[area.id]?.let { (at, notes) -> if (at == stamp) return notes }
+        return runCatching { RoadNotes.parse(file.readText()) }.getOrNull()?.also { notesCache[area.id] = stamp to it }
     }
 
     /** Whole regions already downloaded and verified (before #45). */
@@ -325,7 +400,7 @@ class RouteService(context: Context) {
         val valhalla = engineFor(data)
         val response = try {
             val language = if (instructions) ValhallaRoute.language(app.resources.configuration.locales[0].toLanguageTag()) else null
-            valhalla.routeRaw(ValhallaRoute.request(ride.stops, options, language, startHeading))
+            valhalla.routeRaw(ValhallaRoute.request(ride.stops, options, language, startHeading, ride.avoid.map { it.area }))
         } catch (e: ValhallaException) {
             // 44x: no route; 17x: stop far from any road or in an unconnected area.
             val msg = e.message.orEmpty()
