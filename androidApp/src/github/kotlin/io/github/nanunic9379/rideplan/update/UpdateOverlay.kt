@@ -5,11 +5,15 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,8 +30,10 @@ object UpdateStore {
     var ui by mutableStateOf<UpdateUi?>(null)
     /** The newer Release found by the last check. */
     var release by mutableStateOf<ReleaseInfo?>(null)
-    /** Checked already in this launch: the start check runs once, not at every recreation. */
-    var checkedAtStart = false
+    /** When the last automatic check started (#34); null until the first one. */
+    var lastAutoCheckMs: Long? = null
+    /** The version whose banner the rider closed: not offered again automatically (#34). */
+    var dismissed: String? = null
 }
 
 /**
@@ -59,7 +65,11 @@ fun updateActions(scope: CoroutineScope): UpdateActions {
     return actions
 }
 
-/** Checks once per launch, if the user wants it, whether there is a new Release and shows the banner. */
+/**
+ * If the user wants it, checks whether there is a new Release every time the app comes to the
+ * foreground (#34): at launch and when it returns from the background, at most once every
+ * [UpdateRules.AUTO_CHECK_INTERVAL_MS], and shows the banner.
+ */
 @Composable
 fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
     // Test builds have a different signature: the update would not install.
@@ -67,22 +77,36 @@ fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val release = UpdateStore.release
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val enabled by rememberUpdatedState(checkAtStart)
 
-    LaunchedEffect(checkAtStart) {
-        if (!checkAtStart || UpdateStore.checkedAtStart) return@LaunchedEffect
-        UpdateStore.checkedAtStart = true
-        val found = withContext(Dispatchers.IO) { runCatching { GithubUpdater.latestNewer() }.getOrNull() }
-        if (found != null) {
-            UpdateStore.release = found
-            UpdateStore.ui = UpdateUi.Available(found.versionName)
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event != Lifecycle.Event.ON_START || !enabled) return@LifecycleEventObserver
+            val now = System.currentTimeMillis()
+            if (!UpdateRules.shouldAutoCheck(now, UpdateStore.lastAutoCheckMs)) return@LifecycleEventObserver
+            UpdateStore.lastAutoCheckMs = now
+            scope.launch {
+                val found = withContext(Dispatchers.IO) { runCatching { GithubUpdater.latestNewer() }.getOrNull() }
+                if (found != null && UpdateRules.mayOfferAutomatically(found.versionName, UpdateStore.ui, UpdateStore.dismissed)) {
+                    UpdateStore.release = found
+                    UpdateStore.ui = UpdateUi.Available(found.versionName)
+                }
+            }
         }
+        // Also delivers ON_START right away when the screen is already started.
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     val ui = UpdateStore.ui ?: return
     UpdateBanner(
         state = ui,
         modifier = Modifier.align(Alignment.TopCenter),
-        onDismiss = { UpdateStore.ui = null },
+        onDismiss = {
+            (ui as? UpdateUi.Available)?.let { UpdateStore.dismissed = it.versionName }
+            UpdateStore.ui = null
+        },
         onOpenSettings = {
             context.startActivity(
                 Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")),

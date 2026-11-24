@@ -29,6 +29,24 @@ object UpdateRules {
     /** SHA-256 from GitHub's "digest" field ("sha256:<64 hex digits>"), lowercase. */
     fun sha256FromDigest(digest: String?): String? =
         digest?.removePrefix("sha256:")?.takeIf { hexPattern.matches(it) }?.lowercase()
+
+    /** Minimum time between two automatic checks (#34): well under GitHub's anonymous rate limit. */
+    const val AUTO_CHECK_INTERVAL_MS: Long = 15 * 60 * 1000L
+
+    /**
+     * Whether coming back to the foreground should ask GitHub again (#34): never checked yet,
+     * or the last automatic check is at least [AUTO_CHECK_INTERVAL_MS] old. A clock that went
+     * backwards counts as "time to check".
+     */
+    fun shouldAutoCheck(nowMs: Long, lastCheckMs: Long?): Boolean =
+        lastCheckMs == null || nowMs < lastCheckMs || nowMs - lastCheckMs >= AUTO_CHECK_INTERVAL_MS
+
+    /**
+     * Whether an automatic check that found [found] may show the banner (#34): not over a
+     * download, install or error in progress, and not for the version the rider dismissed.
+     */
+    fun mayOfferAutomatically(found: String, current: UpdateUi?, dismissed: String?): Boolean =
+        (current == null || current is UpdateUi.Available) && found != dismissed
 }
 
 /** What the update banner shows. */
