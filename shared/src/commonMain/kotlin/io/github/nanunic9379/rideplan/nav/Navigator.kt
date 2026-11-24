@@ -140,6 +140,8 @@ data class NavUpdate(
     /** The maneuver after [next], if it comes soon after it. */
     val then: PlacedManeuver?,
     val speedMps: Double?,
+    /** Speed limit of the road here, km/h (#31); null off the road or where it is unknown. */
+    val speedLimitKmh: Int? = null,
     /** Direction for the map: the road when on it, the GPS course otherwise. */
     val bearing: Double?,
     val announcements: List<Announcement>,
@@ -241,6 +243,7 @@ class Navigator(val route: NavRoute, private val config: NavConfig = NavConfig()
             distanceToNextM = distance,
             then = then,
             speedMps = speed,
+            speedLimitKmh = if (onRoute) route.ride.speedLimits.at(at) else null,
             bearing = bearing,
             announcements = out,
             reroute = reroute,

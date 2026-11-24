@@ -189,6 +189,10 @@
     <string name="nav_follow_track">Follow the track</string>
     <string name="nav_then">Then</string>
     <string name="nav_to_finish">to the finish</string>
+    <string name="nav_speed_kmh">km/h</string>
+    <string name="nav_speed_mph">mph</string>
+    <string name="nav_speed_limit">Speed limit %1$s</string>
+    <string name="nav_speed_over">over the limit</string>
     <string name="nav_stop_reached">Reached: %1$s</string>
     <string name="nav_arrived_title">You have arrived</string>
     <string name="nav_arrived_text">Mark this ride as done today?</string>
