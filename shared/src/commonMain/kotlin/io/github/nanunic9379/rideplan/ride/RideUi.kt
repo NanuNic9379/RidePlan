@@ -3,26 +3,33 @@ package io.github.nanunic9379.rideplan.ride
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,22 +45,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.card_collapse
 import io.github.nanunic9379.rideplan.resources.card_expand
-import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.close
 import io.github.nanunic9379.rideplan.resources.err_file_too_big
 import io.github.nanunic9379.rideplan.resources.err_file_unreadable
 import io.github.nanunic9379.rideplan.resources.err_gpx_empty
 import io.github.nanunic9379.rideplan.resources.err_invalid_coords
 import io.github.nanunic9379.rideplan.resources.err_kml_empty
+import io.github.nanunic9379.rideplan.resources.err_link_broken
 import io.github.nanunic9379.rideplan.resources.err_link_names_without_coords
 import io.github.nanunic9379.rideplan.resources.err_link_no_route
 import io.github.nanunic9379.rideplan.resources.err_link_too_many_redirects
 import io.github.nanunic9379.rideplan.resources.err_network
-import io.github.nanunic9379.rideplan.resources.err_link_broken
 import io.github.nanunic9379.rideplan.resources.err_no_stops
 import io.github.nanunic9379.rideplan.resources.err_not_google_maps
 import io.github.nanunic9379.rideplan.resources.err_single_place
@@ -71,48 +86,55 @@ import io.github.nanunic9379.rideplan.resources.link_dialog_import
 import io.github.nanunic9379.rideplan.resources.link_dialog_label
 import io.github.nanunic9379.rideplan.resources.link_dialog_paste
 import io.github.nanunic9379.rideplan.resources.link_dialog_title
-import io.github.nanunic9379.rideplan.resources.route_cancel
-import io.github.nanunic9379.rideplan.resources.share_confirm
-import io.github.nanunic9379.rideplan.resources.share_qr
+import io.github.nanunic9379.rideplan.resources.ok
 import io.github.nanunic9379.rideplan.resources.qr_hint
 import io.github.nanunic9379.rideplan.resources.qr_send_link
 import io.github.nanunic9379.rideplan.resources.qr_title
-import io.github.nanunic9379.rideplan.resources.share_gpx
-import io.github.nanunic9379.rideplan.resources.share_privacy_note
-import io.github.nanunic9379.rideplan.resources.share_title
-import io.github.nanunic9379.rideplan.resources.share_trim_ends
-import io.github.nanunic9379.rideplan.resources.ok
 import io.github.nanunic9379.rideplan.resources.ride_default_name
 import io.github.nanunic9379.rideplan.resources.ride_km
 import io.github.nanunic9379.rideplan.resources.ride_km_straight
+import io.github.nanunic9379.rideplan.resources.ride_sheet_label
 import io.github.nanunic9379.rideplan.resources.ride_source_google
-import io.github.nanunic9379.rideplan.resources.ride_source_link
 import io.github.nanunic9379.rideplan.resources.ride_source_gpx
 import io.github.nanunic9379.rideplan.resources.ride_source_kml
+import io.github.nanunic9379.rideplan.resources.ride_source_link
 import io.github.nanunic9379.rideplan.resources.ride_stops
 import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
+import io.github.nanunic9379.rideplan.resources.route_cancel
+import io.github.nanunic9379.rideplan.resources.route_prefs_title
+import io.github.nanunic9379.rideplan.resources.share_confirm
+import io.github.nanunic9379.rideplan.resources.share_gpx
+import io.github.nanunic9379.rideplan.resources.share_privacy_note
+import io.github.nanunic9379.rideplan.resources.share_qr
+import io.github.nanunic9379.rideplan.resources.share_title
+import io.github.nanunic9379.rideplan.resources.share_trim_ends
 import io.github.nanunic9379.rideplan.resources.stop_edit_hint
 import io.github.nanunic9379.rideplan.nav.NavigateButton
 import io.github.nanunic9379.rideplan.route.DetourNote
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteOptions
 import io.github.nanunic9379.rideplan.route.RouteOptionsRow
-import io.github.nanunic9379.rideplan.route.StopKindsRow
-import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.RouteSection
 import io.github.nanunic9379.rideplan.route.RouteState
+import io.github.nanunic9379.rideplan.route.StopKindsRow
 import io.github.nanunic9379.rideplan.route.durationText
+import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.routeDoneNote
+import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Brand
+import io.github.nanunic9379.rideplan.ui.Touch
+import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import io.github.alexzhirkevich.qrose.rememberQrCodePainter
+import org.maplibre.compose.camera.CameraFit
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.map.MapState
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
+import org.maplibre.compose.util.toDpPadding
 import org.maplibre.spatialk.geojson.BoundingBox
 import kotlin.math.roundToInt
 
@@ -124,7 +146,7 @@ enum class Page { HOME, MAP, PROFILE }
 class RideScreenState {
     var ride by mutableStateOf<Ride?>(null)
     var busy by mutableStateOf(false)
-    /** Last error; [RidePanel] picks the translated text. */
+    /** Last error; [ImportStatus] picks the translated text. */
     var error by mutableStateOf<Throwable?>(null)
     /** Route calculation of the shown ride (#3). */
     var route by mutableStateOf<RouteState>(RouteState.Idle)
@@ -133,7 +155,7 @@ class RideScreenState {
     var page by mutableStateOf(Page.HOME)
     /** The shown ride is in "Your rides" with this id: every change updates it. */
     var savedId by mutableStateOf<String?>(null)
-    /** Ride card open (settings) or collapsed to name and km, to see the route. */
+    /** Ride sheet expanded (settings) or collapsed to name and km, to see the route. */
     var panelOpen by mutableStateOf(true)
     /** The stops were edited on the map (#2): the camera stops re-framing the ride at every change. */
     var stopsEdited by mutableStateOf(false)
@@ -179,10 +201,10 @@ class ImportActions(
     val shareText: ((String) -> Unit)? = null,
 )
 
-private val RouteColor = Color(0xFFFF8A1F)
+private val RouteColor = Brand.Orange
 private val RouteCasing = Color(0xFF7A3300)
 private val StopFill = Color(0xFFFFFFFF)
-private val StopStroke = Color(0xFF1C1B26)
+private val StopStroke = Brand.Ink
 
 /**
  * Track and stops on the map. Only a real road or recorded track is drawn: while the route is
@@ -205,65 +227,29 @@ fun RideLayers(ride: Ride) {
 }
 
 /**
- * Frames the whole ride, with a margin on the sides and room at the bottom for the card.
- * The margin is added to the bounds instead of in pixels: it works the same on every screen.
+ * Frames the whole ride in the part of the map not covered by the controls:
+ * [padding] is the room taken by the back button (top) and by the sheet (bottom).
  */
-suspend fun MapState.fitRide(ride: Ride, panelOpen: Boolean = true) {
+suspend fun MapState.fitRide(ride: Ride, padding: PaddingValues) {
     val (sw, ne) = ride.bounds()
-    val dLon = (ne.lon - sw.lon).coerceAtLeast(0.01)
-    val dLat = (ne.lat - sw.lat).coerceAtLeast(0.01)
     animateCameraToBounds(
-        BoundingBox(
-            sw.lon - dLon * 0.15,
-            sw.lat - dLat * (if (panelOpen) 0.9 else 0.3),
-            ne.lon + dLon * 0.15,
-            ne.lat + dLat * 0.25,
-        ),
+        BoundingBox(sw.lon, sw.lat, ne.lon, ne.lat),
+        CameraFit(fitPadding = padding.toDpPadding(LayoutDirection.Ltr)),
     )
 }
 
-/** Import button, ride card, progress and errors. */
+/** On the empty map: the button that imports a ride (file or link). */
 @Composable
-fun BoxScope.RidePanel(
-    state: RideScreenState,
-    actions: ImportActions?,
-    routeActions: RouteActions? = null,
-    /** Starts turn-by-turn navigation (#5); null = not available on this platform. */
-    onNavigate: (() -> Unit)? = null,
-    saved: @Composable () -> Unit = {},
-    zones: List<PrivateZone> = emptyList(),
-) {
-    val ride = state.ride
+fun ImportFab(actions: ImportActions, modifier: Modifier = Modifier) {
     var linkDialog by remember { mutableStateOf(false) }
-    if (linkDialog && actions != null) {
-        LinkDialog(actions, onDismiss = { linkDialog = false })
-    }
-    Column(
-        Modifier.align(Alignment.BottomCenter).safeDrawingPadding().padding(12.dp).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.End,
-    ) {
-        ImportStatus(state)
-        if (ride != null) {
-            RideCard(
-                ride,
-                route = state.route,
-                options = state.options,
-                routeActions = routeActions,
-                // Only a ride with a road: computed on the phone or a recorded track.
-                onNavigate = onNavigate?.takeIf { !ride.straightLines && state.route == RouteState.Idle },
-                onClose = { routeActions?.cancel?.invoke(); state.goHome() },
-                actions = actions,
-                onLink = { linkDialog = true },
-                saved = saved,
-                open = state.panelOpen,
-                onToggle = { state.panelOpen = !state.panelOpen },
-                zones = zones,
+    if (linkDialog) LinkDialog(actions, onDismiss = { linkDialog = false })
+    Box(modifier) {
+        ImportMenu(actions, onLink = { linkDialog = true }) { open ->
+            ExtendedFloatingActionButton(
+                onClick = open,
+                icon = { Icon(AppIcons.Add, contentDescription = null) },
+                text = { Text(stringResource(Res.string.import_button)) },
             )
-        } else if (actions != null && !state.busy) {
-            ImportMenu(actions, onLink = { linkDialog = true }) { open ->
-                ExtendedFloatingActionButton(onClick = open) { Text(stringResource(Res.string.import_button)) }
-            }
         }
     }
 }
@@ -272,19 +258,30 @@ fun BoxScope.RidePanel(
 @Composable
 internal fun ImportStatus(state: RideScreenState) {
     state.error?.let { e ->
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp)) {
-                Text(errorText(e))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { state.error = null }) { Text(stringResource(Res.string.ok)) }
+        Card(
+            Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            ),
+        ) {
+            Row(Modifier.padding(start = 16.dp, top = 16.dp, end = 8.dp, bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(AppIcons.Warning, contentDescription = null)
+                Column(Modifier.weight(1f)) {
+                    Text(errorText(e), style = MaterialTheme.typography.bodyLarge)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { state.error = null }, modifier = Modifier.heightIn(min = Touch.Min)) {
+                            Text(stringResource(Res.string.ok))
+                        }
+                    }
                 }
             }
         }
     }
     if (state.busy) {
-        Card(Modifier.fillMaxWidth()) {
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.import_loading))
+                Text(stringResource(Res.string.import_loading), style = MaterialTheme.typography.bodyLarge)
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         }
@@ -298,91 +295,141 @@ private fun ImportMenu(actions: ImportActions, onLink: () -> Unit, anchor: @Comp
     Box {
         anchor { open = true }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text(stringResource(Res.string.import_open_file)) }, onClick = { open = false; actions.openFile() })
-            DropdownMenuItem(text = { Text(stringResource(Res.string.import_paste_link)) }, onClick = { open = false; onLink() })
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.import_paste_link)) },
+                leadingIcon = { Icon(AppIcons.Link, contentDescription = null) },
+                onClick = { open = false; onLink() },
+                modifier = Modifier.heightIn(min = Touch.Glove),
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.import_open_file)) },
+                leadingIcon = { Icon(AppIcons.File, contentDescription = null) },
+                onClick = { open = false; actions.openFile() },
+                modifier = Modifier.heightIn(min = Touch.Glove),
+            )
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Content of the bottom sheet over the map.
+ * Header (always visible, also collapsed): name, km/time/stops, Share, route progress.
+ * Body (sheet dragged up): route state, notes, preferences, saved state, import another.
+ * [onHeaderHeight] reports the header height: the collapsed sheet shows exactly the header.
+ */
 @Composable
-private fun RideCard(
-    ride: Ride,
-    route: RouteState,
-    options: RouteOptions,
-    routeActions: RouteActions?,
-    onNavigate: (() -> Unit)?,
-    onClose: () -> Unit,
+fun RideSheet(
+    state: RideScreenState,
     actions: ImportActions?,
-    onLink: () -> Unit,
-    saved: @Composable () -> Unit,
-    open: Boolean = true,
-    onToggle: () -> Unit = {},
+    routeActions: RouteActions?,
+    maxBodyHeight: Dp,
+    onHeaderHeight: (Dp) -> Unit,
+    saved: @Composable () -> Unit = {},
     zones: List<PrivateZone> = emptyList(),
+    /** Starts turn-by-turn navigation (#5); null = not available on this platform. */
+    onNavigate: (() -> Unit)? = null,
 ) {
+    val ride = state.ride ?: return
+    val route = state.route
     val title = ride.name ?: defaultName(ride) ?: stringResource(Res.string.ride_default_name)
-    // Never taller than about half the screen: the rest scrolls and the map stays visible.
-    Card(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            // Collapsed it shows only name, km and time: the whole route is visible on the map.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f).clickable(onClick = onToggle)) {
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(summary(ride), style = MaterialTheme.typography.bodyMedium)
+    val density = LocalDensity.current
+    val busy = route == RouteState.Checking || route == RouteState.Computing || route is RouteState.Downloading
+    var linkDialog by remember { mutableStateOf(false) }
+    if (linkDialog && actions != null) LinkDialog(actions, onDismiss = { linkDialog = false })
+    val sheetLabel = stringResource(Res.string.ride_sheet_label)
+
+    Column(Modifier.fillMaxWidth().navigationBarsPadding().semantics { paneTitle = sheetLabel }) {
+        Column(Modifier.onSizeChanged { onHeaderHeight(with(density) { it.height.toDp() }) }) {
+            Row(
+                Modifier.padding(start = 24.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    Modifier.weight(1f).clickable(
+                        onClickLabel = stringResource(if (state.panelOpen) Res.string.card_collapse else Res.string.card_expand),
+                        role = Role.Button,
+                    ) { state.panelOpen = !state.panelOpen }.semantics(mergeDescendants = true) { heading() },
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(stats(ride), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 }
-                TextButton(onClick = onToggle) {
-                    Text(if (open) "▾ " + stringResource(Res.string.card_collapse) else "▴ " + stringResource(Res.string.card_expand))
-                }
-            }
-            if (onNavigate != null) NavigateButton(onNavigate)
-            if (!open) return@Column
-            val names = ride.stops.mapNotNull { it.name }
-            if (names.isNotEmpty()) {
-                Text(names.joinToString(" → "), style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            }
-            val note = when {
-                ride.route != null -> routeDoneNote(ride.route)
-                ride.straightLines && route == RouteState.Idle -> stringResource(Res.string.ride_straight_lines_note)
-                else -> null
-            }
-            if (note != null) {
-                Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            ride.route?.let { DetourNote(it) }
-            if (routeActions != null && ride.routable && route != RouteState.NotCovered) {
-                val busy = route == RouteState.Checking || route == RouteState.Computing || route is RouteState.Downloading
-                RouteOptionsRow(options, enabled = !busy, onChange = routeActions.changeOptions)
-                StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
-                if (ride.stopsEditable) {
-                    Text(stringResource(Res.string.stop_edit_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            RouteSection(route, routeActions)
-            saved()
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalArrangement = Arrangement.Center) {
                 actions?.shareGpx?.let { share ->
                     var asking by remember { mutableStateOf(false) }
-                    TextButton(onClick = { asking = true }) { Text(stringResource(Res.string.share_gpx)) }
                     var qr by remember { mutableStateOf<String?>(null) }
+                    FilledTonalIconButton(onClick = { asking = true }, modifier = Modifier.size(Touch.Glove)) {
+                        Icon(AppIcons.Share, contentDescription = stringResource(Res.string.share_gpx))
+                    }
                     if (asking) ShareDialog(ride, zones, onDismiss = { asking = false }) { out, asLink ->
                         asking = false
-                        if (asLink) qr = RideLink.encode(out, options) else share(out, title)
+                        if (asLink) qr = RideLink.encode(out, state.options) else share(out, title)
                     }
-                    qr?.let { QrDialog(it, actions?.shareText, onDismiss = { qr = null }) }
+                    qr?.let { QrDialog(it, actions.shareText, onDismiss = { qr = null }) }
                 }
-                TextButton(onClick = onClose) { Text(stringResource(Res.string.close)) }
-                if (actions != null) {
-                    ImportMenu(actions, onLink) { open ->
-                        Button(onClick = open) { Text(stringResource(Res.string.import_another)) }
+            }
+            if (busy) {
+                LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(top = 12.dp))
+            }
+            // Navigate (#5) is the main action of a ride with a road: in the header, so it is there
+            // even with the sheet collapsed.
+            if (onNavigate != null && !ride.straightLines && route == RouteState.Idle) {
+                NavigateButton(onNavigate, Modifier.padding(horizontal = 24.dp).padding(top = 12.dp))
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+        Column(
+            Modifier.heightIn(max = maxBodyHeight).verticalScroll(rememberScrollState())
+                .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            HorizontalDivider()
+            RouteSection(route, routeActions)
+            RideNotes(ride, route)
+            if (routeActions != null && ride.routable && route != RouteState.NotCovered) {
+                Text(
+                    stringResource(Res.string.route_prefs_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.semantics { heading() },
+                )
+                RouteOptionsRow(state.options, enabled = !busy, onChange = routeActions.changeOptions)
+                StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
+                if (ride.stopsEditable) {
+                    Text(stringResource(Res.string.stop_edit_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            HorizontalDivider()
+            saved()
+            if (actions != null) {
+                ImportMenu(actions, onLink = { linkDialog = true }) { open ->
+                    OutlinedButton(onClick = open, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                        Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(Res.string.import_another))
                     }
                 }
             }
         }
+    }
+}
+
+/** Stops in order, where the ride comes from, and what the line on the map means. */
+@Composable
+private fun RideNotes(ride: Ride, route: RouteState) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        val names = ride.stops.mapNotNull { it.name }
+        if (names.isNotEmpty()) {
+            Text(names.joinToString(" → "), style = MaterialTheme.typography.bodyLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        }
+        Text(sourceText(ride), style = MaterialTheme.typography.labelLarge, color = muted)
+        val note = when {
+            ride.route != null -> routeDoneNote(ride.route)
+            ride.straightLines && route == RouteState.Idle -> stringResource(Res.string.ride_straight_lines_note)
+            else -> null
+        }
+        if (note != null) Text(note, style = MaterialTheme.typography.bodyMedium, color = muted)
+        ride.route?.let { DetourNote(it) }
     }
 }
 
@@ -397,22 +444,36 @@ private fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> U
     val preview = remember(ride, zones, trim, hideZones) { SharePreview.of(ride, zones, trim, hideZones) }
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { Icon(AppIcons.Share, contentDescription = null) },
         title = { Text(stringResource(Res.string.share_title)) },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(Res.string.share_privacy_note), style = MaterialTheme.typography.bodyMedium)
                 HideZonesOption(zones, hideZones) { hideZones = it }
                 ShareOption(stringResource(Res.string.share_trim_ends), trim) { trim = it }
                 SharePreviewText(preview)
+                // The QR and link for those who have RidePlan (#6); the GPX file for navigators and other apps.
+                Button(
+                    onClick = { onShare(preview.ride, true) },
+                    enabled = !preview.empty,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                ) {
+                    Icon(AppIcons.Qr, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(Res.string.share_qr))
+                }
+                OutlinedButton(
+                    onClick = { onShare(preview.ride, false) },
+                    enabled = !preview.empty,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                ) {
+                    Icon(AppIcons.File, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(Res.string.share_confirm))
+                }
             }
         },
-        // The GPX file for navigators and other apps; QR and link for those who have RidePlan (#6).
-        confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onShare(preview.ride, false) }, enabled = !preview.empty) { Text(stringResource(Res.string.share_confirm)) }
-                Button(onClick = { onShare(preview.ride, true) }, enabled = !preview.empty) { Text(stringResource(Res.string.share_qr)) }
-            }
-        },
+        confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.route_cancel)) } },
     )
 }
@@ -426,10 +487,10 @@ private fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> U
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Always black on white, even with the dark theme: cameras read it better.
-                Box(Modifier.background(Color.White).padding(12.dp)) {
-                    Image(rememberQrCodePainter(link), contentDescription = null, modifier = Modifier.size(240.dp))
+                Box(Modifier.background(Color.White, MaterialTheme.shapes.medium).padding(16.dp)) {
+                    Image(rememberQrCodePainter(link), contentDescription = stringResource(Res.string.qr_title), modifier = Modifier.size(240.dp))
                 }
-                Text(stringResource(Res.string.qr_hint), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(Res.string.qr_hint), style = MaterialTheme.typography.bodyMedium)
             }
         },
         confirmButton = {
@@ -445,10 +506,11 @@ internal fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(actions.readClipboard()?.let(RideImport::findUrl) ?: "") }
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { Icon(AppIcons.Link, contentDescription = null) },
         title = { Text(stringResource(Res.string.link_dialog_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.link_dialog_help), style = MaterialTheme.typography.bodySmall)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(Res.string.link_dialog_help), style = MaterialTheme.typography.bodyMedium)
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
@@ -479,26 +541,27 @@ private fun defaultName(ride: Ride): String? {
     return if (first != null && last != null && ride.stops.size >= 2) "$first → $last" else null
 }
 
+/** The numbers you look for at a glance: km, time, stops. */
 @Composable
-private fun summary(ride: Ride): String {
+private fun stats(ride: Ride): String {
     val km = formatKm(ride.lengthKm)
     val parts = buildList {
         add(stringResource(if (ride.straightLines) Res.string.ride_km_straight else Res.string.ride_km, km))
         ride.route?.let { add(durationText(it.seconds)) }
         if (ride.stops.isNotEmpty()) add(pluralStringResource(Res.plurals.ride_stops, ride.stops.size, ride.stops.size))
-        add(
-            stringResource(
-                when (ride.source) {
-                    Ride.Source.GPX -> Res.string.ride_source_gpx
-                    Ride.Source.KML -> Res.string.ride_source_kml
-                    Ride.Source.GOOGLE_LINK -> Res.string.ride_source_google
-                    Ride.Source.RIDEPLAN_LINK -> Res.string.ride_source_link
-                },
-            ),
-        )
     }
     return parts.joinToString(" · ")
 }
+
+@Composable
+private fun sourceText(ride: Ride): String = stringResource(
+    when (ride.source) {
+        Ride.Source.GPX -> Res.string.ride_source_gpx
+        Ride.Source.KML -> Res.string.ride_source_kml
+        Ride.Source.GOOGLE_LINK -> Res.string.ride_source_google
+        Ride.Source.RIDEPLAN_LINK -> Res.string.ride_source_link
+    },
+)
 
 /** One decimal below 10 km, whole number above. */
 internal fun formatKm(km: Double): String =

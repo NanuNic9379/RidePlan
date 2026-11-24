@@ -12,7 +12,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.BackupNotice
 import io.github.nanunic9379.rideplan.profile.ProfileStore
@@ -48,9 +50,13 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 class MainActivity : ComponentActivity() {
-    private val rides = RideScreenState()
-    private val router by lazy { RouteService(this) }
-    private var routeJob: Job? = null
+    /** Survives the activity being recreated (theme, language, font size): see [Session]. */
+    private val session by lazy { ViewModelProvider(this)[Session::class.java] }
+    private val rides get() = session.rides
+    private val router get() = session.router
+    private var routeJob: Job?
+        get() = session.routeJob
+        set(value) { session.routeJob = value }
     private lateinit var store: ProfileStore
     /** Turn-by-turn navigation (#5): registered here because it asks for the location permission. */
     private val navigation = AndroidNavigation(this, ::rerouteFromHere)
@@ -101,15 +107,30 @@ class MainActivity : ComponentActivity() {
             toggleStop = { i -> rides.ride?.let { reroute(it.toggledStop(i)) } },
             editStops = ::editStops,
         )
-        rides.options = loadOptions()
-        store = profileStore()
+        val fresh = session.store == null
+        store = session.store ?: profileStore().also { session.store = it }
+        if (fresh) {
+            rides.options = loadOptions()
+            // After the system closed the app in the background, the saved ride on screen comes back.
+            savedInstanceState?.getString(STATE_RIDE)?.let { id -> store.data.rides.firstOrNull { it.id == id } }?.let { saved ->
+                openRide(saved.toRide())
+                rides.savedId = saved.id
+                rides.panelOpen = savedInstanceState.getBoolean(STATE_PANEL, true)
+            }
+        }
         val backupActions = BackupActions(
             save = { saveBackup.launch("rideplan-backup.json") },
             restore = { restoreBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
-        setContent { App(rides = rides, store = store, importActions = actions, routeActions = routeActions, backupActions = backupActions, navigation = navigation, overlay = { UpdateOverlay() }) }
+        setContent { App(rides = rides, store = store, importActions = actions, routeActions = routeActions, backupActions = backupActions, mapViews = MapViewPrefs(this), navigation = navigation, overlay = { UpdateOverlay() }) }
         if (savedInstanceState == null) handle(intent)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        rides.savedId?.takeIf { rides.ride != null }?.let { outState.putString(STATE_RIDE, it) }
+        outState.putBoolean(STATE_PANEL, rides.panelOpen)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -227,7 +248,7 @@ class MainActivity : ComponentActivity() {
     private fun load(block: () -> Ride) {
         rides.error = null
         rides.busy = true
-        lifecycleScope.launch {
+        session.viewModelScope.launch {
             val result = withContext(Dispatchers.IO) { runCatching(block) }
             routeJob?.cancel()
             // A ride received by link is calculated the way the sender set it up (#50);
@@ -245,7 +266,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun planRoute(ride: Ride) {
         routeJob?.cancel()
-        routeJob = lifecycleScope.launch {
+        routeJob = session.viewModelScope.launch {
             rides.route = RouteState.Checking
             routeStep(ride) {
                 val points = ride.stops.map { it.point }
@@ -275,7 +296,7 @@ class MainActivity : ComponentActivity() {
     private fun download(data: DataDownload) {
         val ride = rides.ride ?: return
         routeJob?.cancel()
-        routeJob = lifecycleScope.launch {
+        routeJob = session.viewModelScope.launch {
             rides.route = RouteState.Downloading(data, 0)
             routeStep(ride) {
                 val progress = { done: Long -> rides.route = RouteState.Downloading(data, done) }
@@ -389,3 +410,6 @@ class MainActivity : ComponentActivity() {
             runCatching { fresh.routed(router.route(fresh, data, options, startHeading = heading), data, options) }.getOrNull()
         }
 }
+
+private const val STATE_RIDE = "ride"
+private const val STATE_PANEL = "panel"

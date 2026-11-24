@@ -122,7 +122,7 @@
     <string name="home_rides">Tes balades</string>
     <string name="home_empty_title">Pas encore de balade</string>
     <string name="home_empty_text">Colle un lien Google Maps ou ouvre un fichier GPX : tu le retrouveras ici, prêt à rouvrir.</string>
-    <string name="home_back">← Tes balades</string>
+    <string name="home_back">Tes balades</string>
     <string name="ride_todo">à faire</string>
     <string name="ride_done_once">✓ %1$s</string>
     <string name="ride_done_many">✓ %1$s · %2$d fois</string>
@@ -212,4 +212,11 @@
     <string name="nav_say_stop_unnamed">Tu as atteint l'étape.</string>
     <string name="nav_say_finish">Tu es arrivé. Fin de la balade.</string>
     <string name="nav_say_follow_track">Suis la trace pendant %1$s.</string>
+    <!-- UX redesign -->
+    <string name="nav_back">Retour</string>
+    <string name="home_new_ride">Nouvelle balade</string>
+    <string name="home_add_bike">Ajoute ta moto</string>
+    <string name="route_prefs_title">Préférences d’itinéraire</string>
+    <string name="profile_stats">Tes statistiques</string>
+    <string name="ride_sheet_label">Détails de la balade</string>
 </resources>

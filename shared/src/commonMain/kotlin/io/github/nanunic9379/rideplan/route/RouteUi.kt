@@ -7,7 +7,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -18,6 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Touch
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.region_around_ride
@@ -152,33 +164,38 @@ private fun OptionChip(label: String, selected: Boolean, enabled: Boolean, onTog
         onClick = { onToggle(!selected) },
         enabled = enabled,
         label = { Text(label) },
-        leadingIcon = if (selected) ({ Text("✓") }) else null,
+        leadingIcon = if (selected) ({ Icon(AppIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }) else null,
         modifier = Modifier.heightIn(min = 48.dp),
     )
 }
 
-/** Row of the ride card dedicated to the route. */
+/**
+ * Route state in the ride sheet. Things that need a decision (download, retry) get a
+ * tinted card with a full-width 56 dp button; waiting gets a progress bar.
+ */
 @Composable
 fun RouteSection(state: RouteState, actions: RouteActions?) {
-    val small = MaterialTheme.typography.bodySmall
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     when (state) {
         RouteState.Idle -> Unit
         RouteState.Checking -> Waiting(stringResource(Res.string.route_checking))
         RouteState.Computing -> Waiting(stringResource(Res.string.route_computing))
-        RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = small, color = muted)
-        is RouteState.NeedsData -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
-                style = small,
-            )
+        RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = MaterialTheme.typography.bodyMedium, color = muted)
+        is RouteState.NeedsData -> StatusCard(
+            icon = AppIcons.Download,
+            text = stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
+            container = MaterialTheme.colorScheme.tertiaryContainer,
+            content = MaterialTheme.colorScheme.onTertiaryContainer,
+        ) {
             if (actions != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Button(onClick = { actions.download(state.download) }) { Text(stringResource(Res.string.route_download)) }
+                Button(onClick = { actions.download(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                    Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(Res.string.route_download))
                 }
             }
         }
-        is RouteState.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        is RouteState.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 stringResource(
                     Res.string.route_downloading,
@@ -186,7 +203,7 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
                     formatBytes(state.done),
                     formatBytes(state.download.bytes),
                 ),
-                style = small,
+                style = MaterialTheme.typography.bodyMedium,
             )
             LinearProgressIndicator(
                 progress = { (state.done.toFloat() / state.download.bytes.coerceAtLeast(1)).coerceIn(0f, 1f) },
@@ -194,15 +211,19 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
             )
             if (actions != null) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = actions.cancel) { Text(stringResource(Res.string.route_cancel)) }
+                    TextButton(onClick = actions.cancel, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) }
                 }
             }
         }
-        is RouteState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(failureText(state), style = small, color = MaterialTheme.colorScheme.error)
+        is RouteState.Failed -> StatusCard(
+            icon = AppIcons.Warning,
+            text = failureText(state),
+            container = MaterialTheme.colorScheme.errorContainer,
+            content = MaterialTheme.colorScheme.onErrorContainer,
+        ) {
             if (actions != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = actions.retry) { Text(stringResource(Res.string.route_retry)) }
+                OutlinedButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                    Text(stringResource(Res.string.route_retry))
                 }
             }
         }
@@ -210,9 +231,22 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
 }
 
 @Composable
+private fun StatusCard(icon: ImageVector, text: String, container: Color, content: Color, action: @Composable () -> Unit) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = container, contentColor = content)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(icon, contentDescription = null)
+                Text(text, style = MaterialTheme.typography.bodyMedium)
+            }
+            action()
+        }
+    }
+}
+
+@Composable
 private fun Waiting(text: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(text, style = MaterialTheme.typography.bodySmall)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text, style = MaterialTheme.typography.bodyMedium)
         LinearProgressIndicator(Modifier.fillMaxWidth())
     }
 }

@@ -121,7 +121,7 @@
     <string name="home_rides">I tuoi giri</string>
     <string name="home_empty_title">Ancora nessun giro</string>
     <string name="home_empty_text">Incolla un link di Google Maps o apri un file GPX: lo trovi qui, pronto da riaprire.</string>
-    <string name="home_back">← I tuoi giri</string>
+    <string name="home_back">I tuoi giri</string>
     <string name="ride_todo">da fare</string>
     <string name="ride_done_once">✓ %1$s</string>
     <string name="ride_done_many">✓ %1$s · %2$d volte</string>
@@ -211,4 +211,11 @@
     <string name="nav_say_stop_unnamed">Hai raggiunto la tappa.</string>
     <string name="nav_say_finish">Sei arrivato. Fine del giro.</string>
     <string name="nav_say_follow_track">Segui la traccia per %1$s.</string>
+    <!-- UX redesign -->
+    <string name="nav_back">Indietro</string>
+    <string name="home_new_ride">Nuovo giro</string>
+    <string name="home_add_bike">Aggiungi la tua moto</string>
+    <string name="route_prefs_title">Preferenze del percorso</string>
+    <string name="profile_stats">Le tue statistiche</string>
+    <string name="ride_sheet_label">Dettagli del giro</string>
 </resources>
