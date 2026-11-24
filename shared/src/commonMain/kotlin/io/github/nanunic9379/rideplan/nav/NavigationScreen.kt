@@ -1,6 +1,11 @@
 package io.github.nanunic9379.rideplan.nav
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -70,6 +75,13 @@ import io.github.nanunic9379.rideplan.resources.nav_stop_reached
 import io.github.nanunic9379.rideplan.resources.nav_then
 import io.github.nanunic9379.rideplan.resources.nav_to_finish
 import io.github.nanunic9379.rideplan.resources.nav_unmute
+import io.github.nanunic9379.rideplan.resources.nav_speed_kmh
+import io.github.nanunic9379.rideplan.resources.nav_speed_limit
+import io.github.nanunic9379.rideplan.resources.nav_speed_mph
+import io.github.nanunic9379.rideplan.resources.nav_speed_over
+import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.profile.Units
+import io.github.nanunic9379.rideplan.profile.of
 import io.github.nanunic9379.rideplan.resources.nav_waiting_gps
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
@@ -104,6 +116,11 @@ private object NavColors {
     val MeStroke = Color.White
     val Stop = Color.White
     val StopStroke = Color(0xFF1C1B26)
+    /** The speed limit sign (#31): red ring on white, all red when riding faster. */
+    val LimitRing = Color(0xFFD32F2F)
+    val LimitFace = Color.White
+    val LimitText = Color(0xFF1C1B26)
+    val LimitOverText = Color.White
 }
 
 /** Big touch targets: usable with gloves. */
@@ -326,13 +343,21 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
     Surface(modifier, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (u != null) {
+                val units = LocalUnits.current
+                val shown = speedShown(u.speedMps, u.speedLimitKmh, units)
+                val unit = stringResource(if (units == Units.MILES) Res.string.nav_speed_mph else Res.string.nav_speed_kmh)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(
-                            u.speedMps?.let { "${(it * 3.6).roundToInt()}" } ?: "–",
+                            shown.speed?.toString() ?: "–",
                             fontSize = 34.sp, fontWeight = FontWeight.Bold, lineHeight = 36.sp,
+                            color = if (shown.over) MaterialTheme.colorScheme.error else Color.Unspecified,
                         )
-                        Text("km/h", style = MaterialTheme.typography.labelMedium)
+                        Text(unit, style = MaterialTheme.typography.labelMedium)
+                    }
+                    shown.limit?.let { limit ->
+                        Spacer(Modifier.width(12.dp))
+                        LimitSign(limit, shown.over, unit)
                     }
                     Spacer(Modifier.width(20.dp))
                     Column(Modifier.weight(1f)) {
@@ -356,6 +381,41 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
             }
         }
     }
+}
+
+/** Round speed limit sign (#31); filled red when riding faster than the limit. No sound. */
+@Composable
+private fun LimitSign(limit: Int, over: Boolean, unit: String) {
+    val description = stringResource(Res.string.nav_speed_limit, "$limit $unit") +
+        if (over) ", " + stringResource(Res.string.nav_speed_over) else ""
+    Box(
+        Modifier.size(54.dp)
+            .background(if (over) NavColors.LimitRing else NavColors.LimitFace, CircleShape)
+            .border(6.dp, NavColors.LimitRing, CircleShape)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "$limit",
+            color = if (over) NavColors.LimitOverText else NavColors.LimitText,
+            fontSize = if (limit >= 100) 18.sp else 22.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+
+/** Current speed and limit as shown, in the unit of the settings (#31). */
+internal data class SpeedShown(val speed: Int?, val limit: Int?, val over: Boolean)
+
+/**
+ * [speedMps] from the GPS, [limitKmh] of the road (null = unknown: no sign). Over the limit when
+ * the speed on screen is higher than the number on the sign, so what is seen always agrees.
+ */
+internal fun speedShown(speedMps: Double?, limitKmh: Int?, units: Units): SpeedShown {
+    val speed = speedMps?.takeIf { it >= 0 }?.let { units.of(it * 3.6).roundToInt() }
+    val limit = limitKmh?.takeIf { it > 0 }?.let { units.of(it.toDouble()).roundToInt() }
+    return SpeedShown(speed, limit, over = speed != null && limit != null && speed > limit)
 }
 
 /** Distance on screen: tens of metres below 1 km, then km. */

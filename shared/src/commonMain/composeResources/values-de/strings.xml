@@ -188,6 +188,10 @@
     <string name="nav_follow_track">Dem Track folgen</string>
     <string name="nav_then">Dann</string>
     <string name="nav_to_finish">bis zum Ziel</string>
+    <string name="nav_speed_kmh">km/h</string>
+    <string name="nav_speed_mph">mph</string>
+    <string name="nav_speed_limit">Tempolimit %1$s</string>
+    <string name="nav_speed_over">über dem Limit</string>
     <string name="nav_stop_reached">Erreicht: %1$s</string>
     <string name="nav_arrived_title">Du bist angekommen</string>
     <string name="nav_arrived_text">Diese Tour als heute gefahren markieren?</string>

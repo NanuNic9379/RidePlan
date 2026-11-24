@@ -15,6 +15,8 @@ import io.github.nanunic9379.rideplan.route.CellsDownload
 import io.github.nanunic9379.rideplan.route.RoutingCells
 import io.github.nanunic9379.rideplan.route.RoutingData
 import io.github.nanunic9379.rideplan.route.RoutingRegion
+import io.github.nanunic9379.rideplan.route.SpeedLimits
+import io.github.nanunic9379.rideplan.route.ValhallaSpeedLimits
 import io.github.nanunic9379.rideplan.route.ValhallaRoute
 import java.io.File
 import java.io.IOException
@@ -198,11 +200,20 @@ class RouteService(context: Context) {
             if (Regex("""code=(44\d|17\d)""").containsMatchIn(msg)) throw RouteException(RouteError.NO_ROUTE, msg)
             throw RouteException(RouteError.ENGINE, msg.take(120))
         }
-        return try {
+        val result = try {
             ValhallaRoute.parse(response)
         } catch (e: Exception) {
             throw RouteException(RouteError.ENGINE, e.javaClass.simpleName)
         }
+        // Speed limits (#31): only for the route that is ridden, once per computation. Any
+        // failure only leaves the limits out: the route itself is fine.
+        if (!instructions) return result
+        val limits = try {
+            ValhallaSpeedLimits.compute(result.shape) { valhalla.traceAttributesRaw(it) }
+        } catch (e: Exception) {
+            SpeedLimits.NONE
+        }
+        return result.copy(speedLimits = limits)
     }
 
     private fun engineFor(data: RoutingData): Valhalla {

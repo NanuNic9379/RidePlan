@@ -189,6 +189,10 @@
     <string name="nav_follow_track">Sigue el track</string>
     <string name="nav_then">Luego</string>
     <string name="nav_to_finish">hasta la llegada</string>
+    <string name="nav_speed_kmh">km/h</string>
+    <string name="nav_speed_mph">mph</string>
+    <string name="nav_speed_limit">Límite de velocidad %1$s</string>
+    <string name="nav_speed_over">por encima del límite</string>
     <string name="nav_stop_reached">Alcanzado: %1$s</string>
     <string name="nav_arrived_title">Has llegado</string>
     <string name="nav_arrived_text">¿Marcar esta ruta como hecha hoy?</string>

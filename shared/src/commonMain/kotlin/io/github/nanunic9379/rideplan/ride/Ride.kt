@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.ride
 import io.github.nanunic9379.rideplan.route.Maneuver
 import io.github.nanunic9379.rideplan.route.RouteInfo
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.SpeedLimits
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.sin
@@ -83,6 +84,8 @@ data class Ride(
      * come back when the ride is routed again, in the language of the moment.
      */
     val maneuvers: List<Maneuver> = emptyList(),
+    /** Speed limits along the computed road (#31). Not saved, like [maneuvers]. */
+    val speedLimits: SpeedLimits = SpeedLimits.NONE,
 ) {
     enum class Source {
         GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,

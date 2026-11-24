@@ -43,6 +43,7 @@ import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.SpeedLimits
 import io.github.nanunic9379.rideplan.route.RouteSettings
 import io.github.nanunic9379.rideplan.route.RidingMode
 import io.github.nanunic9379.rideplan.route.routable
@@ -550,7 +551,7 @@ class MainActivity : ComponentActivity() {
             val cells = router.localCells()
             val data = if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), points)) RoutingData.Cells(cells)
             else RoutingRegion.bestFor(router.installed(), points)?.let { RoutingData.Region(it) } ?: return@withContext null
-            val fresh = ride.copy(track = emptyList(), stops = all, route = null, maneuvers = emptyList())
+            val fresh = ride.copy(track = emptyList(), stops = all, route = null, maneuvers = emptyList(), speedLimits = SpeedLimits.NONE)
             runCatching { fresh.routed(router.route(fresh, data, options, startHeading = heading), data, options) }.getOrNull()
         }
 }
