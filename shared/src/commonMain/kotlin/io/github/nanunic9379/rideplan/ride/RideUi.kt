@@ -665,9 +665,9 @@ internal fun defaultName(ride: Ride): String? {
 /** The numbers you look for at a glance: km, time, stops. */
 @Composable
 internal fun stats(ride: Ride): String {
-    val km = formatKm(ride.lengthKm)
+    val km = io.github.nanunic9379.rideplan.personal.distanceText(ride.lengthKm)
     val parts = buildList {
-        add(stringResource(if (ride.straightLines) Res.string.ride_km_straight else Res.string.ride_km, km))
+        add(if (ride.straightLines) stringResource(Res.string.ride_km_straight, km) else km)
         ride.route?.let { add(durationText(it.seconds)) }
         if (ride.stops.isNotEmpty()) add(pluralStringResource(Res.plurals.ride_stops, ride.stops.size, ride.stops.size))
     }

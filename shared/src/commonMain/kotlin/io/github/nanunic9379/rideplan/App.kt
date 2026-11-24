@@ -45,6 +45,7 @@ import io.github.nanunic9379.rideplan.profile.SavedRow
 import io.github.nanunic9379.rideplan.profile.ThemeMode
 import io.github.nanunic9379.rideplan.profile.WelcomeScreen
 import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.profile.unitsFor
 import io.github.nanunic9379.rideplan.personal.MainNavBar
 import io.github.nanunic9379.rideplan.personal.PersonalArea
 import io.github.nanunic9379.rideplan.personal.PlatformActions
@@ -147,7 +148,12 @@ fun App(
         else -> isSystemInDarkTheme()
     }
     RidePlanTheme(dark = dark) {
-      CompositionLocalProvider(LocalUnits provides (settings?.units ?: io.github.nanunic9379.rideplan.profile.Units.KM)) {
+      val region = platform?.region ?: androidx.compose.ui.text.intl.Locale.current.region
+      val units = (settings ?: io.github.nanunic9379.rideplan.profile.AppSettings()).unitsFor(region)
+      CompositionLocalProvider(
+        LocalUnits provides units,
+        io.github.nanunic9379.rideplan.personal.LocalFuelUnits provides io.github.nanunic9379.rideplan.profile.Regions.fuel(units, region),
+      ) {
         val snackbar = remember { SnackbarHostState() }
         val ride = rides.ride
         // Every opened ride ends up in "Your rides" and stays up to date (route, preferences, name).

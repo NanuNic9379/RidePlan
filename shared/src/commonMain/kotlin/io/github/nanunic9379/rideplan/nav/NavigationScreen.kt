@@ -81,17 +81,19 @@ import io.github.nanunic9379.rideplan.resources.nav_stop_reached
 import io.github.nanunic9379.rideplan.resources.nav_then
 import io.github.nanunic9379.rideplan.resources.nav_to_finish
 import io.github.nanunic9379.rideplan.resources.nav_unmute
+import io.github.nanunic9379.rideplan.resources.nav_say_continue
 import io.github.nanunic9379.rideplan.resources.nav_speed_kmh
 import io.github.nanunic9379.rideplan.resources.nav_speed_limit
 import io.github.nanunic9379.rideplan.resources.nav_speed_mph
 import io.github.nanunic9379.rideplan.resources.nav_speed_over
 import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.personal.decimalComma
+import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.of
 import io.github.nanunic9379.rideplan.resources.nav_waiting_gps
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
-import io.github.nanunic9379.rideplan.ride.formatKm
 import io.github.nanunic9379.rideplan.ride.lineJson
 import io.github.nanunic9379.rideplan.ride.pointsJson
 import io.github.nanunic9379.rideplan.route.TurnSign
@@ -145,7 +147,8 @@ fun NavigationScreen(
     onMarkDone: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
-    val session = remember(ride) { NavigationSession(ride, platform, scope, ::speech) }
+    val units = LocalUnits.current
+    val session = remember(ride) { NavigationSession(ride, platform, scope) { speech(it, units) } }
     DisposableEffect(session) {
         session.start()
         onDispose { session.stop() }
@@ -429,28 +432,30 @@ internal data class SpeedShown(val speed: Int?, val limit: Int?, val over: Boole
  * the speed on screen is higher than the number on the sign, so what is seen always agrees.
  */
 internal fun speedShown(speedMps: Double?, limitKmh: Int?, units: Units): SpeedShown {
-    val speed = speedMps?.takeIf { it >= 0 }?.let { units.of(it * 3.6).roundToInt() }
-    val limit = limitKmh?.takeIf { it > 0 }?.let { units.of(it.toDouble()).roundToInt() }
+    val speed = speedMps?.takeIf { it >= 0 }?.let { Measures.speed(it * 3.6, units) }
+    val limit = limitKmh?.takeIf { it > 0 }?.let { Measures.speed(it.toDouble(), units) }
     return SpeedShown(speed, limit, over = speed != null && limit != null && speed > limit)
 }
 
-/** Distance on screen: tens of metres below 1 km, then km. */
-internal fun distanceText(m: Double): String =
-    if (m < 1000) "${((m / 10).roundToInt() * 10).coerceAtLeast(0)} m" else "${formatKm(m / 1000)} km"
+/** Distance on screen, [m] metres, in the unit of the settings (#15): see [Measures.shortDistance]. */
+@Composable
+internal fun distanceText(m: Double): String = Measures.shortDistance(m, LocalUnits.current, decimalComma())
 
-/** Distance for the voice, already rounded by [Navigator.spokenDistance]. */
-internal fun spokenText(m: Int): String = if (m >= 1000) "${m / 1000} km" else "$m m"
+/** Distance for the voice, [m] metres, rounded the way it is said: see [Measures.spoken]. */
+internal fun spokenText(m: Double, units: Units): String = Measures.spoken(m, units, decimalComma())
 
-/** What the voice says for [a], in the app language. */
-internal suspend fun speech(a: Announcement): String? = when (a) {
+/** What the voice says for [a], in the app language and [units]. */
+internal suspend fun speech(a: Announcement, units: Units = Units.KM): String? = when (a) {
     is Announcement.Start -> a.maneuver?.let { it.verbalPre ?: it.instruction }
-        ?: getString(Res.string.nav_say_follow_track, spokenText(Navigator.spokenDistance(a.remainingM)))
+        ?: getString(Res.string.nav_say_follow_track, spokenText(a.remainingM, units))
     is Announcement.Turn -> {
         val m = a.maneuver
         if (a.stage == Stage.NOW) m.verbalPre ?: m.instruction
-        else getString(Res.string.nav_say_in, spokenText(a.distanceM), m.verbalAlert ?: m.verbalPre ?: m.instruction)
+        else getString(Res.string.nav_say_in, spokenText(a.distanceM.toDouble(), units), m.verbalAlert ?: m.verbalPre ?: m.instruction)
     }
-    is Announcement.Continue -> a.text
+    // Valhalla says "Continue for 12 kilometers": in miles the app says it itself (#15).
+    is Announcement.Continue -> a.distanceM?.takeIf { units == Units.MILES }
+        ?.let { getString(Res.string.nav_say_continue, spokenText(it, units)) } ?: a.text
     is Announcement.Arrived -> when {
         a.stop.finish -> getString(Res.string.nav_say_finish)
         a.stop.stop.name != null -> getString(Res.string.nav_say_stop, a.stop.stop.name)

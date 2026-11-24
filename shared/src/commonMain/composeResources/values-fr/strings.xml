@@ -18,7 +18,7 @@
     <string name="close">Fermer</string>
     <string name="ride_default_name">Balade importée</string>
     <string name="ride_km">%1$s km</string>
-    <string name="ride_km_straight">%1$s km à vol d’oiseau</string>
+    <string name="ride_km_straight">%1$s à vol d’oiseau</string>
     <string name="ride_source_gpx">depuis GPX</string>
     <string name="ride_source_kml">depuis KML</string>
     <string name="ride_source_google">depuis Google Maps</string>
@@ -79,8 +79,8 @@
     <string name="route_curves_some">Plus</string>
     <string name="route_curves_more">Beaucoup</string>
     <string name="route_curves_max">Max</string>
-    <string name="route_detour">La balade est plus longue de %1$s% : +%2$s km, +%3$s par rapport à l’itinéraire le plus rapide.</string>
-    <string name="route_detour_long">⚠ Balade bien plus longue : +%1$s% (+%2$s km, +%3$s) par rapport à l’itinéraire le plus rapide. Choisis Rapide ou moins de virages si tu manques de temps ou d’essence.</string>
+    <string name="route_detour">La balade est plus longue de %1$s% : +%2$s, +%3$s par rapport à l’itinéraire le plus rapide.</string>
+    <string name="route_detour_long">⚠ Balade bien plus longue : +%1$s% (+%2$s, +%3$s) par rapport à l’itinéraire le plus rapide. Choisis Rapide ou moins de virages si tu manques de temps ou d’essence.</string>
     <string name="route_stops_title">Étapes</string>
     <string name="route_stops_hint">Touche pour choisir : arrêt (tu y vas) ou passer à côté (sans traverser le village).</string>
     <string name="route_stop_stop">Arrêt : %1$s</string>
@@ -161,8 +161,8 @@
     <string name="backup_failed">Ce fichier n’est pas une sauvegarde RidePlan.</string>
     <string name="share_hide_zones">Masquer mes zones privées (%1$d)</string>
     <string name="share_no_zones">Astuce : ajoute ton domicile comme zone privée dans le profil, il sera masqué de chaque balade partagée.</string>
-    <string name="share_preview_summary">Ce qui quitte le téléphone : %1$s km, %2$d étapes</string>
-    <string name="share_preview_moved">Départ déplacé de %1$s km, arrivée de %2$s km</string>
+    <string name="share_preview_summary">Ce qui quitte le téléphone : %1$s, %2$d étapes</string>
+    <string name="share_preview_moved">Départ déplacé de %1$s, arrivée de %2$s</string>
     <string name="share_preview_hidden">%1$d étapes masquées</string>
     <string name="share_preview_empty">Toute la balade est dans tes zones privées : il n'y a rien à partager.</string>
     <string name="zones_title">Zones privées</string>
@@ -236,9 +236,9 @@
     <string name="filter_bike">Moto</string>
     <string name="filter_length">Longueur</string>
     <string name="filter_reset">Effacer les filtres</string>
-    <string name="len_up_100">Jusqu'à 100 km</string>
-    <string name="len_100_200">100–200 km</string>
-    <string name="len_over_200">Plus de 200 km</string>
+    <string name="len_up_100">Jusqu'à %1$s</string>
+    <string name="len_100_200">%1$s – %2$s</string>
+    <string name="len_over_200">Plus de %1$s</string>
     <string name="new_ride_explore">Explorer la carte</string>
     <string name="rides_empty_filter">Aucune balade avec ces filtres.</string>
     <string name="rides_search">Chercher balades, lieux, notes</string>
@@ -515,4 +515,7 @@
     <string name="plan_leave_keep">Continuer à planifier</string>
     <string name="route_mode_more">Plus</string>
     <string name="ride_source_planned">planifiée sur la carte</string>
+    <string name="units_auto">Auto</string>
+    <string name="units_note">Automatique suit le pays du téléphone : miles aux États-Unis et au Royaume-Uni, kilomètres ailleurs.</string>
+    <string name="nav_say_continue">Continue pendant %1$s.</string>
 </resources>

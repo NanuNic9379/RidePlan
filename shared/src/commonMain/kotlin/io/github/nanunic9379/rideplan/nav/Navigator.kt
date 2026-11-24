@@ -81,8 +81,8 @@ sealed interface Announcement {
     /** A maneuver ahead: [stage] tells how far ahead; [distanceM] already rounded for the voice. */
     data class Turn(val maneuver: Maneuver, val stage: Stage, val distanceM: Int) : Announcement
 
-    /** Right after a maneuver, when the next one is far: "Continue for 12 km". */
-    data class Continue(val text: String) : Announcement
+    /** Right after a maneuver, when the next one is far: "Continue for 12 km". [distanceM]: to the next maneuver, to say it in miles (#15). */
+    data class Continue(val text: String, val distanceM: Double? = null) : Announcement
 
     data class Arrived(val stop: StopMark) : Announcement
 
@@ -292,7 +292,7 @@ class Navigator(val route: NavRoute, private val config: NavConfig = NavConfig()
         if (passed != null && next?.index != passed && next != null && distance != null) {
             val d = AnnounceDistances.forSpeed(speed)
             route.maneuvers.getOrNull(passed)?.maneuver?.verbalPost?.let { post ->
-                if (distance > d.far * 1.5) out += Announcement.Continue(post)
+                if (distance > d.far * 1.5) out += Announcement.Continue(post, distance)
             }
         }
         if (next == null || distance == null) return

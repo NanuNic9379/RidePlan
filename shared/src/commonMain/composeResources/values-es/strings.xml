@@ -18,7 +18,7 @@
     <string name="close">Cerrar</string>
     <string name="ride_default_name">Ruta importada</string>
     <string name="ride_km">%1$s km</string>
-    <string name="ride_km_straight">%1$s km en línea recta</string>
+    <string name="ride_km_straight">%1$s en línea recta</string>
     <string name="ride_source_gpx">desde GPX</string>
     <string name="ride_source_kml">desde KML</string>
     <string name="ride_source_google">desde Google Maps</string>
@@ -79,8 +79,8 @@
     <string name="route_curves_some">Más</string>
     <string name="route_curves_more">Muchas</string>
     <string name="route_curves_max">Máximo</string>
-    <string name="route_detour">La ruta es un %1$s% más larga: +%2$s km, +%3$s respecto a la ruta más rápida.</string>
-    <string name="route_detour_long">⚠ Ruta mucho más larga: +%1$s% (+%2$s km, +%3$s) respecto a la ruta más rápida. Elige Rápido o menos curvas si vas justo de tiempo o de gasolina.</string>
+    <string name="route_detour">La ruta es un %1$s% más larga: +%2$s, +%3$s respecto a la ruta más rápida.</string>
+    <string name="route_detour_long">⚠ Ruta mucho más larga: +%1$s% (+%2$s, +%3$s) respecto a la ruta más rápida. Elige Rápido o menos curvas si vas justo de tiempo o de gasolina.</string>
     <string name="route_stops_title">Paradas</string>
     <string name="route_stops_hint">Toca para elegir: parada (vas allí) o pasar cerca (sin entrar en el pueblo).</string>
     <string name="route_stop_stop">Parada: %1$s</string>
@@ -161,8 +161,8 @@
     <string name="backup_failed">Este archivo no es una copia de RidePlan.</string>
     <string name="share_hide_zones">Ocultar mis zonas privadas (%1$d)</string>
     <string name="share_no_zones">Consejo: añade tu casa como zona privada en el perfil y se ocultará en cada ruta compartida.</string>
-    <string name="share_preview_summary">Lo que sale del teléfono: %1$s km, %2$d paradas</string>
-    <string name="share_preview_moved">Salida desplazada %1$s km, llegada %2$s km</string>
+    <string name="share_preview_summary">Lo que sale del teléfono: %1$s, %2$d paradas</string>
+    <string name="share_preview_moved">Salida desplazada %1$s, llegada %2$s</string>
     <string name="share_preview_hidden">%1$d paradas ocultas</string>
     <string name="share_preview_empty">Toda la ruta está dentro de tus zonas privadas: no hay nada que compartir.</string>
     <string name="zones_title">Zonas privadas</string>
@@ -236,9 +236,9 @@
     <string name="filter_bike">Moto</string>
     <string name="filter_length">Longitud</string>
     <string name="filter_reset">Quitar filtros</string>
-    <string name="len_up_100">Hasta 100 km</string>
-    <string name="len_100_200">100–200 km</string>
-    <string name="len_over_200">Más de 200 km</string>
+    <string name="len_up_100">Hasta %1$s</string>
+    <string name="len_100_200">%1$s – %2$s</string>
+    <string name="len_over_200">Más de %1$s</string>
     <string name="new_ride_explore">Explorar el mapa</string>
     <string name="rides_empty_filter">Ninguna ruta con estos filtros.</string>
     <string name="rides_search">Buscar rutas, lugares, notas</string>
@@ -515,4 +515,7 @@
     <string name="plan_leave_keep">Seguir planificando</string>
     <string name="route_mode_more">Más</string>
     <string name="ride_source_planned">planificada en el mapa</string>
+    <string name="units_auto">Auto</string>
+    <string name="units_note">Automático sigue el país del teléfono: millas en EE. UU. y el Reino Unido, kilómetros en el resto.</string>
+    <string name="nav_say_continue">Continúa durante %1$s.</string>
 </resources>

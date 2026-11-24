@@ -23,6 +23,7 @@ import io.github.nanunic9379.rideplan.resources.share_preview_empty
 import io.github.nanunic9379.rideplan.resources.share_preview_hidden
 import io.github.nanunic9379.rideplan.resources.share_preview_moved
 import io.github.nanunic9379.rideplan.resources.share_preview_summary
+import io.github.nanunic9379.rideplan.personal.distanceText
 import org.jetbrains.compose.resources.stringResource
 
 /** A checkbox row of the share dialog. */
@@ -56,8 +57,8 @@ internal fun SharePreviewText(preview: SharePreview) {
             return@Column
         }
         val style = MaterialTheme.typography.bodySmall
-        Text(stringResource(Res.string.share_preview_summary, formatKm(preview.km), preview.ride.stops.size), style = MaterialTheme.typography.bodyMedium)
-        Text(stringResource(Res.string.share_preview_moved, formatKm(preview.startMovedKm), formatKm(preview.finishMovedKm)), style = style)
+        Text(stringResource(Res.string.share_preview_summary, distanceText(preview.km), preview.ride.stops.size), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(Res.string.share_preview_moved, distanceText(preview.startMovedKm), distanceText(preview.finishMovedKm)), style = style)
         if (preview.hiddenStops > 0) Text(stringResource(Res.string.share_preview_hidden, preview.hiddenStops), style = style)
     }
 }

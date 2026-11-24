@@ -183,6 +183,7 @@ class MainActivity : ComponentActivity() {
             ),
             wipeDevice = ::wipeDevice,
             updates = updateActions(lifecycleScope),
+            region = android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { null },
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
         setContent {

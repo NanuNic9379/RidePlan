@@ -18,7 +18,7 @@
     <string name="close">Chiudi</string>
     <string name="ride_default_name">Giro importato</string>
     <string name="ride_km">%1$s km</string>
-    <string name="ride_km_straight">%1$s km in linea d’aria</string>
+    <string name="ride_km_straight">%1$s in linea d’aria</string>
     <string name="ride_source_gpx">da GPX</string>
     <string name="ride_source_kml">da KML</string>
     <string name="ride_source_google">da Google Maps</string>
@@ -79,8 +79,8 @@
     <string name="route_curves_some">Più</string>
     <string name="route_curves_more">Molte</string>
     <string name="route_curves_max">Massimo</string>
-    <string name="route_detour">Il giro si allunga del %1$s%: +%2$s km, +%3$s rispetto al percorso più veloce.</string>
-    <string name="route_detour_long">⚠ Giro molto più lungo: +%1$s% (+%2$s km, +%3$s) rispetto al percorso più veloce. Scegli Veloce o meno curve se hai poco tempo o poca benzina.</string>
+    <string name="route_detour">Il giro si allunga del %1$s%: +%2$s, +%3$s rispetto al percorso più veloce.</string>
+    <string name="route_detour_long">⚠ Giro molto più lungo: +%1$s% (+%2$s, +%3$s) rispetto al percorso più veloce. Scegli Veloce o meno curve se hai poco tempo o poca benzina.</string>
     <string name="route_stops_title">Tappe</string>
     <string name="route_stops_hint">Tocca per scegliere: sosta (ci arrivi) o passa vicino (senza entrare in paese).</string>
     <string name="route_stop_stop">Sosta: %1$s</string>
@@ -160,8 +160,8 @@
     <string name="backup_failed">Questo file non è una copia di RidePlan.</string>
     <string name="share_hide_zones">Nascondi le mie zone private (%1$d)</string>
     <string name="share_no_zones">Consiglio: aggiungi casa come zona privata nel profilo, verrà nascosta da ogni giro condiviso.</string>
-    <string name="share_preview_summary">Cosa esce dal telefono: %1$s km, %2$d tappe</string>
-    <string name="share_preview_moved">Partenza spostata di %1$s km, arrivo di %2$s km</string>
+    <string name="share_preview_summary">Cosa esce dal telefono: %1$s, %2$d tappe</string>
+    <string name="share_preview_moved">Partenza spostata di %1$s, arrivo di %2$s</string>
     <string name="share_preview_hidden">%1$d tappe nascoste</string>
     <string name="share_preview_empty">Tutto il giro è dentro le tue zone private: non c'è niente da condividere.</string>
     <string name="zones_title">Zone private</string>
@@ -235,9 +235,9 @@
     <string name="filter_bike">Moto</string>
     <string name="filter_length">Lunghezza</string>
     <string name="filter_reset">Togli i filtri</string>
-    <string name="len_up_100">Fino a 100 km</string>
-    <string name="len_100_200">100–200 km</string>
-    <string name="len_over_200">Oltre 200 km</string>
+    <string name="len_up_100">Fino a %1$s</string>
+    <string name="len_100_200">%1$s – %2$s</string>
+    <string name="len_over_200">Oltre %1$s</string>
     <string name="new_ride_explore">Esplora la mappa</string>
     <string name="rides_empty_filter">Nessun giro con questi filtri.</string>
     <string name="rides_search">Cerca giri, posti, note</string>
@@ -514,4 +514,7 @@
     <string name="plan_leave_keep">Continua a pianificare</string>
     <string name="route_mode_more">Altro</string>
     <string name="ride_source_planned">pianificato sulla mappa</string>
+    <string name="units_auto">Auto</string>
+    <string name="units_note">Automatico segue il paese del telefono: miglia negli USA e nel Regno Unito, chilometri altrove.</string>
+    <string name="nav_say_continue">Prosegui per %1$s.</string>
 </resources>
