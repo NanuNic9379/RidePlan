@@ -25,6 +25,13 @@ fun outsideStops(stops: List<Stop>, published: RoutingCells?): List<OutsideStop>
 }
 
 /**
+ * Same check over several areas (#14): the stops outside the area the ride mostly belongs to
+ * (see [RoutingAreas.outside]). Empty when no area is known.
+ */
+fun outsideStops(stops: List<Stop>, published: List<PublishedArea>): List<OutsideStop> =
+    RoutingAreas.outside(published, stops.map { it.point }).map { OutsideStop(it + 1, stops[it].name?.trim()?.ifEmpty { null }) }
+
+/**
  * The rider's text for [RouteState.NotCovered]: names the stops that have no road data, so it is
  * clear what to move (a stop across the border, a typo in an imported link), not just "no data".
  */

@@ -368,6 +368,9 @@
     <string name="mapdata_free">Frei</string>
     <string name="mapdata_list">Auf dem Handy</string>
     <string name="mapdata_cells">Straßen rund um deine Touren</string>
+    <string name="mapdata_cells_area">Straßen rund um deine Touren: %1$s</string>
+    <string name="area_it">Italien</string>
+    <string name="area_alps">Alpen</string>
     <string name="mapdata_note">Wenn du Straßendaten löschst, lädt RidePlan sie erneut, wenn du dort eine Tour öffnest.</string>
     <string name="mapdata_delete_title">Diese Straßendaten löschen?</string>
     <string name="info_title">Info und Updates</string>

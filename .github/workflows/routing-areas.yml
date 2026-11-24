@@ -1,0 +1,219 @@
+name: Routing data areas
+
+# Road data beyond Italy (#14): one build per area of data/routing-areas.json, each published in
+# its own Release ("routing-<area>") with its own cells.json, then the index the app reads
+# ("routing-index", areas.json). Same steps as routing-data.yml (Valhalla tiles split into
+# 1-degree cells, fuel stations, road notes). Italy is NOT built here: routing-data.yml keeps
+# building it into the "routing-data" Release that older app versions read.
+#
+# Areas are built only by hand (Actions > Routing data areas > Run workflow, or
+# `gh workflow run routing-areas.yml -f areas=alps`), one free runner per area.
+# A push to main that changes the areas file only refreshes the index (about a minute).
+
+on:
+  workflow_dispatch:
+    inputs:
+      areas:
+        description: "Areas to build, comma-separated ids of data/routing-areas.json (e.g. alps). Empty: only refresh the index."
+        required: false
+        default: alps
+        type: string
+  push:
+    # Only main: a push to a pull request branch must never rebuild or publish the data.
+    branches: [main]
+    paths:
+      - .github/workflows/routing-areas.yml
+      - data/routing-areas.json
+      - data/routing_areas.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: routing-areas
+  cancel-in-progress: false
+
+env:
+  # Same engine version as inside the app (valhalla-mobile 0.6.6 = Valhalla 3.9.2).
+  VALHALLA_VERSION: 3.9.2
+
+jobs:
+  plan:
+    name: Areas to build
+    runs-on: ubuntu-latest
+    outputs:
+      areas: ${{ steps.areas.outputs.areas }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: areas
+        name: Check the areas
+        env:
+          WANTED: ${{ github.event_name == 'workflow_dispatch' && inputs.areas || '' }}
+        run: |
+          if [ -z "$(echo "$WANTED" | tr -d ' ,')" ]; then
+            echo "areas=[]" >> "$GITHUB_OUTPUT"
+          else
+            echo "areas=$(python3 data/routing_areas.py matrix data/routing-areas.json "$WANTED")" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Area ${{ matrix.area }}
+    needs: plan
+    if: needs.plan.outputs.areas != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        area: ${{ fromJSON(needs.plan.outputs.areas) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+      # Same as Italy: the filter and the tile build need more than the runner's 16 GB.
+      - name: Disk space and swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo swapoff -a || true
+          S=/mnt/rideplan.swap; sudo fallocate -l 12G $S || { S=/rideplan.swap; sudo fallocate -l 12G $S; }
+          sudo chmod 600 $S
+          sudo mkswap $S
+          sudo swapon $S
+          free -h
+          df -h
+      - id: area
+        name: Area settings
+        run: |
+          python3 data/routing_areas.py config data/routing-areas.json "${{ matrix.area }}" area.json
+          echo "release=$(python3 data/routing_areas.py release data/routing-areas.json "${{ matrix.area }}")" >> "$GITHUB_OUTPUT"
+          cat area.json
+      - name: OpenStreetMap data
+        run: |
+          mkdir -p osm
+          url="$(python3 data/routing_data.py source area.json)"
+          curl -sSfL --retry 3 -o osm/all.osm.pbf "$url"
+          # Geofabrik publishes a checksum next to every extract: a broken download stops here.
+          if curl -sSfL --retry 3 -o osm/all.md5 "${url}.md5"; then
+            echo "$(cut -d' ' -f1 osm/all.md5)  osm/all.osm.pbf" | md5sum -c -
+          fi
+          ls -la osm
+      - id: osm
+        name: Data date
+        run: |
+          d=$(osmium fileinfo -g header.option.osmosis_replication_timestamp osm/all.osm.pbf || true)
+          [ -n "$d" ] || d=$(osmium fileinfo -g header.option.timestamp osm/all.osm.pbf || true)
+          echo "date=${d:-unknown}" >> "$GITHUB_OUTPUT"
+          echo "OpenStreetMap data from $d"
+      - name: Fuel stations
+        run: |
+          osmium tags-filter osm/all.osm.pbf nwr/amenity=fuel -o osm/fuel.osm.pbf
+          mkdir -p data-build
+          osmium export osm/fuel.osm.pbf -f geojsonseq -x print_record_separator=false \
+            --geometry-types=point,polygon -o data-build/fuel.geojsonseq
+          rm osm/fuel.osm.pbf
+          wc -l data-build/fuel.geojsonseq
+      - name: Road notes (seasonal closures, speed cameras)
+        run: |
+          osmium tags-filter osm/all.osm.pbf \
+            n/highway=speed_camera \
+            w/motor_vehicle:conditional,motorcycle:conditional,vehicle:conditional,access:conditional,seasonal,opening_hours \
+            -o osm/notes.osm.pbf
+          osmium export -f geojsonseq --add-unique-id=type_id --geometry-types=point,linestring \
+            -o osm/notes.geojsonseq osm/notes.osm.pbf
+          mkdir -p notes
+          python3 data/road_notes.py osm/notes.geojsonseq notes/road-notes.json "${{ steps.osm.outputs.date }}"
+          rm osm/notes.osm.pbf osm/notes.geojsonseq
+          ls -la notes
+      - name: Only roads, ferries, turn restrictions and boundaries
+        run: |
+          /usr/bin/time -v osmium tags-filter osm/all.osm.pbf \
+            w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,living_street,service,track,road \
+            w/route=ferry r/route=ferry r/type=restriction r/boundary=administrative \
+            -o osm/roads.osm.pbf
+          rm osm/all.osm.pbf
+          ls -la osm
+      - name: Build
+        run: |
+          mkdir -p data-build
+          mv osm/roads.osm.pbf data-build/roads.osm.pbf
+          /usr/bin/time -v docker run --rm -v "$PWD/data-build:/data" "ghcr.io/valhalla/valhalla:$VALHALLA_VERSION" bash -c '
+            set -e
+            valhalla_build_config --mjolnir-tile-dir /data/tiles \
+              --mjolnir-admin /data/admins.sqlite \
+              --mjolnir-include-pedestrian False --mjolnir-include-bicycle False \
+              --mjolnir-include-driveways False > /data/valhalla.json
+            valhalla_build_admins -c /data/valhalla.json /data/roads.osm.pbf
+            valhalla_build_tiles -c /data/valhalla.json /data/roads.osm.pbf'
+          du -sh data-build/tiles data-build/tiles/*
+      # Fails before publishing if the area breaks a Release limit (2 GiB per file, 1000 files).
+      - name: Grid cells
+        run: |
+          python3 data/routing_data.py cells area.json data-build/tiles out \
+            "${{ github.run_id }}" "${{ steps.osm.outputs.date }}" "$VALHALLA_VERSION" \
+            data-build/fuel.geojsonseq
+          ls -la out | head -20
+          du -sh out
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ steps.area.outputs.release }}
+        run: |
+          if ! gh release view "$RELEASE" >/dev/null 2>&1; then
+            {
+              echo "Road data for routing on the phone (area ${{ matrix.area }}), split into squares of about 100 km."
+              echo "The app downloads them by itself when needed: they need no manual install."
+              echo
+              echo "Data © OpenStreetMap contributors, ODbL licence (https://www.openstreetmap.org/copyright)."
+            } > notes.md
+            gh release create "$RELEASE" --target main --prerelease --latest=false \
+              --title "Routing data: ${{ matrix.area }}" --notes-file notes.md
+          fi
+          # New packs next to the old ones until cells.json changes (downloads in progress keep working).
+          gh release upload "$RELEASE" out/*.zip --clobber
+          gh release upload "$RELEASE" out/*.tsv --clobber
+          gh release upload "$RELEASE" out/cells.json --clobber
+          gh release upload "$RELEASE" notes/road-notes.json --clobber
+          gh release view "$RELEASE" --json assets -q '.assets[].name' \
+            | python3 data/routing_data.py stale out/cells.json \
+            | while read -r name; do gh release delete-asset "$RELEASE" "$name" -y; done
+
+  # The index lists every area whose Release has a cells.json, with its outline. Runs also when
+  # an area failed, so the areas that did build are listed.
+  index:
+    name: Index of the areas
+    needs: [plan, build]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Outlines and published areas
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p polys
+          published=""
+          for row in $(python3 -c "import json; [print(a['id'] + ',' + a['release'] + ',' + a.get('poly', '')) for a in json.load(open('data/routing-areas.json'))['areas']]"); do
+            id=${row%%,*}; rest=${row#*,}; release=${rest%%,*}; poly=${rest#*,}
+            if gh release view "$release" --json assets -q '.assets[].name' 2>/dev/null | grep -qx cells.json; then
+              published="$published,$id"
+              [ -z "$poly" ] || curl -sSfL --retry 3 -o "polys/$id.poly" "$poly" || echo "no outline for $id"
+            fi
+          done
+          echo "published: $published"
+          mkdir -p index
+          python3 data/routing_areas.py index data/routing-areas.json polys "$published" index/areas.json
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view routing-index >/dev/null 2>&1; then
+            {
+              echo "Index of the areas of road data: the app reads it to pick the area that covers a ride."
+              echo
+              echo "Data © OpenStreetMap contributors, ODbL licence (https://www.openstreetmap.org/copyright)."
+            } > notes.md
+            gh release create routing-index --target main --prerelease --latest=false \
+              --title "Routing data: index" --notes-file notes.md
+          fi
+          gh release upload routing-index index/areas.json --clobber

@@ -16,6 +16,10 @@ import io.github.nanunic9379.rideplan.route.FuelData
 import io.github.nanunic9379.rideplan.route.FuelFile
 import io.github.nanunic9379.rideplan.route.FuelStation
 import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.route.LocalArea
+import io.github.nanunic9379.rideplan.route.PublishedArea
+import io.github.nanunic9379.rideplan.route.RoutingArea
+import io.github.nanunic9379.rideplan.route.RoutingAreas
 import io.github.nanunic9379.rideplan.route.RoutingPack
 import io.github.nanunic9379.rideplan.route.RoutingCells
 import io.github.nanunic9379.rideplan.route.RoutingData
@@ -37,9 +41,12 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * On-phone routing (#3). Every function blocks: call it off the main thread.
  *
- * Network: only the list of published data and the chosen files, from the "routing-data" Release.
- * Grid-cell data (#45): the cells around the ride all go into the same tile directory, which
- * Valhalla reads directly. Whole regions downloaded before #45 remain usable.
+ * Network: only the index of the areas, their lists of published data and the chosen files, from
+ * the Releases ("routing-data" for Italy, "routing-<area>" for the other areas, #14).
+ * Grid-cell data (#45): the cells around the ride all go into the tile directory of their area,
+ * which Valhalla reads directly. Each area (#14) has its own directory, so a ride in the Alps
+ * does not wipe the cells of Italy; Italy stays where it was before #14 (routing/cells), so
+ * nothing is downloaded again. Whole regions downloaded before #45 remain usable.
  * The ride's stops never leave the phone.
  */
 class RouteService(context: Context) {
@@ -47,32 +54,103 @@ class RouteService(context: Context) {
     /** Excluded from backup: hundreds of MB that can be downloaded again. */
     private val dir = File(app.noBackupFilesDir, "routing").apply { mkdirs() }
 
-    /** Grid-cell data (#45): tile directory, copy of the build manifest, packs already extracted. */
-    private val cellsDir = File(dir, "cells")
-    private val tilesDir = File(cellsDir, "tiles")
-    private val cellsManifest = File(cellsDir, "manifest.json")
-    private val cellsInstalled = File(cellsDir, "installed.txt")
-    /** Fuel stations of each installed cell (#7): <pack id>.tsv, only for builds that publish them. */
-    private val fuelDir = File(cellsDir, "fuel")
+    /** The other areas (#14): routing/areas/<area id>/, laid out like Italy's directory. */
+    private val areasDir = File(dir, "areas")
+
+    /** Copy of the last index read, so the choice of the area also works offline. */
+    private val indexCopy = File(dir, "areas.json")
+
+    /**
+     * Grid-cell data (#45) of one area: tile directory, copy of the build manifest, packs already
+     * extracted, fuel stations of each installed cell (#7, <pack id>.tsv).
+     */
+    private inner class AreaFiles(val id: String) {
+        val root = if (id == RoutingAreas.ITALY) File(dir, "cells") else File(areasDir, id)
+        val tiles = File(root, "tiles")
+        val manifest = File(root, "manifest.json")
+        val installed = File(root, "installed.txt")
+        val fuel = File(root, "fuel")
+
+        fun cells(): RoutingCells? = runCatching { RoutingCells.parse(manifest.readText()) }.getOrNull()
+
+        fun installedPacks(): Set<String> =
+            runCatching { installed.readLines().map { it.trim() }.filter { it.isNotEmpty() }.toSet() }.getOrDefault(emptySet())
+    }
+
+    private fun files(area: String): AreaFiles {
+        // No id can lead outside the routing directory.
+        require(RoutingAreas.AREA_ID.matches(area)) { "Invalid area" }
+        return AreaFiles(area)
+    }
+
+    /** Italy first, then every valid directory under routing/areas. */
+    private fun areaIds(): List<String> = listOf(RoutingAreas.ITALY) +
+        areasDir.listFiles { f -> f.isDirectory }.orEmpty().map { it.name }
+            .filter { RoutingAreas.AREA_ID.matches(it) && it != RoutingAreas.ITALY }.sorted()
 
     private var engine: Valhalla? = null
     private var engineData: String? = null
 
-    /** The build of the cells on the phone; null if there are none. */
-    fun localCells(): RoutingCells? = runCatching { RoutingCells.parse(cellsManifest.readText()) }.getOrNull()
-
-    /** The packs already extracted into the tile directory. */
-    fun installedPacks(): Set<String> =
-        runCatching { cellsInstalled.readLines().map { it.trim() }.filter { it.isNotEmpty() }.toSet() }.getOrDefault(emptySet())
-
-    /** The published cells; null if the Release does not have them yet (then whole regions are used). */
-    fun publishedCells(): RoutingCells? = try {
-        RoutingCells.parse(get(BuildConfig.ROUTING_DATA_URL + "cells.json").use { it.readBytes().decodeToString() })
-    } catch (e: NotFound) {
-        null
-    } catch (e: IOException) {
-        throw RouteException(RouteError.NETWORK, e.javaClass.simpleName)
+    /** The areas with cells on the phone. */
+    fun localAreas(): List<LocalArea> = areaIds().mapNotNull { id ->
+        val f = files(id)
+        f.cells()?.let { LocalArea(id, it, f.installedPacks()) }
     }
+
+    /** The areas as last read from the index; only Italy before the first reading. */
+    fun areas(): List<RoutingArea> = runCatching { RoutingAreas.parse(indexCopy.readText()) }.getOrDefault(RoutingAreas.FALLBACK)
+
+    /** Reads the index again; when it cannot (offline, not published yet) the last copy, or Italy only. */
+    private fun refreshAreas(): List<RoutingArea> = try {
+        val text = get(INDEX_URL).use { it.readCapped(MAX_INDEX_BYTES) }.decodeToString()
+        RoutingAreas.parse(text).also { indexCopy.writeText(text) }
+    } catch (e: IOException) {
+        areas()
+    } catch (e: IllegalArgumentException) {
+        // An index this version cannot read: as if there were none.
+        areas()
+    }
+
+    /**
+     * Road data already on the phone that routes the ride, with no network. [strict]: only an
+     * area whose outline holds every stop (see [RoutingAreas.local]); otherwise any area whose
+     * cells cover them. Then the whole regions from before #45.
+     */
+    fun localData(points: List<LatLon>, strict: Boolean = true): RoutingData? {
+        RoutingAreas.local(areas(), localAreas(), points, strict)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
+        return RoutingRegion.bestFor(installed(), points)?.let { RoutingData.Region(it) }
+    }
+
+    /**
+     * The published builds of the areas that may hold the ride (#14), best first. Null if no area
+     * has published cells (then whole regions are used, as before #45). Without network but with
+     * data on the phone that covers the stops: an empty list, so that data is used.
+     */
+    fun publishedAreas(points: List<LatLon>): List<PublishedArea>? {
+        val candidates = RoutingAreas.candidates(refreshAreas(), points).take(MAX_AREAS_TRIED)
+        if (candidates.isEmpty()) return emptyList()
+        val found = ArrayList<PublishedArea>()
+        try {
+            for (area in candidates) {
+                val cells = try {
+                    RoutingCells.parse(get(releaseUrl(area.release) + "cells.json").use { it.readBytes().decodeToString() })
+                } catch (e: NotFound) {
+                    continue
+                } catch (e: IllegalArgumentException) {
+                    continue // a format this version cannot read: as if the area were not there
+                }
+                found += PublishedArea(area, cells)
+            }
+        } catch (e: IOException) {
+            if (localData(points, strict = false) != null) return emptyList()
+            throw RouteException(RouteError.NETWORK, e.javaClass.simpleName)
+        }
+        return found.ifEmpty { null }
+    }
+
+    /** What to download for the ride among the published areas; null if none covers it. */
+    fun plan(published: List<PublishedArea>, points: List<LatLon>): CellsDownload? =
+        RoutingAreas.plan(published, localAreas(), points)
 
     /**
      * Downloads the missing packs one at a time, checks the SHA-256 of each and only then moves
@@ -80,25 +158,28 @@ class RouteService(context: Context) {
      */
     fun download(plan: CellsDownload, isActive: () -> Boolean, progress: (Long) -> Unit) {
         if (dir.usableSpace < plan.tileBytes + 200_000_000) throw RouteException(RouteError.NO_SPACE)
-        val staging = File(cellsDir, "staging")
+        val area = files(plan.area)
+        require(RoutingAreas.RELEASE.matches(plan.release)) { "Invalid release" }
+        val base = releaseUrl(plan.release)
+        val staging = File(area.root, "staging")
         try {
             closeEngine()
-            if (plan.wipe || localCells()?.build != plan.cells.build) {
-                // New build: the old cells do not match the new ones.
-                cellsInstalled.delete()
-                tilesDir.deleteRecursively()
-                fuelDir.deleteRecursively()
-                cellsDir.mkdirs()
-                cellsManifest.writeText(plan.cells.toJson())
+            if (plan.wipe || area.cells()?.build != plan.cells.build) {
+                // New build: the old cells do not match the new ones. Only this area's.
+                area.installed.delete()
+                area.tiles.deleteRecursively()
+                area.fuel.deleteRecursively()
+                area.root.mkdirs()
+                area.manifest.writeText(plan.cells.toJson())
             }
-            tilesDir.mkdirs()
-            var base = 0L
+            area.tiles.mkdirs()
+            var done = 0L
             for (pack in plan.packs) {
                 staging.deleteRecursively()
                 staging.mkdirs()
                 val digest = MessageDigest.getInstance("SHA-256")
-                get(BuildConfig.ROUTING_DATA_URL + pack.file).use { raw ->
-                    val start = base
+                get(base + pack.file).use { raw ->
+                    val start = done
                     val hashed = DigestInputStream(CountingStream(raw) { progress(start + it) }, digest)
                     // Do not close the zip stream: it would close the source before the hash is complete.
                     val zip = ZipInputStream(hashed)
@@ -118,14 +199,14 @@ class RouteService(context: Context) {
                 val sha = digest.digest().joinToString("") { "%02x".format(it) }
                 if (sha != pack.sha256) throw RouteException(RouteError.CHECKSUM)
                 staging.walkTopDown().filter { it.isFile }.forEach { f ->
-                    val target = File(tilesDir, f.relativeTo(staging).path)
+                    val target = File(area.tiles, f.relativeTo(staging).path)
                     target.parentFile?.mkdirs()
                     target.delete()
                     if (!f.renameTo(target)) throw IOException("rename")
                 }
-                pack.fuel?.let { downloadFuel(pack, it) }
-                cellsInstalled.appendText(pack.id + "\n")
-                base += pack.bytes + (pack.fuel?.bytes ?: 0)
+                pack.fuel?.let { downloadFuel(area, base, pack, it) }
+                area.installed.appendText(pack.id + "\n")
+                done += pack.bytes + (pack.fuel?.bytes ?: 0)
             }
         } catch (e: IOException) {
             throw RouteException(if (dir.usableSpace < 50_000_000) RouteError.NO_SPACE else RouteError.NETWORK, e.javaClass.simpleName)
@@ -138,11 +219,12 @@ class RouteService(context: Context) {
      * The fuel stations of one cell (#7), checked like the road packs. Never fatal: without the
      * list the ride still routes, and the ride sheet says the stations are unknown there.
      */
-    private fun downloadFuel(pack: RoutingPack, fuel: FuelFile) {
+    private fun downloadFuel(area: AreaFiles, base: String, pack: RoutingPack, fuel: FuelFile) {
+        val fuelDir = area.fuel
         val part = File(fuelDir, pack.id + ".tsv.part")
         try {
             fuelDir.mkdirs()
-            val bytes = get(BuildConfig.ROUTING_DATA_URL + fuel.file).use { it.readCapped(MAX_FUEL_BYTES) }
+            val bytes = get(base + fuel.file).use { it.readCapped(MAX_FUEL_BYTES) }
             val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             if (sha != fuel.sha256) return
             FuelData.parse(bytes.decodeToString())
@@ -160,15 +242,19 @@ class RouteService(context: Context) {
     }
 
     /**
-     * The fuel stations that may be near [line] (#7), from the lists of the installed cells.
+     * The fuel stations that may be near [line] (#7), from the lists of the installed cells of
+     * the first area that has them all along the line (#14).
      * Null when part of the line has no list on the phone: then nothing is said about fuel.
      */
     fun fuelNear(line: List<LatLon>): List<FuelStation>? {
-        val cells = localCells() ?: return null
-        val installed = installedPacks()
-        return FuelData.stationsAlong(cells, line) { id ->
-            if (id in installed) File(fuelDir, "$id.tsv").takeIf { it.isFile }?.readText() else null
+        for (local in localAreas()) {
+            val cells = local.cells ?: continue
+            val fuelDir = files(local.id).fuel
+            FuelData.stationsAlong(cells, line) { id ->
+                if (id in local.installed) File(fuelDir, "$id.tsv").takeIf { it.isFile }?.readText() else null
+            }?.let { return it }
         }
+        return null
     }
 
     /** Whole regions already downloaded and verified (before #45). */
@@ -269,7 +355,7 @@ class RouteService(context: Context) {
         val base = when (data) {
             is RoutingData.Region -> ValhallaConfigFactory.usingTileExtract(tar(data.region).absolutePath)
             // Tile directory: drop tile_extract, otherwise the engine first looks for the default tar.
-            is RoutingData.Cells -> ValhallaConfigFactory.usingTilesDir(tilesDir.absolutePath)
+            is RoutingData.Cells -> ValhallaConfigFactory.usingTilesDir(files(data.area).tiles.absolutePath)
                 .let { it.copy(mjolnir = it.mjolnir?.copy(tileExtract = null)) }
         }
         // Towns passed near need a wide radius (#29); by default the engine rejects it.
@@ -296,20 +382,32 @@ class RouteService(context: Context) {
 
     private fun tar(region: RoutingRegion) = File(dir, region.id + ".tar")
 
-    /** Road data on the phone (#21): each whole region, and all the cells as one item. */
+    /**
+     * Road data on the phone (#21): each whole region, and the cells of each area as one item
+     * (#14). With a single area the item has no area name, as before.
+     */
     fun mapData(): List<MapDataItem> {
         val regions = installed().map { MapDataItem(it.id, tar(it).length(), isCells = false) }
-        val cells = cellsDir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
-        return regions + listOfNotNull(MapDataItem(CELLS_ID, cells, isCells = true).takeIf { cells > 0 })
+        val sizes = areaIds().map { id -> id to files(id).root.walkBottomUp().filter { it.isFile }.sumOf { it.length() } }
+            .filter { it.second > 0 }
+        val names = areas().associate { it.id to it.name }
+        return regions + sizes.map { (id, bytes) ->
+            MapDataItem(cellsItemId(id), bytes, isCells = true, area = if (sizes.size > 1) (names[id] ?: id) else null)
+        }
     }
 
     /** Deletes one item of [mapData]; it is downloaded again when a ride there needs it. */
     @Synchronized
     fun delete(item: MapDataItem) {
         closeEngine()
-        if (item.isCells) cellsDir.deleteRecursively()
+        if (item.isCells) files(if (item.id == CELLS_ID) RoutingAreas.ITALY else item.id.removePrefix(CELLS_PREFIX)).root.deleteRecursively()
         else listOf(".tar", ".json").forEach { File(dir, item.id + it).delete() }
     }
+
+    /** Italy keeps the id it had before #14. */
+    private fun cellsItemId(area: String) = if (area == RoutingAreas.ITALY) CELLS_ID else CELLS_PREFIX + area
+
+    private fun releaseUrl(release: String) = BuildConfig.ROUTING_RELEASES_URL + release + "/"
 
     fun freeBytes(): Long = dir.usableSpace
 
@@ -339,6 +437,12 @@ class RouteService(context: Context) {
 
     private companion object {
         const val CELLS_ID = "cells"
+        const val CELLS_PREFIX = "cells-"
+        const val INDEX_URL = BuildConfig.ROUTING_RELEASES_URL + "routing-index/areas.json"
+        /** The index is a few kB per area: anything this big is not one. */
+        const val MAX_INDEX_BYTES = 2_000_000
+        /** Areas whose published list is read for one ride (each is one small request). */
+        const val MAX_AREAS_TRIED = 4
         /** A cell's fuel list is a few kB: anything this big is not one. */
         const val MAX_FUEL_BYTES = 4_000_000
         val TILE = Regex("""[012](/\d{3})+\.gph""")
@@ -353,7 +457,7 @@ class RouteService(context: Context) {
             val n = read(buf)
             if (n < 0) break
             out.write(buf, 0, n)
-            if (out.size() > max) throw IOException("fuel list too big")
+            if (out.size() > max) throw IOException("file too big")
         }
         return out.toByteArray()
     }

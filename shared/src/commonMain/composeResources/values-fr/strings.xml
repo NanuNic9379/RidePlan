@@ -369,6 +369,9 @@
     <string name="mapdata_free">Libres</string>
     <string name="mapdata_list">Sur le téléphone</string>
     <string name="mapdata_cells">Routes autour de tes balades</string>
+    <string name="mapdata_cells_area">Routes autour de tes balades : %1$s</string>
+    <string name="area_it">Italie</string>
+    <string name="area_alps">Alpes</string>
     <string name="mapdata_note">Si tu supprimes les données routières, RidePlan les retélécharge quand tu rouvres une balade là-bas.</string>
     <string name="mapdata_delete_title">Supprimer ces données routières ?</string>
     <string name="info_title">Infos et mises à jour</string>

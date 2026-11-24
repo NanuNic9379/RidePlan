@@ -7,7 +7,8 @@ import androidx.compose.runtime.setValue
 
 /** A piece of road data on the phone (#21): a region, or all the cells around your rides. */
 /** [rideMap]: a map saved for one ride (#1), with the ride name ("" if it has none). */
-data class MapDataItem(val id: String, val bytes: Long, val isCells: Boolean, val rideMap: String? = null)
+/** [area]: name of the road-data area (#14), only when the phone has cells of more than one. */
+data class MapDataItem(val id: String, val bytes: Long, val isCells: Boolean, val rideMap: String? = null, val area: String? = null)
 
 /** What only the platform can do for the personal area (#21). Every action is optional. */
 @Stable

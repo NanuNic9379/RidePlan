@@ -343,8 +343,10 @@ sealed interface RoutingData {
         override val valhalla get() = region.valhalla
     }
 
-    data class Cells(val cells: RoutingCells) : RoutingData {
-        override val dataId get() = "cells-${cells.build}"
+    /** [area]: the area the cells belong to (#14), each with its own tile directory. */
+    data class Cells(val cells: RoutingCells, val area: String = RoutingAreas.ITALY) : RoutingData {
+        // Italy keeps the id it had before #14: rides routed then still match.
+        override val dataId get() = if (area == RoutingAreas.ITALY) "cells-${cells.build}" else "cells-$area-${cells.build}"
         override val osmDate get() = cells.osmDate
         override val valhalla get() = cells.valhalla
     }

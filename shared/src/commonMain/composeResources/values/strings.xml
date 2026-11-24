@@ -369,6 +369,9 @@
     <string name="mapdata_free">Free</string>
     <string name="mapdata_list">On the phone</string>
     <string name="mapdata_cells">Roads around your rides</string>
+    <string name="mapdata_cells_area">Roads around your rides: %1$s</string>
+    <string name="area_it">Italy</string>
+    <string name="area_alps">Alps</string>
     <string name="mapdata_note">If you delete road data, RidePlan downloads it again when you open a ride there.</string>
     <string name="mapdata_delete_title">Delete this road data?</string>
     <string name="info_title">About and updates</string>

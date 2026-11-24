@@ -131,6 +131,38 @@ Bandwidth reference: 10,000 active riders × ~300 MB a year ≈ 3 TB a year, fre
   the routing-data workflow on the next push to `main` (a normal Italy rebuild, ~22 min).
 * `MapTiles.kt`: tile counts for areas and ride corridors, used for the numbers above.
 
+## Areas: first slice (Alps)
+
+Owner decisions taken: order Alps, France, Spain-Portugal, Germany-Austria-Switzerland,
+Balkans; GitHub Releases while Europe-only; one free runner per area.
+
+* **Areas file** `data/routing-areas.json`: Italy (`it`, Release `routing-data`, still built by
+  `routing-data.yml`, untouched) and the Alps (`alps`, Geofabrik `europe/alps-latest.osm.pbf`,
+  2.34 GB on 2026-11-24, Release `routing-alps`). Each area has the `.poly` outline of its
+  extract.
+* **Workflow** `routing-areas.yml`: matrix with one free runner per area given by hand
+  (`gh workflow run routing-areas.yml -f areas=alps`), same steps as Italy (cells, fuel lists,
+  road notes, Release-limit check, MD5 check of the Geofabrik download), then the index job.
+  A push to `main` that changes the areas file only refreshes the index; it never builds an area.
+  Italy can not be built from here (`routing_areas.py matrix` refuses it).
+* **Index** `areas.json` in Release `routing-index`: per published area its id, name, Release,
+  bounding box and outline (encoded polylines, 3 decimals; Alps 0.5 kB, Italy 2.5 kB).
+* **App** (`RoutingAreas.kt`, `RouteService.kt`):
+  * reads the index (keeps a copy for offline use); without it, only Italy as before;
+  * prefers the area whose outline holds every stop: a 1-degree cell at the edge of an area
+    exists even where only part of its roads was in the extract (Lugano in Italy's data);
+  * among those, the smallest download (data already on the phone costs nothing), then the
+    smaller area; if none holds every stop, any area whose cells cover them (as before);
+  * one folder per area: Italy stays in `routing/cells` (no re-download after the update),
+    other areas in `routing/areas/<id>`; a new build wipes only its own area;
+  * "Data on the phone" lists one item per area (named only when there are several);
+  * old app versions keep reading `routing-data/cells.json`, which is not touched.
+* **Expected Alps build** (*estimate* from Italy): about 25-35 min on the free runner,
+  about 0.75 GB of packs, about 130-150 cells, about 1.9 GB if every pack is extracted.
+
+Not done yet: a mirror URL, a ride that needs two areas (stops are named, no route), the
+monthly `cron`, the next areas (add an entry to `routing-areas.json` and run the workflow).
+
 ## Owner decisions
 
 1. **Order of areas** after Italy: recommended Alps (cross-border, most requested by riders),
