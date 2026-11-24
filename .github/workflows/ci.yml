@@ -7,6 +7,8 @@ on:
     paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
   pull_request:
     paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
+  # Manual run only for the iPhone job (paused, see below).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -37,6 +39,9 @@ jobs:
 
   ios:
     name: iPhone (simulator, unsigned)
+    # Paused: the iPhone app is not being built for now and macOS runners queue for long.
+    # Run it by hand from the Actions tab (Run workflow) when needed.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-26
     timeout-minutes: 45
     env:
