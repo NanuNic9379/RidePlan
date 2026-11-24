@@ -43,7 +43,59 @@ how it works, and the proposal for the per-country road rules, which still need 
 - "Remove the first and last km" (privacy of shared rides) stays 1 km in every unit.
 - Valhalla instruction texts other than "Continue for..." never contain distances.
 
-## Per-country rules: proposal (needs a decision)
+## Per-country rules: option A done (warnings only)
+
+The owner chose option A. The ride sheet now lists the countries a ride crosses and, for each
+country other than the phone's own, what to know there:
+"Countries on this ride: Italy → Switzerland — Switzerland: motorway vignette required, also for
+motorcycles; tolls on some roads, bridges or tunnels; motorways only for vehicles faster than 80 km/h".
+A ride that stays in the phone's country shows nothing. Routing does not change.
+
+### How the countries are found (offline)
+- Outlines: **Natural Earth 1:10m "Admin 0 – Countries", version 5.1.2**
+  (https://www.naturalearthdata.com/, file `ne_10m_admin_0_countries.geojson` from
+  github.com/nvkelso/natural-earth-vector). Natural Earth is **public domain**: no attribution
+  needed, compatible with the app licence and with F-Droid.
+- `data/country_borders.py` (standard library only) keeps the 40 European countries of the
+  table, drops overseas parts (French Guiana, Madeira, the Canaries...) and islands under about
+  30 km², simplifies every outline to about 500 m (Douglas-Peucker) and writes them as encoded
+  polylines with 3 decimals into `route/CountryBorders.kt` (about 115 KB of source, generated:
+  do not edit by hand, run the script again).
+- `route/Countries.kt` checks a point every 0.5 km along the ride line (long straight lines of
+  a ride without a road are split) with a point-in-polygon test (even-odd rule, so San Marino
+  is a hole in Italy). A country counts only with at least 1 km of the ride inside it: the
+  outlines are coarse, and a road along a border must not look like a crossing.
+- Done off the main thread when the ride sheet opens; nothing leaves the phone.
+- Limits: borders are accurate to roughly 0.5–1 km; the Vatican is too small and reads as
+  Italy; Monaco and Liechtenstein are there. Countries outside the table (Turkey, Ukraine,
+  the rest of the world) are not recognised and get no warning.
+
+### The rules table (`route/CountryRules.kt`)
+Per country: motorway vignette for motorcycles (yes / no / unclear), tolls (none / some roads,
+bridges or tunnels / most motorways), minimum cc on motorways, minimum design speed on
+motorways, speed-camera warnings legal (yes / no / unclear), an official source link, the
+date (`checked`) and `verified`.
+
+**No entry is verified yet.** They were compiled in 2026-11 from the official sites linked in
+the code and general knowledge; the ride sheet says so under the warnings ("Rules as of 2026-11,
+not yet checked by a person"). Points known to be uncertain:
+- Vignette for motorcycles in Czechia, Slovakia, Bulgaria, Romania, Moldova: sources disagree,
+  marked *unclear* ("check whether motorcycles need one").
+- France: motorways forbidden under 80 cc — to confirm in the Code de la route (R421-2).
+- Switzerland 80 km/h, Germany and Austria 60 km/h minimum design speed: to confirm.
+- Speed-camera warnings: *no* for FR, DE, CH, BE, SK; *yes* for IT, GB, ES, NL, PL; *unclear*
+  elsewhere.
+
+To verify an entry: open its `source`, check every field, set `checked` to the month and
+`verified = true` (a test reminds that none is verified today, update it then).
+
+### Speed cameras: owner decision
+Speed-camera warnings are **Italy only**, off everywhere else, even where they may be legal.
+`CountryRules.speedCameraWarningsAllowed(country)` returns true only for Italy
+(`SPEED_CAMERA_WARNINGS_COUNTRIES`); a future speed-camera feature must ask it for the country
+of each camera (`Countries.at(point)`).
+
+## Per-country rules: original proposal (B and C still open)
 
 Today the only road rule is in the bike: `Engine.UP_TO_150` avoids motorways everywhere. That
 is right for Italy (motorways forbidden under 150 cc), roughly right for most of Europe, and
@@ -113,5 +165,5 @@ than no rule. Community corrections can go through the same Weblate/GitHub flow.
 
 ### Decisions for the owner
 1. Weblate: create the project linked to the GitHub repository (free for open source)?
-2. Country rules: start with option A? Who checks the data per country (owner, community)?
+2. Country rules: option A is done. Who checks the data per country (owner, community)?
 3. Should the bike profile ask the exact cc instead of "up to 150 / over 150 / electric"?

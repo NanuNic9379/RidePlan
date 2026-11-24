@@ -71,11 +71,11 @@ internal object Gpx {
         val xml = Xml.stripComments(raw)
         val trackPoints = Xml.elements(xml, "trkpt").mapNotNull(::point)
         val routePoints = Xml.elements(xml, "rtept").map { it to point(it) }
-        val waypoints = Xml.elements(xml, "wpt").mapNotNull { e -> point(e)?.let { Stop(Xml.text(e.body, "name"), it) } }
+        val waypoints = Xml.elements(xml, "wpt").mapNotNull { e -> point(e)?.let { Stop(Xml.text(e.body, "name"), it, plan = plan(e.body)) } }
 
         // A route (rte) without a track: its points are the stops.
         val stops = waypoints.ifEmpty {
-            if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { Stop(Xml.text(e.body, "name"), it) } } else emptyList()
+            if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { Stop(Xml.text(e.body, "name"), it, plan = plan(e.body)) } } else emptyList()
         }
         val track = trackPoints.ifEmpty { if (waypoints.isNotEmpty()) routePoints.mapNotNull { it.second } else emptyList() }
         if (track.size < 2 && stops.size < 2) throw ImportException(ImportError.GPX_EMPTY)
@@ -84,7 +84,32 @@ internal object Gpx {
             // Only the ride's <name>: strip the points first, they have their own <name>.
             Xml.elements(xml, tag).firstOrNull()?.body?.let { body -> Xml.text(withoutPoints(body), "name") }
         }
-        return Ride(name, track, Stop.guessKinds(stops, towns = false), Ride.Source.GPX)
+        val guessed = Stop.guessKinds(stops, towns = false).map { s -> if (s.plan != null) s.copy(kind = Stop.Kind.STOP) else s }
+        return Ride(name, track, guessed, Ride.Source.GPX, version = version(xml))
+    }
+
+    /**
+     * The plan of a stop written by RidePlan (#10): purpose in `type`, note in `cmt`, time and
+     * pause in the extension. Other apps' `type` and `cmt` are read too when they fit.
+     */
+    private fun plan(body: String): StopPlan? {
+        val ext = Xml.elements(body, "stop").firstOrNull()
+        return StopPlan(
+            purpose = StopPlan.Purpose.of(Xml.text(body, "type")),
+            time = ext?.attr("time")?.let(StopPlan::parseTime),
+            pauseMinutes = ext?.attr("pause")?.toIntOrNull() ?: 0,
+            note = Xml.text(body, "cmt").orEmpty(),
+        ).normalized()
+    }
+
+    /** The ride version written by RidePlan (#11), with its note from the metadata description. */
+    private fun version(xml: String): RideVersion? {
+        val meta = Xml.elements(xml, "metadata").firstOrNull()?.body ?: return null
+        val e = Xml.elements(meta, "version").firstOrNull() ?: return null
+        val id = e.attr("id")?.takeIf { it.isNotBlank() && it.length <= 64 } ?: return null
+        val number = e.attr("number")?.toIntOrNull()?.takeIf { it >= 1 } ?: return null
+        val note = Xml.text(meta, "desc")?.removePrefix("v$number:")?.trim().orEmpty()
+        return RideVersion(id, number, note.take(RideVersion.MAX_NOTE), e.attr("updated")?.toLongOrNull() ?: 0)
     }
 
     private val points = Regex("""<(trkseg|trkpt|rtept|wpt)\b.*?</\1\s*>""", RegexOption.DOT_MATCHES_ALL)

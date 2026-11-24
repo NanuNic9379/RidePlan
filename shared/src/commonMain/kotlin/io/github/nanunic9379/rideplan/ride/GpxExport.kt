@@ -11,25 +11,32 @@ import kotlin.math.roundToLong
  *   the road through them.
  * - `trk`: the actual road, when there is one (imported GPX/KML or route calculated on the phone).
  *   For those who want to follow exactly that road.
+ * - Stop plans (#10) on `wpt` and `rtept`, the ride version (#11) in the metadata: see [planTags].
  */
 object GpxExport {
     fun write(ride: Ride, fallbackName: String): String {
         val name = ride.name ?: fallbackName
         val sb = StringBuilder()
         sb.append("""<?xml version="1.0" encoding="UTF-8"?>""").append('\n')
-        sb.append("""<gpx version="1.1" creator="RidePlan" xmlns="http://www.topografix.com/GPX/1/1">""").append('\n')
-        sb.append("  <metadata><name>").append(escape(name)).append("</name></metadata>\n")
+        sb.append("""<gpx version="1.1" creator="RidePlan" xmlns="http://www.topografix.com/GPX/1/1" xmlns:rideplan="$NAMESPACE">""").append('\n')
+        sb.append("  <metadata><name>").append(escape(name)).append("</name>")
+        ride.version?.let { v ->
+            if (v.note.isNotBlank()) sb.append("<desc>").append(escape("v${v.number}: ${v.note}")).append("</desc>")
+            sb.append("<extensions><rideplan:version id=\"").append(escape(v.rideId)).append("\" number=\"").append(v.number)
+                .append("\" updated=\"").append(v.updatedAt).append("\"/></extensions>")
+        }
+        sb.append("</metadata>\n")
         // Stops as wpt only next to a track: without a track the route points are enough
         // (and whoever reads the file back does not mistake the route for the road).
         if (!ride.straightLines) ride.stops.forEachIndexed { i, stop ->
             sb.append("  <wpt ").append(attrs(stop.point)).append("><name>")
-                .append(escape(stopName(stop, i))).append("</name></wpt>\n")
+                .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan)).append("</wpt>\n")
         }
         if (ride.stops.size >= 2) {
             sb.append("  <rte>\n    <name>").append(escape(name)).append("</name>\n")
             ride.stops.forEachIndexed { i, stop ->
                 sb.append("    <rtept ").append(attrs(stop.point)).append("><name>")
-                    .append(escape(stopName(stop, i))).append("</name></rtept>\n")
+                    .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan)).append("</rtept>\n")
             }
             sb.append("  </rte>\n")
         }
@@ -55,6 +62,33 @@ object GpxExport {
     }
 
     private fun stopName(stop: Stop, i: Int) = stop.name ?: "${i + 1}"
+
+    /** Namespace of the RidePlan extensions (#10, #11): other apps skip them. */
+    const val NAMESPACE = "https://nanunic9379.github.io/RidePlan/gpx/1"
+
+    /**
+     * The plan of a stop (#10), in GPX order after the name: the note in `cmt`, a readable
+     * line in `desc` for other apps, the purpose in `type`, time and pause in an extension.
+     */
+    private fun planTags(plan: StopPlan?): String {
+        val p = plan?.normalized() ?: return ""
+        val sb = StringBuilder()
+        if (p.note.isNotBlank()) sb.append("<cmt>").append(escape(p.note)).append("</cmt>")
+        val desc = listOfNotNull(
+            p.time?.let(StopPlan::timeText),
+            p.pauseMinutes.takeIf { it > 0 }?.let { "$it min" },
+            p.note.ifBlank { null },
+        ).joinToString(" · ")
+        if (desc.isNotEmpty()) sb.append("<desc>").append(escape(desc)).append("</desc>")
+        p.purpose?.let { sb.append("<type>").append(it.code).append("</type>") }
+        if (p.time != null || p.pauseMinutes > 0) {
+            sb.append("<extensions><rideplan:stop")
+            p.time?.let { sb.append(" time=\"").append(StopPlan.timeText(it)).append('"') }
+            if (p.pauseMinutes > 0) sb.append(" pause=\"").append(p.pauseMinutes).append('"')
+            sb.append("/></extensions>")
+        }
+        return sb.toString()
+    }
 
     private fun attrs(p: LatLon) = """lat="${coord(p.lat)}" lon="${coord(p.lon)}""""
 

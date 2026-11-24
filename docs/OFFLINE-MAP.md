@@ -1,21 +1,22 @@
 # Offline map of a region (#1)
 
-Status as of November 2026, written while checking what #1 still needs.
+Status as of November 2026. Step 1 (the map along a ride) is delivered; Step 2 (whole
+regions) is still open, so #1 stays open.
 
 ## What already works
 
 | #1 criterion | State | Evidence |
 |---|---|---|
 | MapLibre on Android and iOS, OSM vector tiles | Done | `maplibre-compose` 0.20.0 (`gradle/libs.versions.toml`), style `MapDefaults.STYLE` = OpenFreeMap Liberty (OpenMapTiles schema, OSM data) in `App.kt` and `NavigationScreen.kt` |
-| © OpenStreetMap attribution visible | Done | MapLibre's attribution button stays on the map (`viewportInsets` in `App.kt`); licences page lists OpenStreetMap, OpenFreeMap, MapLibre, Valhalla (`info_licences_text`) |
-| Download a region and use it without network | **Not done for the map** | The map style and its tiles are always fetched online from `tiles.openfreemap.org`. Nothing in the code uses MapLibre's offline storage (`OfflinePack`, `OfflineManager`) or a local PMTiles/MBTiles file. Only MapLibre's ambient cache keeps the tiles you already looked at, with no guarantee. |
+| © OpenStreetMap attribution visible | Done | MapLibre's attribution button stays on the map (`viewportInsets` in `App.kt`); the ride map section shows "Map © OpenStreetMap contributors, OpenFreeMap"; licences page lists OpenStreetMap, OpenFreeMap, MapLibre, Valhalla (`info_licences_text`) |
+| Map along a ride, usable without network | **Done (Android, Step 1)** | "Download map for this ride" in the ride sheet (`RideMapUi.kt`, `RideMapDownloads.kt`), MapLibre offline packs. Checked on the emulator in airplane mode: zoom 14 detail drawn along the ride. |
+| Download a whole region | **Not done (Step 2)** | Needs a file we publish ourselves, see below. |
+| iOS | Not done | The shared UI is ready (`PlatformActions.rideMap`); iOS has no `RideMapActions` yet, so the section is hidden there. |
 
-What *is* offline today is the **road data for routing and navigation** (#3, #45): Valhalla
-tiles in 1-degree cells, downloaded around the ride (`RoutingCells.kt`, `RouteService.kt`,
-`.github/workflows/routing-data.yml`). So in the mountains without signal the route and the
-turn instructions work, but the map underneath can be blank where it was never viewed.
+The **road data for routing and navigation** (#3, #45) is offline as before: Valhalla tiles
+in 1-degree cells (`RoutingCells.kt`, `RouteService.kt`, `.github/workflows/routing-data.yml`).
 
-**#1 is not done.** It must stay open.
+**#1 is not done.** It must stay open for Step 2.
 
 ## Constraints found
 
@@ -26,32 +27,91 @@ turn instructions work, but the map underneath can be blank where it was never v
 * A whole region does not fit that: Italy at zoom 0-13 is about 129,000 tiles, at zoom 0-14
   about 515,000 tiles (computed with `MapTiles.count`, see `MapTilesTest`). A region map
   therefore needs a file we publish ourselves.
-* `maplibre-compose` 0.20.0 already ships an offline API (`org.maplibre.compose.offline`:
-  `OfflinePackDefinition.TilePyramid` for a box, `OfflinePackDefinition.Shape` for any
-  geometry, `DownloadProgress`, `setMaximumAmbientCacheSize`). No new dependency is needed.
-* Recent MapLibre Native versions (from late 2024) read `pmtiles://` sources, so a single
-  PMTiles file per area can back the same Liberty style once downloaded. To be verified on
-  the version bundled by maplibre-compose 0.20.0.
+* `maplibre-compose` 0.20.0 ships the offline API (`org.maplibre.compose.offline`). No new
+  dependency was needed.
+* Recent MapLibre Native versions read `pmtiles://` sources, so a single PMTiles file per
+  area can back the same Liberty style once downloaded. To be verified on the version
+  bundled by maplibre-compose 0.20.0.
 
-## Plan
+## Step 1: the map along the ride (delivered)
 
-### Step 1 (no infrastructure, no cost): the map along the ride
+### What the rider sees
 
-After a route is calculated, offer "Map for this ride, X MB" next to the road data:
+In the sheet of a saved ride (road calculated, not straight lines) a section **Map without
+signal** shows, before anything is downloaded:
 
-* Geometry: the calculated track with **5 km on each side**, zoom 5 to 14. A 300 km ride is
-  about 1,400-2,100 tiles (`MapTilesTest.rideCorridorFitsOneOpenFreeMapDownload`), so **one
-  download, one tap**, inside the OpenFreeMap limit.
-* Size: OpenMapTiles vector tiles in rural areas average 10-25 KB, so 15-50 MB per ride.
-  If the estimate exceeds 3,000 tiles or 50 MB (very long rides, dense cities), split the
-  track into consecutive parts and show one button per part, as the terms require.
-* Implementation: `OfflinePackDefinition.Shape` (corridor polygon) on the existing style,
-  max 4 parallel requests, `User-Agent: RidePlan/<version>`; same Wi-Fi / mobile-data rules as
-  the road data (#44); listed and deletable in *Downloaded map data* (#21).
-* Done when: airplane mode, open the saved ride, the map is drawn along the whole route at
-  every zoom used during navigation (overzoom above 14).
+* "The map along the road, 5 km on each side: N tiles, about X MB", and a 56 dp button
+  **Download map for this ride**.
+* If full detail is over the limit: the full size, and the same corridor with less detail
+  (some small streets missing when zoomed in close), button **Download with less detail**.
+* If even the lowest detail is over the limit: the ride is too long for one download,
+  split it into stages.
+* On mobile data with "Wi-Fi only" on (#44): the same question as for road data, with the
+  size; "wait for Wi-Fi" cancels.
+* While downloading: progress bar, tiles done of total, MB, **Cancel** (cancel removes the
+  partial download).
+* Once saved: "Map saved, it works without signal. X MB on the phone" and **Delete map**.
+  An interrupted download offers **Resume**; an outdated one (see below) **Update map**.
+* The saved maps are also listed, with size, in *Downloaded map data* (#21) and removed by
+  "delete all data on this device".
 
-### Step 2 (needs a hosting decision): whole regions
+### How it works
+
+* `route/RideMap.kt` (pure, tested in `RideMapTest`): the corridor is the set of zoom 14
+  tiles within 5 km of the track, plus all their parents down to zoom 5. It estimates bytes
+  per zoom and picks the highest max zoom (14, else 13, 12, 11) that stays within 3,000
+  tiles and 50 MB. The corridor is turned into rectangles (`areas`) that become one
+  MultiPolygon for `OfflinePackDefinition.Shape`.
+* `androidApp/.../RideMapDownloads.kt`: creates/resumes/deletes the MapLibre offline pack,
+  stores a small JSON (`RideMapInfo`) as pack metadata, watches progress and stops (and
+  deletes) a pack that would pass the limit while downloading.
+* `RideMapNetwork` replaces MapLibre's network for `tiles.openfreemap.org` during a ride map
+  download: **at most 4 requests at a time**, `User-Agent: RidePlan/<version> (+repo url)`,
+  ETag / Range support. Normal map browsing is untouched.
+* The map database moved from the cache folder (Android may empty it) to the app files
+  folder (`maplibre.db`); the old cache file is removed once. Offline packs live in that
+  same database, so the normal map uses them without network.
+
+### Measured sizes (emulator, 25 km ride east of Turin)
+
+| Part | Size |
+|---|---|
+| Tiles z5-14 (222, estimate 223) | 11.5 MB |
+| Fonts (Latin, Greek, Cyrillic, etc.) | 4.8 MB |
+| Style, sprites | 0.2 MB |
+| **Total** | **about 17 MB** |
+
+Average tile size by zoom: z5-8 about 250 KB (they cover large areas, relief included),
+z9-10 about 150 KB, z11-12 about 60 KB, z13-14 about 35-40 KB. The old guess "300 km = 15-50
+MB at zoom 14" was too optimistic. With the measured numbers:
+
+* up to about **150 km**: full detail (zoom 14), one download;
+* about **200-300 km**: zoom 13 (country lanes still drawn, a few tiny streets missing);
+* a multi-day tour of about **1,200 km**: zoom 11;
+* longer tours: too long for one download, split into stages.
+
+### Decisions taken while building
+
+* **Fonts:** the style asks for every Unicode block of each font; downloading them all is
+  over 44 MB. During a ride map download, font ranges from U+3000 up (CJK) are answered
+  "no content, already expired", so they are fetched again the next time the phone is
+  online. Latin, Greek, Cyrillic, Arabic etc. are kept.
+* **Weekly data:** OpenFreeMap publishes new tiles every week under a new address
+  (`.../planet/20261122_124456_pt/...`). The app remembers the newest version it has seen;
+  a saved map from an older version is marked outdated with **Update map**, because the
+  style then points to tiles that are not stored. Until the rider updates, an older map can
+  still show where the old style is cached, but this is not guaranteed.
+* **Size check during the download:** the estimate is calibrated on one ride; dense cities
+  can be heavier. The download is stopped and deleted if it passes 3,000 tiles or 50 MB.
+
+### Limits of this slice
+
+* No automatic split into several parts: rides over about 1,200 km must be saved as stages.
+* Android only (iOS needs its own `RideMapActions`).
+* The estimate is calibrated on one rural ride; dense cities can come out larger (the
+  runtime check protects the limit).
+
+## Step 2 (needs a hosting decision): whole regions
 
 * Source: OpenFreeMap's weekly planet PMTiles (same OpenMapTiles schema as the Liberty style).
 * A workflow cuts each area with `pmtiles extract <planet url> <area>.pmtiles --bbox=... --maxzoom=14`;
@@ -63,14 +123,10 @@ After a route is calculated, offer "Map for this ride, X MB" next to the road da
   `pmtiles://` source under the online style.
 * Details, costs and the worldwide extension: see `WORLDWIDE-COVERAGE.md`.
 
-## What was added now
-
-* `route/MapTiles.kt`: tile numbering, tile count for a box and for a ride corridor, and the
-  OpenFreeMap limits as constants. Tested in `MapTilesTest`. It is the size estimate Step 1
-  will show before downloading.
-
 ## Owner decisions
 
-1. **Step 1 with OpenFreeMap** under their offline terms: recommended (free, compliant, no
-   server). OpenFreeMap lives on donations: consider sponsoring it if usage grows.
-2. **Step 2 hosting**: GitHub Releases (free) or a mirror (see `WORLDWIDE-COVERAGE.md`).
+1. **OpenFreeMap** is used under its offline terms (free, compliant, no server). It lives on
+   donations: consider sponsoring it if usage grows.
+2. **Very long tours:** add a split into several parts (one button per part, each started by
+   the rider, as the terms require), or keep "split the ride into stages".
+3. **Step 2 hosting**: GitHub Releases (free) or a mirror (see `WORLDWIDE-COVERAGE.md`).

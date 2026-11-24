@@ -27,11 +27,16 @@ fun Ride.withStopAdded(point: LatLon): Ride {
     return copy(stops = fresh).unrouted()
 }
 
-/** Stop [index] dragged to [point]: its old name no longer applies and the route passes exactly there. */
+/**
+ * Stop [index] dragged to [point]: its old name no longer applies and the route passes exactly there.
+ * A stop with a plan (#10) stays a real stop.
+ */
 fun Ride.withStopMoved(index: Int, point: LatLon): Ride {
     if (!stopsEditable || index !in stops.indices) return this
     if (stops[index].point == point) return this
-    val fresh = stops.toMutableList().also { it[index] = Stop(null, point, Stop.Kind.VIA) }
+    // A planned stop (#10) keeps its plan: the group still meets there, just a bit further on.
+    val plan = stops[index].plan
+    val fresh = stops.toMutableList().also { it[index] = Stop(null, point, if (plan != null) Stop.Kind.STOP else Stop.Kind.VIA, plan = plan) }
     return copy(stops = fresh).unrouted()
 }
 

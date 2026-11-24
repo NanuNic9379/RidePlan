@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.ride
 import io.github.nanunic9379.rideplan.route.Maneuver
 import io.github.nanunic9379.rideplan.route.RouteInfo
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.RoadSurfaces
 import io.github.nanunic9379.rideplan.route.SpeedLimits
 import kotlin.math.asin
 import kotlin.math.cos
@@ -19,8 +20,15 @@ data class LatLon(val lat: Double, val lon: Double) {
  * A stop with its name, if the source provides one.
  * [kind]: how much the exact point matters (#29).
  * [overnight]: the rider sleeps here: a day of a multi-day trip ends at this stop (#12).
+ * [plan]: what the group does there and when (#10); null for a plain stop.
  */
-data class Stop(val name: String?, val point: LatLon, val kind: Kind = Kind.STOP, val overnight: Boolean = false) {
+data class Stop(
+    val name: String?,
+    val point: LatLon,
+    val kind: Kind = Kind.STOP,
+    val overnight: Boolean = false,
+    val plan: StopPlan? = null,
+) {
     enum class Kind {
         /** I really go there (bar, fuel, farm restaurant): the route gets there and stops. */
         STOP,
@@ -89,6 +97,10 @@ data class Ride(
     val speedLimits: SpeedLimits = SpeedLimits.NONE,
     /** Daily cap of a multi-day trip (#12); null = no automatic split into days. */
     val dayCap: DayCap? = null,
+    /** Unpaved stretches along the computed road (#9). Not saved, like [maneuvers]. */
+    val surfaces: RoadSurfaces = RoadSurfaces.NONE,
+    /** Version of the ride (#11); null until it is saved for the first time. */
+    val version: RideVersion? = null,
 ) {
     enum class Source {
         GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,

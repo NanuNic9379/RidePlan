@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import kotlinx.coroutines.Job
@@ -17,6 +18,8 @@ class Session(app: Application) : AndroidViewModel(app) {
     var routeJob: Job? = null
     /** Created by the first activity, then shared by the next ones. */
     var store: ProfileStore? = null
+    /** Maps saved for rides, for use without signal (#1). */
+    val rideMaps by lazy { RideMapDownloads(app, viewModelScope) }
 }
 
 /** The last viewed map area (Explore): a small preference file, never in the backup. */

@@ -75,6 +75,8 @@ import io.github.nanunic9379.rideplan.resources.language_help
 import io.github.nanunic9379.rideplan.resources.language_phone
 import io.github.nanunic9379.rideplan.resources.language_title
 import io.github.nanunic9379.rideplan.resources.mapdata_cells
+import io.github.nanunic9379.rideplan.resources.mapdata_ride_map
+import io.github.nanunic9379.rideplan.resources.ride_default_name
 import io.github.nanunic9379.rideplan.resources.mapdata_delete_title
 import io.github.nanunic9379.rideplan.resources.mapdata_free
 import io.github.nanunic9379.rideplan.resources.mapdata_list
@@ -375,7 +377,7 @@ fun MapDataPage(rides: RideScreenState, platform: PlatformActions?) {
                     if (i > 0) GroupDivider()
                     NavRow(
                         AppIcons.Map,
-                        if (item.isCells) stringResource(Res.string.mapdata_cells) else regionLabel(item.id),
+                        item.rideMap?.let { rideMapLabel(it) } ?: if (item.isCells) stringResource(Res.string.mapdata_cells) else regionLabel(item.id),
                         sizeText(item.bytes),
                         onClick = null,
                         end = {
@@ -408,6 +410,10 @@ fun MapDataPage(rides: RideScreenState, platform: PlatformActions?) {
 /** A region id ("italy-nord-ovest") read as words. */
 @Composable
 private fun regionLabel(id: String): String = io.github.nanunic9379.rideplan.route.regionName(id)
+
+@Composable
+private fun rideMapLabel(name: String): String =
+    stringResource(Res.string.mapdata_ride_map, name.ifEmpty { stringResource(Res.string.ride_default_name) })
 
 /** Info & updates (#21, #30): version, the update card even after closing the banner, links. */
 @Composable

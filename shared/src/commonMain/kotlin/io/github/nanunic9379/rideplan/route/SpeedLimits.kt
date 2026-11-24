@@ -87,14 +87,23 @@ object ValhallaSpeedLimits {
      * and returns the response; a piece it cannot walk is left without limits.
      */
     fun compute(shape: List<LatLon>, engine: (String) -> String): SpeedLimits {
-        if (shape.size < 2) return SpeedLimits.NONE
+        return SpeedLimits.of(walk(shape, engine) { json, offset -> parse(json, offset) }.flatten())
+    }
+
+    /**
+     * Walks [shape] piece by piece with [engine] and reads each response with [read] (the JSON
+     * and where the piece starts on the route, in metres). A piece the engine cannot walk is
+     * tried again in halves, then left out. Shared with [ValhallaRoadAttributes] (#9).
+     */
+    fun <T> walk(shape: List<LatLon>, engine: (String) -> String, read: (String, Double) -> T): List<T> {
+        if (shape.size < 2) return emptyList()
         val along = DoubleArray(shape.size)
         for (i in 1 until shape.size) along[i] = along[i - 1] + distanceKm(shape[i - 1], shape[i]) * 1000
-        val out = ArrayList<SpeedLimit>()
+        val out = ArrayList<T>()
         fun walk(range: IntRange, splits: Int) {
-            val stretches = runCatching { parse(engine(request(shape.subList(range.first, range.last + 1))), along[range.first]) }.getOrNull()
+            val piece = runCatching { read(engine(request(shape.subList(range.first, range.last + 1))), along[range.first]) }
             when {
-                stretches != null -> out += stretches
+                piece.isSuccess -> out += piece.getOrThrow()
                 splits > 0 && range.last - range.first >= MIN_SPLIT_POINTS -> {
                     val mid = (range.first + range.last) / 2
                     walk(range.first..mid, splits - 1)
@@ -103,7 +112,7 @@ object ValhallaSpeedLimits {
             }
         }
         pieces(along).forEach { walk(it, SPLITS) }
-        return SpeedLimits.of(out)
+        return out
     }
 
     /**
@@ -132,7 +141,11 @@ object ValhallaSpeedLimits {
         put("shape_format", "polyline6")
         put("filters", buildJsonObject {
             put("attributes", buildJsonArray {
-                listOf("edge.speed_limit", "edge.begin_shape_index", "edge.end_shape_index", "shape")
+                listOf(
+                    "edge.speed_limit", "edge.begin_shape_index", "edge.end_shape_index", "shape",
+                    // Unpaved stretches (#9), read by ValhallaRoadSurface from the same walk.
+                    "edge.surface", "edge.unpaved",
+                )
                     .forEach { add(kotlinx.serialization.json.JsonPrimitive(it)) }
             })
             put("action", "include")

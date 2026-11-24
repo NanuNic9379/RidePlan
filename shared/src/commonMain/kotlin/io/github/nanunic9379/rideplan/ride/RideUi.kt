@@ -111,6 +111,8 @@ import io.github.nanunic9379.rideplan.resources.share_trim_ends
 import io.github.nanunic9379.rideplan.resources.stop_edit_hint
 import io.github.nanunic9379.rideplan.nav.NavigateButton
 import io.github.nanunic9379.rideplan.route.DetourNote
+import io.github.nanunic9379.rideplan.route.RoughLayers
+import io.github.nanunic9379.rideplan.route.SurfaceNote
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RidingModeRow
 import io.github.nanunic9379.rideplan.route.RidingMode
@@ -324,6 +326,7 @@ fun RideLayers(ride: Ride) {
     val stops = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(ride.stops.map { it.point })))
     LineLayer(id = "ride-casing", source = line, color = const(RouteCasing), width = const(7.dp))
     LineLayer(id = "ride-line", source = line, color = const(RouteColor), width = const(4.dp))
+    RoughLayers(ride)
     CircleLayer(
         id = "ride-stops",
         source = stops,
@@ -440,6 +443,8 @@ fun RideSheet(
     onNavigate: (() -> Unit)? = null,
     /** The default bike: under 150 cc it locks "avoid motorways" in the route settings (#8). */
     bike: Bike? = null,
+    /** The map of this ride for use without signal (#1). */
+    offlineMap: @Composable (Ride) -> Unit = {},
 ) {
     val ride = state.ride ?: return
     val route = state.route
@@ -512,6 +517,9 @@ fun RideSheet(
             HorizontalDivider()
             RouteSection(route, routeActions)
             RideNotes(ride, route)
+            FuelSection(state, routeActions, bike)
+            CountryWarningsSection(ride)
+            if (route == RouteState.Idle) offlineMap(ride)
             if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {
                 RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
@@ -552,6 +560,7 @@ private fun RideNotes(ride: Ride, route: RouteState) {
         }
         if (note != null) Text(note, style = MaterialTheme.typography.bodyMedium, color = muted)
         ride.route?.let { DetourNote(it) }
+        SurfaceNote(ride.surfaces)
     }
 }
 

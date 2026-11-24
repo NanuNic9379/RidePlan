@@ -103,6 +103,8 @@ class RouteActions(
     val toggleStop: (index: Int) -> Unit = {},
     /** The stops were edited on the map (#2): show the new ride and route it again. */
     val editStops: (Ride) -> Unit = {},
+    /** Fuel stations that may be near a line (#7), from the data on the phone; null = unknown. */
+    val fuelStations: (suspend (List<io.github.nanunic9379.rideplan.ride.LatLon>) -> List<FuelStation>?)? = null,
 )
 
 /**
