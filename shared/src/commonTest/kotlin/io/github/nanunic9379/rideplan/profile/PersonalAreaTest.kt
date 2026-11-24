@@ -131,7 +131,9 @@ class PersonalAreaTest {
         val small = Bike("s", "SH 125", engine = Engine.UP_TO_150)
         val big = Bike("b", "Tracer", engine = Engine.OVER_150)
         val prefs = RouteOptions(curves = Curves.MORE, avoidHighways = false, avoidTolls = true)
-        assertEquals(prefs.copy(avoidHighways = true), prefs.forBike(small))
+        assertEquals(prefs.copy(avoidHighways = true, noMotorways = true), prefs.forBike(small))
+        // Already switched off by hand: the ban is still added.
+        assertTrue(prefs.copy(avoidHighways = true).forBike(small).noMotorways)
         assertEquals(prefs, prefs.forBike(big))
         assertEquals(prefs, prefs.forBike(null))
     }

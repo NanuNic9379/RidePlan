@@ -46,9 +46,12 @@ data class Bike(
     val avoidsMotorways: Boolean get() = engine == Engine.UP_TO_150
 }
 
-/** The route options a ride really uses with [bike]: the bike's rules win over preferences. */
+/**
+ * The route options a ride really uses with [bike]: the bike's rules win over preferences.
+ * Under 150 cc motorways are switched off and also banned outright in the engine (#8).
+ */
 fun RouteOptions.forBike(bike: Bike?): RouteOptions =
-    if (bike?.avoidsMotorways == true && !avoidHighways) copy(avoidHighways = true) else this
+    if (bike?.avoidsMotorways == true) copy(avoidHighways = true, noMotorways = true) else this
 
 /**
  * Reads a decimal number typed by hand: comma or point, spaces ignored. Null when it is not a

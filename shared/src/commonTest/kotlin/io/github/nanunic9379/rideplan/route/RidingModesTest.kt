@@ -76,8 +76,13 @@ class RidingModesTest {
         val scooter = Bike("s", "SH 125", engine = Engine.UP_TO_150)
         val o = RidingMode.FAST.options.forBike(scooter)
         assertTrue(o.avoidHighways)
+        assertTrue(o.noMotorways)
         assertTrue(""""use_highways":0.0""" in request(o))
+        assertTrue(""""exclude_highways":true""" in request(o))
+        // Every mode keeps the ban, the fastest one included (#8).
+        RidingMode.entries.forEach { assertTrue(""""exclude_highways":true""" in request(it.options.forBike(scooter)), it.name) }
         assertEquals(RidingMode.FAST.options, RidingMode.FAST.options.forBike(Bike("t", "Tracer 7")))
+        assertFalse("exclude_highways" in request(RidingMode.FAST.options.forBike(Bike("e", "Zero", engine = Engine.ELECTRIC))))
     }
 
     @Test

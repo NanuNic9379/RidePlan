@@ -226,7 +226,13 @@ class RouteService(context: Context) {
                 .let { it.copy(mjolnir = it.mjolnir?.copy(tileExtract = null)) }
         }
         // Towns passed near need a wide radius (#29); by default the engine rejects it.
-        val config = base.copy(serviceLimits = base.serviceLimits?.copy(maxRadius = maxOf(base.serviceLimits?.maxRadius ?: 0, ValhallaRoute.PASS_RADIUS_M)))
+        // Hard exclusions carry the motorway ban under 150 cc (#8): off by default in Valhalla.
+        val config = base.copy(
+            serviceLimits = base.serviceLimits?.copy(
+                maxRadius = maxOf(base.serviceLimits?.maxRadius ?: 0, ValhallaRoute.PASS_RADIUS_M),
+                allowHardExclusions = true,
+            ),
+        )
         val manager = ValhallaConfigManager(app, ValhallaFile(app, "valhalla.json", dir))
         return Valhalla(app, config, manager).also {
             engine = it
