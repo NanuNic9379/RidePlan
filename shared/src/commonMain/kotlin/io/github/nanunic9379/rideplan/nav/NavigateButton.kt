@@ -14,13 +14,14 @@ import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.nav_start
 import io.github.nanunic9379.rideplan.route.TurnSign
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.stringResource
 
 /** "Navigate" in the ride card (#5): big enough for gloves. */
 @Composable
 fun NavigateButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick = onClick, modifier = modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+    Button(onClick = onClick, modifier = modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
         TurnArrow(TurnSign.STRAIGHT, LocalContentColor.current, Modifier.size(22.dp))
         Text(stringResource(Res.string.nav_start), Modifier.padding(start = 8.dp), style = MaterialTheme.typography.titleMedium)
     }

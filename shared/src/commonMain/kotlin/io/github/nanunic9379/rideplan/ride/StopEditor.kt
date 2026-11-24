@@ -43,6 +43,7 @@ import io.github.nanunic9379.rideplan.resources.stop_edit_earlier
 import io.github.nanunic9379.rideplan.resources.stop_edit_later
 import io.github.nanunic9379.rideplan.resources.stop_edit_remove
 import io.github.nanunic9379.rideplan.resources.stop_edit_title
+import io.github.nanunic9379.rideplan.ui.Radius
 import org.jetbrains.compose.resources.stringResource
 import org.maplibre.compose.interaction.ClickResult
 import org.maplibre.compose.interaction.MapInteractions
@@ -168,11 +169,13 @@ fun StopToolbar(
                     onClick = { onReorder(index, index - 1) },
                     enabled = index > 0,
                     modifier = Modifier.heightIn(min = 48.dp),
+                    shape = Radius.Control,
                 ) { Text("◀ " + stringResource(Res.string.stop_edit_earlier), maxLines = 1) }
                 OutlinedButton(
                     onClick = { onReorder(index, index + 1) },
                     enabled = index < ride.stops.lastIndex,
                     modifier = Modifier.heightIn(min = 48.dp),
+                    shape = Radius.Control,
                 ) { Text(stringResource(Res.string.stop_edit_later) + " ▶", maxLines = 1) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {

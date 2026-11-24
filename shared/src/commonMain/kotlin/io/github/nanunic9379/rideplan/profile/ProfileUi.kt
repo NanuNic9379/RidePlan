@@ -89,6 +89,7 @@ import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.formatKm
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -108,6 +109,7 @@ internal fun TonalAction(icon: ImageVector, text: String, onClick: () -> Unit, m
         onClick = onClick,
         modifier = modifier.heightIn(min = Touch.Glove),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        shape = Radius.Control,
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -156,7 +158,7 @@ fun SavedRow(store: ProfileStore, savedId: String?, currentName: String?, onSave
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Button(onClick = onSave, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+            Button(onClick = onSave, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                 Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text(stringResource(Res.string.preview_save))
@@ -224,7 +226,7 @@ fun WelcomeScreen(store: ProfileStore) {
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Button(onClick = finish, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+        Button(onClick = finish, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
             Text(stringResource(Res.string.welcome_start), style = MaterialTheme.typography.titleMedium)
         }
         // "Skip" also keeps what you already typed: with the keyboard open the buttons move.
@@ -260,7 +262,7 @@ internal fun RenameDialog(initial: String, onDismiss: () -> Unit, onSave: (Strin
         text = {
             OutlinedTextField(value = text, onValueChange = { text = it.take(80) }, singleLine = true, modifier = Modifier.fillMaxWidth())
         },
-        confirmButton = { Button(onClick = { onSave(text) }, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.save)) } },
+        confirmButton = { Button(onClick = { onSave(text) }, modifier = Modifier.heightIn(min = Touch.Min), shape = Radius.Control) { Text(stringResource(Res.string.save)) } },
         dismissButton = { TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) } },
     )
 }
@@ -280,7 +282,7 @@ internal fun DayPicker(onDismiss: () -> Unit, onPick: (Long) -> Unit) {
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(enabled = state.selectedDateMillis != null, onClick = { state.selectedDateMillis?.let(onPick) }) {
+            Button(enabled = state.selectedDateMillis != null, onClick = { state.selectedDateMillis?.let(onPick) }, shape = Radius.Control) {
                 Text(stringResource(Res.string.menu_done))
             }
         },

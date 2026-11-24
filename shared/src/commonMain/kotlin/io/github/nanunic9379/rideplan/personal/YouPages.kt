@@ -61,6 +61,7 @@ import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.ride.Dest
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -299,6 +300,7 @@ fun GaragePage(store: ProfileStore, rides: RideScreenState) {
         Button(
             onClick = { rides.open(Dest.BikePage(null)) },
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+            shape = Radius.Control,
         ) {
             Icon(AppIcons.Add, contentDescription = null)
             Text(stringResource(Res.string.garage_add), Modifier.padding(start = 8.dp))
@@ -451,12 +453,14 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
             },
             enabled = name.isNotBlank(),
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+            shape = Radius.Control,
         ) { Text(stringResource(Res.string.save)) }
         if (old != null) {
             OutlinedButton(
                 onClick = { confirmDelete = true },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth().padding(top = 24.dp).heightIn(min = Touch.Glove),
+                shape = Radius.Control,
             ) {
                 Icon(AppIcons.Delete, contentDescription = null)
                 Text(stringResource(Res.string.bike_delete), Modifier.padding(start = 8.dp))
@@ -474,6 +478,7 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
                     onClick = { confirmDelete = false; store.update { it.deleteBike(old.id) }; rides.back() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
                     modifier = Modifier.heightIn(min = Touch.Min),
+                    shape = Radius.Control,
                 ) { Text(stringResource(Res.string.zones_delete)) }
             },
             dismissButton = {

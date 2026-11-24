@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -107,6 +106,7 @@ import io.github.nanunic9379.rideplan.ride.Page
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -213,7 +213,7 @@ fun RidesTab(store: ProfileStore, rides: RideScreenState, padding: PaddingValues
                     IconButton(onClick = { rides.query = q.copy(text = "") }) { Icon(AppIcons.Close, contentDescription = null) }
                 }) else null,
                 singleLine = true,
-                shape = RoundedCornerShape(28.dp),
+                shape = Radius.Control,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             )
         }
@@ -300,7 +300,7 @@ fun RideRow(saved: SavedRide, title: String, onOpen: () -> Unit, onStar: (() -> 
                         stringResource(Res.string.tag_received),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer, Radius.Tag).padding(horizontal = 6.dp, vertical = 2.dp),
                     )
                 }
                 Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -398,7 +398,7 @@ private fun SortSheet(store: ProfileStore, current: RideQuery, onChange: (RideQu
             }
             Spacer(Modifier.size(8.dp))
             val n = count(q)
-            Button(onClick = { onChange(q); onDismiss() }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+            Button(onClick = { onChange(q); onDismiss() }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                 Text(pluralStringResource(Res.plurals.filter_show, n, n), style = MaterialTheme.typography.titleMedium)
             }
             TextButton(

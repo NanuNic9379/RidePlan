@@ -75,6 +75,7 @@ import io.github.nanunic9379.rideplan.ride.ShareDialog
 import io.github.nanunic9379.rideplan.ride.sourceText
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -175,6 +176,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
             Button(
                 onClick = { store.update { it.keep(id) } },
                 modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                shape = Radius.Control,
             ) {
                 Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -185,12 +187,14 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
                 OutlinedButton(
                     onClick = { store.update { it.delete(id) }; rides.back() },
                     modifier = Modifier.weight(1f).heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) { Text(stringResource(Res.string.detail_discard)) }
             }
         } else {
             Button(
                 onClick = { openOnMap(store, rides, actions, saved) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                shape = Radius.Control,
             ) {
                 Icon(AppIcons.Map, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.resources.Res
@@ -151,7 +152,7 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
         ) {
             if (actions != null) {
                 if (state.onMobile) {
-                    Button(onClick = { actions.downloadOnMobile(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                    Button(onClick = { actions.downloadOnMobile(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                         Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(stringResource(Res.string.route_mobile_confirm))
@@ -160,7 +161,7 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
                         Text(stringResource(Res.string.route_mobile_wait))
                     }
                 } else {
-                Button(onClick = { actions.download(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                Button(onClick = { actions.download(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                     Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text(stringResource(Res.string.route_download))
@@ -195,7 +196,7 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
             content = MaterialTheme.colorScheme.onErrorContainer,
         ) {
             if (actions != null) {
-                OutlinedButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                OutlinedButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                     Text(stringResource(Res.string.route_retry))
                 }
             }
