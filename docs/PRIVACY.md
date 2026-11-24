@@ -12,7 +12,8 @@ as with any web page, the phone's IP address and the time of the request.
 |---|---|---|
 | You show the map | OpenFreeMap (`tiles.openfreemap.org`) | The map area to draw |
 | You import a Google Maps link | Google (`maps.app.goo.gl`, `google.com`) | The link you pasted or shared |
-| You download the road data of an area | GitHub (`routing-data` Release of this repository) | The file name of the area |
+| You download the map of a ride for use without signal | OpenFreeMap (`tiles.openfreemap.org`) | The map tiles along the ride |
+| You download the road data of an area (roads, fuel stations, road notes) | GitHub (Releases of this repository) | The file name of the area |
 | Update check (GitHub version only) | GitHub (`api.github.com`) | No data beyond the request for the latest version |
 
 The route is computed **on the phone**: stops are not sent to any server. The same holds during
