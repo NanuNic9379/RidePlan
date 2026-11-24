@@ -56,3 +56,14 @@ The initial analysis ([ANALYSIS.md](ANALYSIS.md)) brought more milestones, all a
 curve check, following the ride in the saddle, private zone, range and fuel stations,
 vehicle profile (engine size), dirt and surface, stops and meeting points, versioned update
 of the ride, multi-day trip, seasonal pass closures.
+
+## Decision: route engine and curves (#4)
+Valhalla stays. Since 3.9 its motorcycle profile has a real curvature cost (straight and urban
+roads get expensive), it is the only engine of the three that runs offline on Android and
+iPhone, and the app already ships it. Its limits: the twistiness is a coarse per-road score,
+and unpaved roads are only expensive, not banned, so at "Max" a curvy dirt road can beat a
+straight paved one. Every route therefore carries fixed safety settings (no trails, no tracks,
+residents-only roads 30 minutes away, restrictions never ignored), and under 150 cc motorways
+are a hard ban. GraphHopper (custom model) and BRouter remain the fallback, Android only, if the
+field check against Kurviger fails. Details, numbers and the field-check protocol:
+[ROUTING.md](ROUTING.md).

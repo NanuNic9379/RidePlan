@@ -93,11 +93,18 @@ data class RouteOptions(
     /** Go around towns where possible (#30): best effort, see [ValhallaRoute.request]. */
     val avoidTowns: Boolean = false,
     val mode: RidingMode? = null,
+    /**
+     * Motorways are forbidden, not just avoided (#8): set by the bike (under 150 cc, see
+     * `forBike`), never by a switch. The engine may not use a motorway even when it is the only
+     * road; stops are never placed on one.
+     */
+    val noMotorways: Boolean = false,
 )
 
 /**
  * How much to seek curves: Valhalla's `use_curvature` (above 0.5 it prefers winding roads).
  * On the San Basilio → Padula test ride (#10): 0.75 makes it about 14% longer, 1 about 24%.
+ * What it really does in the engine, and its limits, is in docs/ROUTING.md (#4).
  */
 @Serializable
 enum class Curves(val curvature: Double?) {
@@ -138,6 +145,14 @@ object ValhallaRoute {
     const val TOWN_SERVICE_PENALTY = 60
 
     /**
+     * Seconds added for entering a road open only to reach a destination there (access =
+     * destination / private / delivery, residents-only zones): the engine default is 600. The
+     * route still ends on such a road when a stop is on it, but never crosses one to save time
+     * or to find bends (#4).
+     */
+    const val DESTINATION_ONLY_PENALTY = 1800
+
+    /**
      * Motorcycle profile with default values: the closest to the ride drawn on Google.
      * Stops are "break"; dragged points and towns are "through", where no U-turn is made.
      * For a town any road within [PASS_RADIUS_M] is enough: so the route can go around it
@@ -163,6 +178,9 @@ object ValhallaRoute {
                     val kind = if (end) Stop.Kind.STOP else stop.kind
                     put("type", if (kind == Stop.Kind.STOP) "break" else "through")
                     if (kind == Stop.Kind.PASS) put("radius", PASS_RADIUS_M)
+                    // A bike banned from motorways must not be placed on one (#8): without this a
+                    // stop next to a motorway could snap onto it.
+                    if (options.noMotorways) put("search_filter", buildJsonObject { put("max_road_class", "trunk") })
                     if (i == 0 && startHeading != null) {
                         put("heading", ((startHeading % 360 + 360) % 360).toInt())
                         put("heading_tolerance", 60)
@@ -173,10 +191,21 @@ object ValhallaRoute {
         put("costing", "motorcycle")
         put("costing_options", buildJsonObject {
             put("motorcycle", buildJsonObject {
+                // Safety settings sent with every route, whatever the curves (#4, docs/ROUTING.md).
+                // Bad surfaces (dirt, gravel, paths) cost the most the engine allows.
                 put("use_trails", 0.0)
+                // Tracks (farm and forest roads) cost 4 times as much plus 5 minutes to enter.
+                put("use_tracks", 0.0)
+                // A ban on unpaved roads in the middle of the route. Valhalla 3.9.2 reads it but
+                // its motorcycle profile does not apply it yet: sent so a newer engine does.
+                put("exclude_unpaved", true)
+                put("destination_only_penalty", DESTINATION_ONLY_PENALTY)
                 options.curves.curvature?.let { put("use_curvature", it) }
-                if (options.avoidHighways) put("use_highways", 0.0)
+                if (options.avoidHighways || options.noMotorways) put("use_highways", 0.0)
                 else options.mode?.highwayBias?.let { put("use_highways", it) }
+                // The legal ban (#8): a hard exclusion, not a cost. It needs
+                // service_limits.allow_hard_exclusions in the engine config (RouteService).
+                if (options.noMotorways) put("exclude_highways", true)
                 if (options.avoidTolls) put("use_tolls", 0.0)
                 if (options.avoidFerries) put("use_ferry", 0.0)
                 if (options.avoidTowns) {

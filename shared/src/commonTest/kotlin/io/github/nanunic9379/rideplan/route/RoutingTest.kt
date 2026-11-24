@@ -115,6 +115,77 @@ class RoutingTest {
         assertTrue(""""use_tolls":0.0""" in all)
     }
 
+    /** Every combination of switches a rider can make, plus the bike's ban (#4, #8). */
+    private val everyOption: List<RouteOptions> = buildList {
+        for (curves in Curves.entries) for (mode in listOf(null) + RidingMode.entries)
+            for (flags in 0 until 32) add(
+                RouteOptions(
+                    curves = curves,
+                    avoidHighways = flags and 1 != 0,
+                    avoidTolls = flags and 2 != 0,
+                    avoidFerries = flags and 4 != 0,
+                    avoidTowns = flags and 8 != 0,
+                    mode = mode,
+                    noMotorways = flags and 16 != 0,
+                ),
+            )
+    }
+
+    private fun motorcycle(o: RouteOptions, stops: List<Stop> = listOf(Stop("A", sanBasilio), Stop("B", padula))) =
+        kotlinx.serialization.json.Json.parseToJsonElement(ValhallaRoute.request(stops, o))
+            .let { it as kotlinx.serialization.json.JsonObject }
+
+    @Test
+    fun curvesNeverLeaveTheTarmac() {
+        // #4: whatever the curves, the same safety settings go with every route.
+        for (o in everyOption) {
+            val root = motorcycle(o)
+            val m = root.getValue("costing_options").let { it as kotlinx.serialization.json.JsonObject }
+                .getValue("motorcycle").toString()
+            assertTrue(""""use_trails":0.0""" in m, "$o")
+            assertTrue(""""use_tracks":0.0""" in m, "$o")
+            assertTrue(""""exclude_unpaved":true""" in m, "$o")
+            assertTrue(""""destination_only_penalty":${ValhallaRoute.DESTINATION_ONLY_PENALTY}""" in m, "$o")
+            // Restrictions, access, one-ways and closures are never ignored (limited traffic
+            // zones, private roads, closed passes): the engine default is to respect them.
+            assertFalse("ignore_" in root.toString(), "$o")
+            // Never the shortest route: it ignores every preference and takes any lane.
+            assertFalse("shortest" in root.toString(), "$o")
+            assertEquals("\"motorcycle\"", root.getValue("costing").toString())
+        }
+    }
+
+    @Test
+    fun curveLevelsSendOnlyTheCurvature() {
+        // The curve level changes one number and nothing else in the request.
+        val base = RouteOptions()
+        for (c in Curves.entries) {
+            val with = ValhallaRoute.request(listOf(Stop("A", sanBasilio), Stop("B", padula)), base.copy(curves = c))
+            val without = ValhallaRoute.request(listOf(Stop("A", sanBasilio), Stop("B", padula)), base)
+            val expected = c.curvature?.let { without.replace(""""destination_only_penalty":1800""", """"destination_only_penalty":1800,"use_curvature":$it""") } ?: without
+            assertEquals(expected, with, c.name)
+        }
+        // Valhalla only reacts above 0.5, in steps of 0.05.
+        Curves.entries.mapNotNull { it.curvature }.forEach { assertTrue(it > 0.5 && it <= 1.0) }
+    }
+
+    @Test
+    fun motorwayBanIsHard() {
+        // #8: under 150 cc motorways are excluded, not just expensive, and no stop lands on one.
+        val stops = listOf(Stop("A", sanBasilio), Stop("Matera", LatLon(40.66, 16.6), Stop.Kind.PASS), Stop("B", padula))
+        for (o in everyOption) {
+            val r = motorcycle(o, stops).toString()
+            if (o.noMotorways) {
+                assertTrue(""""exclude_highways":true""" in r, "$o")
+                assertTrue(""""use_highways":0.0""" in r, "$o")
+                assertEquals(stops.size, Regex(""""max_road_class":"trunk"""").findAll(r).count(), "$o")
+            } else {
+                assertFalse("exclude_highways" in r, "$o")
+                assertFalse("search_filter" in r, "$o")
+            }
+        }
+    }
+
     @Test
     fun recalculation() {
         val ride = Ride("test", emptyList(), listOf(Stop("A", sanBasilio), Stop("B", padula)), Ride.Source.GOOGLE_LINK)
