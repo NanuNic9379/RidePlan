@@ -553,4 +553,37 @@
         <item quantity="one">Mostrar 1 gasolinera en la ruta</item>
         <item quantity="other">Mostrar %1$d gasolineras en la ruta</item>
     </plurals>
+    <string name="sheet_title">Ficha de la ruta</string>
+    <string name="sheet_hint">Toca una parada para indicar punto de encuentro, gasolina o comida, la hora y cuánto se para.</string>
+    <string name="sheet_share">Compartir la ficha</string>
+    <string name="sheet_version">Versión %1$d · actualizada el %2$s</string>
+    <string name="version_note_add">Escribe qué ha cambiado</string>
+    <string name="version_note_title">Qué ha cambiado en esta versión</string>
+    <string name="version_note_hint">p. ej. desprendimiento en la SP12, pasamos por Pietrapertosa</string>
+    <string name="sheet_totals">Conduciendo %1$s · con paradas %2$s</string>
+    <string name="sheet_finish">llegada hacia las %1$s</string>
+    <string name="sheet_rough">Horas estimadas a 50 km/h: abre la ruta en el mapa para calcular el recorrido.</string>
+    <string name="sheet_late">tarde</string>
+    <string name="sheet_pause">parada de %1$d min</string>
+    <string name="sheet_private">Lugar privado</string>
+    <string name="sheet_updated_note">Qué ha cambiado: %1$s</string>
+    <string name="purpose_meeting">Punto de encuentro</string>
+    <string name="purpose_fuel">Gasolina</string>
+    <string name="purpose_coffee">Café</string>
+    <string name="purpose_lunch">Comida</string>
+    <string name="purpose_photo">Parada para fotos</string>
+    <string name="plan_none">Solo parada</string>
+    <string name="plan_time">Hora (p. ej. 08:30)</string>
+    <string name="plan_time_invalid">Escribe la hora como 08:30</string>
+    <string name="plan_pause">Parada</string>
+    <string name="plan_note">Nota para el grupo</string>
+    <string name="plan_save">Guardar</string>
+    <string name="plan_clear">Quitar el plan</string>
+    <string name="update_title">Actualizada de v%1$d a v%2$d</string>
+    <string name="update_added">Paradas añadidas: %1$s</string>
+    <string name="update_removed">Paradas quitadas: %1$s</string>
+    <string name="update_replanned">Plan cambiado en %1$d paradas</string>
+    <string name="update_unnamed">punto en el mapa</string>
+    <string name="update_ok">Entendido</string>
+    <string name="update_snack">Ruta actualizada a v%1$d</string>
 </resources>

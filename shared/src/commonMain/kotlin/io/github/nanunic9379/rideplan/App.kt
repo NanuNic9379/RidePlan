@@ -57,6 +57,7 @@ import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.RideSheet
 import io.github.nanunic9379.rideplan.ride.StopHandles
+import io.github.nanunic9379.rideplan.personal.updateNotice
 import io.github.nanunic9379.rideplan.ride.StopToolbar
 import io.github.nanunic9379.rideplan.ride.rememberStopInteractions
 import io.github.nanunic9379.rideplan.ride.stopsEditable
@@ -159,13 +160,17 @@ fun App(
         // Every opened ride ends up in "Your rides" and stays up to date (route, preferences, name).
         // A ride received by link waits in "Received" until you keep or discard it (#48, #21).
         // A ride being planned (#33) is saved only on "Done", when the plan ends.
+        val notices = rememberCoroutineScope()
         LaunchedEffect(ride, rides.plan == null) {
             if (ride != null && store != null && rides.plan == null) {
+                val now = store.time()
                 store.update { d ->
-                    val (fresh, id) = if (rides.isPreview) d.receive(ride, store.time()) else d.save(ride, rides.savedId, store.time())
+                    val (fresh, id) = if (rides.isPreview) d.receive(ride, now) else d.save(ride, rides.savedId, now)
                     rides.savedId = id
                     fresh
                 }
+                // A newer version of a ride you had replaced it (#11): say so on the map.
+                updateNotice(store.data.rides.firstOrNull { it.id == rides.savedId }, now)?.let { notices.launch { snackbar.showSnackbar(it) } }
             }
         }
         // The map draws edge to edge: each screen handles the system bars itself.

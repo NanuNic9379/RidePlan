@@ -46,6 +46,9 @@ object RideLink {
             Polyline.encode(track, 5),
             // Fields added later (#50): older versions and the web page only read the first six.
             ride.stops.joinToString("") { it.kind.name.take(1) },
+            // #10 and #11: plans of the stops and the version of the ride.
+            plansCode(ride.stops),
+            ride.version?.let(::versionCode).orEmpty(),
         ).map { it.replace('\n', ' ') }
         return PREFIX + Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(fields.joinToString("\n").encodeToByteArray())
     }
@@ -60,14 +63,68 @@ object RideLink {
         val points = runCatching { Polyline.decode(f[3], 5) }.getOrElse { throw ImportException(ImportError.LINK_BROKEN) }
         val names = f[4].split(SEP)
         val kinds = f.getOrNull(6).orEmpty()
-        val stops = points.mapIndexed { i, p -> Stop(names.getOrNull(i)?.ifEmpty { null }, p, kindOf(kinds.getOrNull(i))) }
+        val plans = parsePlans(f.getOrNull(7).orEmpty())
+        val stops = points.mapIndexed { i, p -> Stop(names.getOrNull(i)?.ifEmpty { null }, p, kindOf(kinds.getOrNull(i)), plan = plans.getOrNull(i)) }
         val track = runCatching { Polyline.decode(f[5], 5) }.getOrElse { throw ImportException(ImportError.LINK_BROKEN) }
         if (stops.size < 2 && track.size < 2) throw ImportException(ImportError.NO_STOPS)
         val options = parseOptions(f[2])
-        return Shared(Ride(f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK, sharedOptions = options), options)
+        val version = parseVersion(f.getOrNull(8).orEmpty())
+        return Shared(Ride(f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK, sharedOptions = options, version = version), options)
     }
 
     private const val SEP = "\u001f"
+    private const val SUB = "\u001e"
+
+    /**
+     * One entry per stop, separated like the names: "purpose<SUB>time<SUB>pause<SUB>note",
+     * empty for a stop without a plan. Empty when no stop has one.
+     */
+    internal fun plansCode(stops: List<Stop>): String {
+        if (stops.none { it.plan?.normalized() != null }) return ""
+        return stops.joinToString(SEP) { s ->
+            val p = s.plan?.normalized() ?: return@joinToString ""
+            listOf(
+                p.purpose?.code.orEmpty(),
+                p.time?.toString().orEmpty(),
+                p.pauseMinutes.takeIf { it > 0 }?.toString().orEmpty(),
+                p.note.replace(SEP, " ").replace(SUB, " "),
+            ).joinToString(SUB).trimEnd(SUB[0])
+        }
+    }
+
+    internal fun parsePlans(code: String): List<StopPlan?> {
+        if (code.isEmpty()) return emptyList()
+        return code.split(SEP).map { entry ->
+            if (entry.isEmpty()) return@map null
+            val p = entry.split(SUB)
+            StopPlan(
+                purpose = StopPlan.Purpose.of(p.getOrNull(0)),
+                time = p.getOrNull(1)?.toIntOrNull(),
+                pauseMinutes = p.getOrNull(2)?.toIntOrNull() ?: 0,
+                note = p.getOrNull(3).orEmpty(),
+            ).normalized()
+        }
+    }
+
+    /** "rideId<SEP>number<SEP>updated (seconds)<SEP>note". */
+    internal fun versionCode(v: RideVersion): String = listOf(
+        v.rideId.replace(SEP, ""),
+        v.number.toString(),
+        (v.updatedAt / 1000).toString(),
+        v.note.take(RideVersion.MAX_NOTE).replace(SEP, " "),
+    ).joinToString(SEP)
+
+    internal fun parseVersion(code: String): RideVersion? {
+        val p = code.split(SEP)
+        val id = p[0].takeIf { it.isNotBlank() && it.length <= 64 } ?: return null
+        val number = p.getOrNull(1)?.toIntOrNull()?.takeIf { it >= 1 } ?: return null
+        return RideVersion(
+            rideId = id,
+            number = number,
+            note = p.getOrNull(3).orEmpty().take(RideVersion.MAX_NOTE),
+            updatedAt = (p.getOrNull(2)?.toLongOrNull() ?: 0) * 1000,
+        )
+    }
 
     /**
      * "MAX,h,t,f,n": curves, then h = no motorways, t = no tolls, f = no ferries, n = around

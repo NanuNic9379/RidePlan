@@ -552,4 +552,37 @@
         <item quantity="one">1 Tankstelle an der Tour anzeigen</item>
         <item quantity="other">%1$d Tankstellen an der Tour anzeigen</item>
     </plurals>
+    <string name="sheet_title">Tourblatt</string>
+    <string name="sheet_hint">Tippe auf einen Halt für Treffpunkt, Tanken oder Mittagessen, Uhrzeit und Pausendauer.</string>
+    <string name="sheet_share">Tourblatt teilen</string>
+    <string name="sheet_version">Version %1$d · aktualisiert am %2$s</string>
+    <string name="version_note_add">Schreiben, was sich geändert hat</string>
+    <string name="version_note_title">Was sich in dieser Version geändert hat</string>
+    <string name="version_note_hint">z. B. Erdrutsch auf der SP12, wir fahren über Pietrapertosa</string>
+    <string name="sheet_totals">Fahrzeit %1$s · mit Pausen %2$s</string>
+    <string name="sheet_finish">Ankunft gegen %1$s</string>
+    <string name="sheet_rough">Zeiten bei 50 km/h geschätzt: öffne die Tour auf der Karte, um die Route zu berechnen.</string>
+    <string name="sheet_late">zu spät</string>
+    <string name="sheet_pause">%1$d Min. Pause</string>
+    <string name="sheet_private">Privater Ort</string>
+    <string name="sheet_updated_note">Geändert: %1$s</string>
+    <string name="purpose_meeting">Treffpunkt</string>
+    <string name="purpose_fuel">Tanken</string>
+    <string name="purpose_coffee">Kaffee</string>
+    <string name="purpose_lunch">Mittagessen</string>
+    <string name="purpose_photo">Fotostopp</string>
+    <string name="plan_none">Nur Halt</string>
+    <string name="plan_time">Uhrzeit (z. B. 08:30)</string>
+    <string name="plan_time_invalid">Uhrzeit als 08:30 schreiben</string>
+    <string name="plan_pause">Pause</string>
+    <string name="plan_note">Notiz für die Gruppe</string>
+    <string name="plan_save">Speichern</string>
+    <string name="plan_clear">Plan entfernen</string>
+    <string name="update_title">Aktualisiert von v%1$d auf v%2$d</string>
+    <string name="update_added">Neue Halte: %1$s</string>
+    <string name="update_removed">Entfernte Halte: %1$s</string>
+    <string name="update_replanned">Plan bei %1$d Halten geändert</string>
+    <string name="update_unnamed">Punkt auf der Karte</string>
+    <string name="update_ok">Verstanden</string>
+    <string name="update_snack">Tour auf v%1$d aktualisiert</string>
 </resources>

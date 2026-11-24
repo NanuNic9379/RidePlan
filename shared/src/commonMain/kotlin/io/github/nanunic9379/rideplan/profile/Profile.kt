@@ -4,7 +4,10 @@ import io.github.nanunic9379.rideplan.ride.DayCap
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.PrivateZone
 import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.ride.RideUpdate
+import io.github.nanunic9379.rideplan.ride.RideVersion
 import io.github.nanunic9379.rideplan.ride.Stop
+import io.github.nanunic9379.rideplan.ride.StopPlan
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
@@ -29,7 +32,33 @@ data class Profile(
 
 /** A saved stop: [kind] is the name of [Stop.Kind], so the file stays readable. [overnight]: see [Stop.overnight]. */
 @Serializable
-data class SavedStop(val name: String?, val lat: Double, val lon: Double, val kind: String = Stop.Kind.STOP.name, val overnight: Boolean = false)
+data class SavedStop(
+    val name: String?,
+    val lat: Double,
+    val lon: Double,
+    val kind: String = Stop.Kind.STOP.name,
+    val overnight: Boolean = false,
+    /** The plan of the stop (#10): [StopPlan.Purpose.code], minutes after midnight, pause, note. */
+    val purpose: String? = null,
+    val time: Int? = null,
+    val pause: Int = 0,
+    val note: String = "",
+) {
+    val plan: StopPlan? get() = StopPlan(StopPlan.Purpose.of(purpose), time, pause, note).normalized()
+
+    fun toStop(): Stop =
+        Stop(name, LatLon(lat, lon), Stop.Kind.entries.firstOrNull { it.name == kind } ?: Stop.Kind.STOP, overnight, plan)
+
+    companion object {
+        fun of(stop: Stop): SavedStop {
+            val p = stop.plan?.normalized()
+            return SavedStop(
+                stop.name, stop.point.lat, stop.point.lon, stop.kind.name, stop.overnight,
+                purpose = p?.purpose?.code, time = p?.time, pause = p?.pauseMinutes ?: 0, note = p?.note.orEmpty(),
+            )
+        }
+    }
+}
 
 /** A ride that arrived from someone else (#21): it waits in "Received" until you keep or discard it. */
 @Serializable
@@ -63,6 +92,10 @@ data class SavedRide(
     val riddenWith: Map<Long, String> = emptyMap(),
     /** Daily cap of a multi-day trip (#12), see [SavedDayCap]. */
     val dayCap: SavedDayCap? = null,
+    /** Version of the ride (#11); null for rides saved before versions existed. */
+    val version: RideVersion? = null,
+    /** A newer version replaced this ride (#11): shown until you dismiss it. */
+    val update: RideUpdate? = null,
 ) {
     val lastOpened: Long get() = openedAt ?: savedAt
     val lastRidden: Long? get() = ridden.maxOrNull()
@@ -75,9 +108,10 @@ data class SavedRide(
     fun toRide(): Ride = Ride(
         name = name,
         track = track.chunked(2).filter { it.size == 2 }.map { LatLon(it[0], it[1]) },
-        stops = stops.map { s -> Stop(s.name, LatLon(s.lat, s.lon), Stop.Kind.entries.firstOrNull { it.name == s.kind } ?: Stop.Kind.STOP, s.overnight) },
+        stops = stops.map { it.toStop() },
         source = Ride.Source.entries.firstOrNull { it.name == source } ?: Ride.Source.GPX,
         dayCap = dayCap?.toDayCap(),
+        version = version,
     )
 
     companion object {
@@ -88,13 +122,21 @@ data class SavedRide(
             km = ride.lengthKm,
             seconds = ride.route?.seconds?.toLong(),
             source = ride.source.name,
-            stops = ride.stops.map { SavedStop(it.name, it.point.lat, it.point.lon, it.kind.name, it.overnight) },
+            stops = ride.stops.map(SavedStop::of),
             // The route calculated by RidePlan is rebuilt from the stops: the file stays small.
             track = if (ride.route != null) emptyList() else ride.track.flatMap { listOf(it.lat, it.lon) },
             ridden = ridden,
             dayCap = ride.dayCap?.let(SavedDayCap::from),
+            version = ride.version,
         )
     }
+
+    /**
+     * Same road and same plans: what decides whether the ride got a new version (#11).
+     * The stops carry their plans and overnights (#12); the daily cap decides where the days end.
+     */
+    internal fun sameRouteAs(other: SavedRide): Boolean =
+        stops == other.stops && track == other.track && dayCap == other.dayCap
 }
 
 /**
@@ -131,23 +173,99 @@ data class ProfileData(
      */
     fun save(ride: Ride, id: String?, now: Long): Pair<ProfileData, String> {
         val old = rides.firstOrNull { it.id == id }
+        // The same ride is already here (a link or GPX of a ride you have, #11): update it, no copy.
+        if (old == null) sameRide(ride)?.let { return adopt(it, ride, now) }
         val newId = old?.id ?: newId()
         val fresh = SavedRide.from(ride, newId, now, old?.ridden.orEmpty())
-        val saved = if (old == null) fresh else fresh.copy(
+        // An older version shown on the map must not overwrite the newer one you already have.
+        if (old != null && isStale(old, fresh, ride.version)) return this to old.id
+        val saved = if (old == null) fresh.copy(version = ride.version ?: RideVersion.first(now)) else fresh.copy(
             favourite = old.favourite,
             notes = old.notes,
             openedAt = old.openedAt,
             received = old.received,
             riddenWith = old.riddenWith,
+            version = nextVersion(old, fresh, ride.version, now),
+            update = old.update,
         )
         return copy(rides = listOf(saved) + rides.filter { it.id != newId }) to newId
     }
 
     /** A ride received by link (#48): saved at once, but in "Received" until you keep it. */
     fun receive(ride: Ride, now: Long): Pair<ProfileData, String> {
+        val existing = sameRide(ride)
+        if (existing != null) return adopt(existing, ride, now)
         val (data, id) = save(ride, null, now)
         return data.change(id) { it.copy(received = Received(now)) } to id
     }
+
+    /** The saved ride that is the same ride as [ride] (same [RideVersion.rideId]), if any. */
+    fun sameRide(ride: Ride): SavedRide? = ride.version?.let { v -> rides.firstOrNull { v.sameRide(it.version) } }
+
+    /**
+     * [ride] is another version of [old] (#11). A newer one replaces the road and the plans and
+     * leaves an [RideUpdate] note; what only lives here (notes, outings, favourite) stays.
+     * The same or an older version changes nothing.
+     */
+    private fun adopt(old: SavedRide, ride: Ride, now: Long): Pair<ProfileData, String> {
+        val incoming = ride.version ?: return this to old.id
+        if (!incoming.isNewerThan(old.version)) return this to old.id
+        val saved = SavedRide.from(ride, old.id, now, old.ridden).copy(
+            name = ride.name ?: old.name,
+            favourite = old.favourite,
+            notes = old.notes,
+            openedAt = old.openedAt,
+            received = old.received,
+            riddenWith = old.riddenWith,
+            version = incoming,
+            update = RideUpdate.between(old.toRide(), ride, now),
+        )
+        return copy(rides = listOf(saved) + rides.filter { it.id != old.id }) to old.id
+    }
+
+    /**
+     * The version after a save (#11). Unchanged road: same version. Changed in the same editing
+     * session as the last version (made after the ride was last opened): same number, new date.
+     * Otherwise the number grows and the old note no longer applies.
+     */
+    private fun nextVersion(old: SavedRide, fresh: SavedRide, incoming: RideVersion?, now: Long): RideVersion {
+        val base = old.version ?: incoming ?: RideVersion.first(now)
+        return when {
+            fresh.sameRouteAs(old) -> base
+            base.updatedAt >= old.lastOpened -> base.copy(updatedAt = now)
+            else -> RideVersion(base.rideId, base.number + 1, "", now)
+        }
+    }
+
+    /**
+     * [incoming] is an older version of [old] with another road, and [old] was not edited in
+     * this session: the map shows an old link or file, and the newer version wins.
+     */
+    private fun isStale(old: SavedRide, fresh: SavedRide, incoming: RideVersion?): Boolean {
+        val v = old.version ?: return false
+        return v.isNewerThan(incoming) && !fresh.sameRouteAs(old) && v.updatedAt < old.lastOpened
+    }
+
+    /** Plan of stop [index] (#10); null removes it. A changed plan counts as a change of the ride. */
+    fun setStopPlan(id: String, index: Int, plan: StopPlan?, now: Long): ProfileData = change(id) { r ->
+        val stop = r.stops.getOrNull(index) ?: return@change r
+        val p = plan?.normalized()
+        val updated = SavedStop.of(stop.toStop().copy(plan = p)).let {
+            // A stop with a plan is a real stop: the route reaches it.
+            if (p != null && stop.kind == Stop.Kind.VIA.name) it.copy(kind = Stop.Kind.STOP.name) else it
+        }
+        val fresh = r.copy(stops = r.stops.toMutableList().also { it[index] = updated })
+        if (fresh.sameRouteAs(r)) r else fresh.copy(version = nextVersion(r, fresh, null, now))
+    }
+
+    /** The leader's note for the current version ("v3: landslide on the SP12", #11). */
+    fun setVersionNote(id: String, note: String, now: Long): ProfileData = change(id) { r ->
+        val v = r.version ?: RideVersion.first(now)
+        r.copy(version = v.copy(note = note.replace('\n', ' ').trim().take(RideVersion.MAX_NOTE)))
+    }
+
+    /** The "updated from vN to vM" note was read. */
+    fun dismissUpdate(id: String): ProfileData = change(id) { it.copy(update = null) }
 
     /** Keeps a received ride among your own. */
     fun keep(id: String): ProfileData = change(id) { it.copy(received = null) }

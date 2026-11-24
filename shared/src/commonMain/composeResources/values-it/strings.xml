@@ -552,4 +552,37 @@
         <item quantity="one">Mostra 1 distributore lungo il giro</item>
         <item quantity="other">Mostra %1$d distributori lungo il giro</item>
     </plurals>
+    <string name="sheet_title">Scheda del giro</string>
+    <string name="sheet_hint">Tocca una tappa per indicare ritrovo, benzina o pranzo, l\'orario e quanto ci si ferma.</string>
+    <string name="sheet_share">Condividi la scheda</string>
+    <string name="sheet_version">Versione %1$d · aggiornata il %2$s</string>
+    <string name="version_note_add">Scrivi cosa è cambiato</string>
+    <string name="version_note_title">Cosa è cambiato in questa versione</string>
+    <string name="version_note_hint">es. frana sulla SP12, passiamo da Pietrapertosa</string>
+    <string name="sheet_totals">In sella %1$s · con le soste %2$s</string>
+    <string name="sheet_finish">arrivo verso le %1$s</string>
+    <string name="sheet_rough">Orari stimati a 50 km/h: apri il giro sulla mappa per calcolare il percorso.</string>
+    <string name="sheet_late">in ritardo</string>
+    <string name="sheet_pause">sosta di %1$d min</string>
+    <string name="sheet_private">Luogo privato</string>
+    <string name="sheet_updated_note">Cosa è cambiato: %1$s</string>
+    <string name="purpose_meeting">Ritrovo</string>
+    <string name="purpose_fuel">Benzina</string>
+    <string name="purpose_coffee">Caffè</string>
+    <string name="purpose_lunch">Pranzo</string>
+    <string name="purpose_photo">Sosta foto</string>
+    <string name="plan_none">Solo tappa</string>
+    <string name="plan_time">Orario (es. 08:30)</string>
+    <string name="plan_time_invalid">Scrivi l\'orario come 08:30</string>
+    <string name="plan_pause">Sosta</string>
+    <string name="plan_note">Nota per il gruppo</string>
+    <string name="plan_save">Salva</string>
+    <string name="plan_clear">Togli i dettagli</string>
+    <string name="update_title">Aggiornato da v%1$d a v%2$d</string>
+    <string name="update_added">Tappe aggiunte: %1$s</string>
+    <string name="update_removed">Tappe tolte: %1$s</string>
+    <string name="update_replanned">Dettagli cambiati in %1$d tappe</string>
+    <string name="update_unnamed">punto sulla mappa</string>
+    <string name="update_ok">Ho capito</string>
+    <string name="update_snack">Giro aggiornato alla v%1$d</string>
 </resources>

@@ -553,4 +553,37 @@
         <item quantity="one">Show 1 station along the ride</item>
         <item quantity="other">Show %1$d stations along the ride</item>
     </plurals>
+    <string name="sheet_title">Ride sheet</string>
+    <string name="sheet_hint">Tap a stop to set a meeting point, fuel or lunch, a time and how long you stop.</string>
+    <string name="sheet_share">Share ride sheet</string>
+    <string name="sheet_version">Version %1$d · updated %2$s</string>
+    <string name="version_note_add">Write what changed</string>
+    <string name="version_note_title">What changed in this version</string>
+    <string name="version_note_hint">e.g. landslide on the SP12, we go via Pietrapertosa</string>
+    <string name="sheet_totals">Riding %1$s · with stops %2$s</string>
+    <string name="sheet_finish">arrival about %1$s</string>
+    <string name="sheet_rough">Times estimated at 50 km/h: open the ride on the map to compute the route.</string>
+    <string name="sheet_late">late</string>
+    <string name="sheet_pause">%1$d min stop</string>
+    <string name="sheet_private">Private place</string>
+    <string name="sheet_updated_note">What changed: %1$s</string>
+    <string name="purpose_meeting">Meeting point</string>
+    <string name="purpose_fuel">Fuel</string>
+    <string name="purpose_coffee">Coffee</string>
+    <string name="purpose_lunch">Lunch</string>
+    <string name="purpose_photo">Photo stop</string>
+    <string name="plan_none">Just a stop</string>
+    <string name="plan_time">Time (e.g. 08:30)</string>
+    <string name="plan_time_invalid">Write the time as 08:30</string>
+    <string name="plan_pause">Pause</string>
+    <string name="plan_note">Note for the group</string>
+    <string name="plan_save">Save</string>
+    <string name="plan_clear">Remove plan</string>
+    <string name="update_title">Updated from v%1$d to v%2$d</string>
+    <string name="update_added">Stops added: %1$s</string>
+    <string name="update_removed">Stops removed: %1$s</string>
+    <string name="update_replanned">Plan changed at %1$d stops</string>
+    <string name="update_unnamed">point on the map</string>
+    <string name="update_ok">Got it</string>
+    <string name="update_snack">Ride updated to v%1$d</string>
 </resources>

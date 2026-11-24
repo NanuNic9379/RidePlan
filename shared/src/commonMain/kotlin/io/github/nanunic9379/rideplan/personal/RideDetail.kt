@@ -178,6 +178,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
                 content = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
+        RideUpdateCard(store, saved)
         // The route draws itself once when the page opens (the system "remove animations" setting skips it).
         val drawn = remember(saved.id) { Animatable(0f) }
         LaunchedEffect(saved.id) { drawn.animateTo(1f, tween(Motion.Draw, easing = Motion.Emphasized)) }
@@ -248,6 +249,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
                 saved.stops.forEachIndexed { i, stop -> StopRow(i, saved.stops.size, stop.name, stop.lat, stop.lon, alongKm[i]) }
             }
         }
+        if (saved.stops.size >= 2) RideSheetSection(store, saved, actions?.shareText)
         if (received == null) {
             Notes(store, saved)
             History(saved, onUndo = { store.update { it.undoRidden(id) } })
