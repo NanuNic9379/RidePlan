@@ -24,8 +24,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.material3.FilledTonalButton
+import io.github.nanunic9379.rideplan.resources.nav_overview
+import io.github.nanunic9379.rideplan.resources.nav_recenter
+import kotlinx.coroutines.launch
+import org.maplibre.compose.camera.CameraFit
+import org.maplibre.compose.camera.CameraMoveReason
+import org.maplibre.spatialk.geojson.BoundingBox
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -128,7 +139,13 @@ fun NavigationScreen(
     ) {
         NavLayers(session.ride, session.update?.position)
     }
-    LaunchedEffect(update) {
+    // Follows the rider until the map is moved by hand or "Route" is tapped (#37).
+    var follow by remember { mutableStateOf(true) }
+    LaunchedEffect(state) {
+        snapshotFlow { state.cameraMoveReason }.collect { if (it == CameraMoveReason.Gesture) follow = false }
+    }
+    LaunchedEffect(update, follow) {
+        if (!follow) return@LaunchedEffect
         val u = update ?: return@LaunchedEffect
         val kmh = (u.speedMps ?: 0.0) * 3.6
         val zoom = when {
@@ -157,7 +174,32 @@ fun NavigationScreen(
             Column(Modifier.align(Alignment.TopStart).then(panel)) {
                 Banner(session, onExit)
             }
-            BottomBar(session, onExit, Modifier.align(Alignment.BottomStart).then(panel))
+            Column(
+                Modifier.align(Alignment.BottomStart).then(panel),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.End,
+            ) {
+                if (follow) {
+                    FilledTonalButton(
+                        onClick = {
+                            follow = false
+                            scope.launch {
+                                val (sw, ne) = session.ride.bounds()
+                                state.animateCameraToBounds(
+                                    BoundingBox(sw.lon, sw.lat, ne.lon, ne.lat),
+                                    CameraFit(bearing = 0.0, pitch = 0.0, fitPadding = DpPadding(top = 200.dp, bottom = 240.dp, left = 32.dp, right = 32.dp)),
+                                )
+                            }
+                        },
+                        modifier = Modifier.heightIn(min = ButtonHeight),
+                    ) { Text(stringResource(Res.string.nav_overview), style = MaterialTheme.typography.titleMedium) }
+                } else {
+                    Button(onClick = { follow = true }, modifier = Modifier.heightIn(min = ButtonHeight)) {
+                        Text(stringResource(Res.string.nav_recenter), style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                BottomBar(session, onExit, Modifier.fillMaxWidth())
+            }
         }
     }
 
