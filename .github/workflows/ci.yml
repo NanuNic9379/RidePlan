@@ -3,7 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
+    # Text-only changes cannot break the build: skip the 10-minute macOS job for them.
+    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
   pull_request:
+    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
 
 permissions:
   contents: read
@@ -45,6 +48,14 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      # Kotlin/Native toolchain and platform libraries (~1 GB): without this they are
+      # downloaded and rebuilt on every run, most of the job's 10 minutes.
+      - name: Cache Kotlin/Native
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: konan-${{ runner.os }}-${{ runner.arch }}-
       - name: Xcode version
         run: xcodebuild -version
       - name: Common code tests on the simulator
