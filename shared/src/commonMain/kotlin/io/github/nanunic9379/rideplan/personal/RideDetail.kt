@@ -1,6 +1,9 @@
 package io.github.nanunic9379.rideplan.personal
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -35,13 +39,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.MenuItem
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.RenameDialog
 import io.github.nanunic9379.rideplan.profile.DayPicker
 import io.github.nanunic9379.rideplan.profile.SavedRide
+import io.github.nanunic9379.rideplan.profile.StopDistances
 import io.github.nanunic9379.rideplan.profile.TonalAction
 import io.github.nanunic9379.rideplan.profile.title
 import io.github.nanunic9379.rideplan.resources.Res
@@ -54,6 +58,10 @@ import io.github.nanunic9379.rideplan.resources.detail_notes_help
 import io.github.nanunic9379.rideplan.resources.detail_notes_hint
 import io.github.nanunic9379.rideplan.resources.detail_open_map
 import io.github.nanunic9379.rideplan.resources.detail_received
+import io.github.nanunic9379.rideplan.resources.detail_stop_finish
+import io.github.nanunic9379.rideplan.resources.detail_stop_from_start
+import io.github.nanunic9379.rideplan.resources.detail_stop_n
+import io.github.nanunic9379.rideplan.resources.detail_stop_start
 import io.github.nanunic9379.rideplan.resources.detail_view_map
 import io.github.nanunic9379.rideplan.resources.menu_delete
 import io.github.nanunic9379.rideplan.resources.menu_done
@@ -68,6 +76,7 @@ import io.github.nanunic9379.rideplan.resources.snack_deleted
 import io.github.nanunic9379.rideplan.resources.snack_done
 import io.github.nanunic9379.rideplan.resources.snack_undo
 import io.github.nanunic9379.rideplan.ride.ImportActions
+import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.QrDialog
 import io.github.nanunic9379.rideplan.ride.RideLink
 import io.github.nanunic9379.rideplan.ride.RideScreenState
@@ -75,7 +84,10 @@ import io.github.nanunic9379.rideplan.ride.ShareDialog
 import io.github.nanunic9379.rideplan.ride.sourceText
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Figure
+import io.github.nanunic9379.rideplan.ui.Motion
 import io.github.nanunic9379.rideplan.ui.Radius
+import io.github.nanunic9379.rideplan.ui.TabularFigures
 import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -166,11 +178,31 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
                 content = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
-        RideSketch(listOf(saved.shape), Modifier.fillMaxWidth().height(180.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Tag(AppIcons.Route, distanceText(saved.km))
-            saved.seconds?.let { Tag(AppIcons.History, durationText(it.toDouble())) }
-            if (saved.stops.isNotEmpty()) Tag(AppIcons.Pin, pluralStringResource(Res.plurals.ride_stops, saved.stops.size, saved.stops.size))
+        // The route draws itself once when the page opens (the system "remove animations" setting skips it).
+        val drawn = remember(saved.id) { Animatable(0f) }
+        LaunchedEffect(saved.id) { drawn.animateTo(1f, tween(Motion.Draw, easing = Motion.Emphasized)) }
+        RideSketch(
+            listOf(saved.shape),
+            Modifier.fillMaxWidth().aspectRatio(16f / 10f),
+            background = MaterialTheme.colorScheme.surfaceContainer,
+            grid = 24.dp,
+            progress = { drawn.value },
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.Bottom,
+        ) {
+            RideFigure(distanceNumber(saved.km), distanceUnit())
+            saved.seconds?.let { RideFigure(durationText(it.toDouble()), null) }
+            if (saved.stops.isNotEmpty()) {
+                Text(
+                    pluralStringResource(Res.plurals.ride_stops, saved.stops.size, saved.stops.size),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                )
+            }
         }
         if (received != null) {
             Button(
@@ -207,13 +239,13 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
         }
         if (saved.stops.isNotEmpty()) {
             SectionLabel(stringResource(Res.string.route_stops_title))
-            saved.stops.forEachIndexed { i, stop ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.heightIn(min = 40.dp)) {
-                    Box(Modifier.size(28.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape), contentAlignment = Alignment.Center) {
-                        Text("${i + 1}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    }
-                    Text(stop.name ?: "${fmt(stop.lat)}, ${fmt(stop.lon)}", style = MaterialTheme.typography.bodyLarge)
-                }
+            // Distance from the start only along a real track: a routed ride keeps no track.
+            val alongKm = remember(saved.id, saved.track, saved.stops) {
+                if (saved.track.size >= 4) StopDistances.along(saved.shape, saved.stops.map { LatLon(it.lat, it.lon) })
+                else saved.stops.map { null }
+            }
+            Column {
+                saved.stops.forEachIndexed { i, stop -> StopRow(i, saved.stops.size, stop.name, stop.lat, stop.lon, alongKm[i]) }
             }
         }
         if (received == null) {
@@ -231,15 +263,53 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
 
 private fun fmt(v: Double): String = ((v * 10_000).toLong() / 10_000.0).toString()
 
+/** A ride figure set like a dashboard: big tabular number, small unit. */
 @Composable
-private fun Tag(icon: ImageVector, text: String) {
+private fun RideFigure(value: String, unit: String?) {
+    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Figure(value, style = MaterialTheme.typography.headlineMedium.merge(TabularFigures), color = MaterialTheme.colorScheme.primary)
+        if (unit != null) {
+            Text(unit, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 4.dp))
+        }
+    }
+}
+
+/**
+ * One stop: what it is in the ride (start, stop n, finish), its name when the ride has one,
+ * then how far from the start and the coordinates, small. No place name is made up.
+ */
+@Composable
+private fun StopRow(index: Int, count: Int, name: String?, lat: Double, lon: Double, alongKm: Double?) {
+    val role = when {
+        index == 0 -> stringResource(Res.string.detail_stop_start)
+        index == count - 1 -> stringResource(Res.string.detail_stop_finish)
+        else -> stringResource(Res.string.detail_stop_n, index + 1)
+    }
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
-        Modifier.background(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.shapes.small).padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        Modifier.fillMaxWidth().heightIn(min = Touch.Min).padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
-        Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
+        // The marker of the map: white with a dark ring, the finish filled.
+        val ink = MaterialTheme.colorScheme.onSurface
+        val finish = index == count - 1 && count > 1
+        Box(Modifier.padding(top = 4.dp).size(24.dp), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(12.dp)
+                    .background(if (finish) ink else MaterialTheme.colorScheme.surface, CircleShape)
+                    .border(2.5.dp, if (finish) MaterialTheme.colorScheme.surface else ink, CircleShape),
+            )
+        }
+        Column(Modifier.weight(1f)) {
+            Text(role, style = MaterialTheme.typography.titleMedium)
+            if (name != null) Text(name, style = MaterialTheme.typography.bodyMedium)
+            val distance = alongKm?.let { stringResource(Res.string.detail_stop_from_start, distanceText(it)) }
+            Text(
+                listOfNotNull(distance, "${fmt(lat)}, ${fmt(lon)}").joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall.merge(TabularFigures),
+                color = muted,
+            )
+        }
     }
 }
 

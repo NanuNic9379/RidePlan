@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -107,7 +108,7 @@ import io.github.nanunic9379.rideplan.resources.route_cancel
 import io.github.nanunic9379.rideplan.resources.save
 import io.github.nanunic9379.rideplan.resources.stat_average
 import io.github.nanunic9379.rideplan.resources.stat_done
-import io.github.nanunic9379.rideplan.resources.stat_longest_ride
+import io.github.nanunic9379.rideplan.resources.stat_longest
 import io.github.nanunic9379.rideplan.resources.stat_outings_label
 import io.github.nanunic9379.rideplan.resources.stats_always
 import io.github.nanunic9379.rideplan.resources.stats_best
@@ -156,11 +157,11 @@ fun StatsPage(store: ProfileStore, rides: RideScreenState) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatTile("${s.outings}", pluralStringResource(Res.plurals.stat_outings_label, s.outings), Modifier.weight(1f))
-            StatTile(distanceText(s.km), stringResource(Res.string.stat_done), Modifier.weight(1f))
+            StatTile(distanceNumber(s.km), stringResource(Res.string.stat_done), Modifier.weight(1f), unit = distanceUnit())
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatTile(s.longestKm?.let { distanceText(it) } ?: "–", stringResource(Res.string.stat_longest_ride), Modifier.weight(1f))
-            StatTile(s.averageKm?.let { distanceText(it) } ?: "–", stringResource(Res.string.stat_average), Modifier.weight(1f))
+            StatTile(s.longestKm?.let { distanceNumber(it) } ?: "–", stringResource(Res.string.stat_longest), Modifier.weight(1f), unit = s.longestKm?.let { distanceUnit() })
+            StatTile(s.averageKm?.let { distanceNumber(it) } ?: "–", stringResource(Res.string.stat_average), Modifier.weight(1f), unit = s.averageKm?.let { distanceUnit() })
         }
         SectionLabel(stringResource(if (s.barsAreYears) Res.string.stats_per_year else Res.string.stats_per_month))
         Bars(s.bars.map { (if (s.barsAreYears) "${it.label}".takeLast(2) else monthShort(it.label).take(1)) to it.km })
@@ -173,7 +174,13 @@ fun StatsPage(store: ProfileStore, rides: RideScreenState) {
             )
         }
         SectionLabel(stringResource(Res.string.stats_where))
-        RideSketch(s.ridden.map { it.shape }, Modifier.fillMaxWidth().height(180.dp), strokeWidth = 3.dp)
+        RideSketch(
+            s.ridden.map { it.shape },
+            Modifier.fillMaxWidth().aspectRatio(16f / 10f),
+            strokeWidth = 3.dp,
+            background = MaterialTheme.colorScheme.surfaceContainer,
+            grid = 24.dp,
+        )
         Text(stringResource(Res.string.stats_where_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (s.repeated.isNotEmpty()) {
             SectionLabel(stringResource(Res.string.stats_repeated))

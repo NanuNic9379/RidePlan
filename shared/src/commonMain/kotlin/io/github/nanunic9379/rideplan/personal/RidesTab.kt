@@ -1,7 +1,7 @@
 package io.github.nanunic9379.rideplan.personal
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,17 +19,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,12 +44,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -106,8 +110,11 @@ import io.github.nanunic9379.rideplan.ride.Page
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Motion
 import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
+import io.github.nanunic9379.rideplan.ui.pressable
+import io.github.nanunic9379.rideplan.ui.staggerIn
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -140,6 +147,8 @@ fun NewRideFab(actions: ImportActions, rides: RideScreenState, modifier: Modifie
     if (link) LinkDialog(actions, onDismiss = { link = false })
     ExtendedFloatingActionButton(
         onClick = { sheet = true },
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         modifier = modifier.heightIn(min = Touch.Glove),
         icon = { Icon(AppIcons.Add, contentDescription = null) },
         text = { Text(stringResource(Res.string.home_new_ride), style = MaterialTheme.typography.labelLarge) },
@@ -179,6 +188,9 @@ fun RidesTab(store: ProfileStore, rides: RideScreenState, padding: PaddingValues
         RideFilter.apply(data.rides, candidate) { titles[it.id].orEmpty() }.size
     }
 
+    // The rows rise in one after the other only the first time the list appears.
+    val stagger = remember { !listShown }
+    LaunchedEffect(Unit) { listShown = true }
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -195,9 +207,9 @@ fun RidesTab(store: ProfileStore, rides: RideScreenState, padding: PaddingValues
                     modifier = Modifier.weight(1f).semantics { heading() },
                 )
                 val filtered = q.bike != null || q.length != LengthFilter.ANY || q.sort != RideSort.LAST_OPENED
-                FilledTonalIconButton(onClick = { sortSheet = true }, modifier = Modifier.size(Touch.Glove)) {
+                IconButton(onClick = { sortSheet = true }, modifier = Modifier.size(Touch.Glove)) {
                     Box {
-                        Icon(AppIcons.Sort, contentDescription = stringResource(Res.string.rides_sort))
+                        Icon(AppIcons.Sort, contentDescription = stringResource(Res.string.rides_sort), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (filtered) Box(Modifier.size(8.dp).align(Alignment.TopEnd).background(MaterialTheme.colorScheme.primary, CircleShape))
                     }
                 }
@@ -220,8 +232,15 @@ fun RidesTab(store: ProfileStore, rides: RideScreenState, padding: PaddingValues
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(RideChip.entries) { chip ->
+                    val on = q.chip == chip
+                    val container by animateColorAsState(
+                        if (on) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                        Motion.feedback(),
+                        label = "chip",
+                    )
                     FilterChip(
-                        selected = q.chip == chip,
+                        selected = on,
+                        colors = FilterChipDefaults.filterChipColors(containerColor = container, selectedContainerColor = container),
                         onClick = { rides.query = q.copy(chip = chip) },
                         label = { Text("${chipLabel(chip)}  ${counts[chip] ?: 0}") },
                         leadingIcon = if (q.chip == chip) ({ Icon(AppIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }) else null,
@@ -243,13 +262,13 @@ fun RidesTab(store: ProfileStore, rides: RideScreenState, padding: PaddingValues
                 }
             }
         }
-        items(shown, key = { it.id }) { saved ->
+        itemsIndexed(shown, key = { _, it -> it.id }) { i, saved ->
             RideRow(
                 saved,
                 titles[saved.id].orEmpty(),
                 onOpen = { rides.open(Dest.RideDetail(saved.id)) },
                 onStar = { store.update { it.setFavourite(saved.id, !saved.favourite) } },
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp).staggerIn(i, stagger),
             )
         }
     }
@@ -273,9 +292,7 @@ fun EmptyState(title: String, text: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(Modifier.size(72.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(AppIcons.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(36.dp))
-        }
+        Icon(AppIcons.Route, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp))
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -285,15 +302,23 @@ fun EmptyState(title: String, text: String) {
 @Composable
 fun RideRow(saved: SavedRide, title: String, onOpen: () -> Unit, onStar: (() -> Unit)?, modifier: Modifier = Modifier) {
     Card(
-        modifier.fillMaxWidth(),
+        modifier.fillMaxWidth().clip(Radius.Card).pressable(onOpen),
+        shape = Radius.Card,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 88.dp).clickable(onClick = onOpen).padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            Modifier.fillMaxWidth().heightIn(min = 88.dp).padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            RideSketch(listOf(saved.shape), Modifier.size(64.dp), strokeWidth = 2.5.dp)
+            // Card corner 16 minus the 12 of padding: the thumbnail corner follows the card's.
+            RideSketch(
+                listOf(saved.shape),
+                Modifier.size(64.dp).clip(RoundedCornerShape(4.dp)),
+                strokeWidth = 2.5.dp,
+                background = MaterialTheme.colorScheme.surfaceContainer,
+                grid = 16.dp,
+            )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 if (saved.received != null) {
                     Text(
@@ -408,3 +433,6 @@ private fun SortSheet(store: ProfileStore, current: RideQuery, onChange: (RideQu
         }
     }
 }
+
+/** True once the Rides list has been shown in this run of the app: its stagger plays once. */
+private var listShown = false

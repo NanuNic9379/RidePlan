@@ -141,8 +141,15 @@
     <string name="welcome_start">Start</string>
     <string name="welcome_skip">Skip for now</string>
     <string name="profile_name">Name</string>
-    <string name="stat_km">Km ridden</string>
+    <string name="stat_km">Ridden</string>
     <string name="stat_longest">Longest ride</string>
+    <string name="detail_stop_start">Start</string>
+    <string name="detail_stop_n">Stop %1$d</string>
+    <string name="detail_stop_finish">Finish</string>
+    <string name="detail_stop_from_start">%1$s from start</string>
+    <string name="unit_km">km</string>
+    <string name="unit_mi">mi</string>
+    <string name="map_attribution">Map data credits</string>
     <string name="stats_empty">When you mark a ride as done, your km show up here.</string>
     <string name="profile_local">Your data stays on this phone: no account, no server.</string>
     <string name="backup_title">Backup</string>
@@ -258,11 +265,9 @@
     <string name="profile_edit">Your profile</string>
     <string name="profile_color">Colour</string>
     <string name="profile_your_bike">Your bike</string>
-    <string name="stat_outings">outings</string>
-    <string name="stat_mi">Miles ridden</string>
-    <string name="stat_done">ridden</string>
-    <string name="stat_longest_ride">the longest ride</string>
-    <string name="stat_average">average per outing</string>
+    <string name="stat_outings">Outings</string>
+    <string name="stat_done">Ridden</string>
+    <string name="stat_average">Average per outing</string>
     <string name="stats_title">Statistics</string>
     <string name="stats_sub">By year, by month, where you rode</string>
     <string name="stats_always">All time</string>
@@ -355,8 +360,8 @@
     <string name="mapdata_title">Downloaded map data</string>
     <string name="mapdata_none">No road data on the phone</string>
     <string name="mapdata_none_text">RidePlan downloads only the roads around your rides, when it calculates one.</string>
-    <string name="mapdata_used">used</string>
-    <string name="mapdata_free">free</string>
+    <string name="mapdata_used">Used</string>
+    <string name="mapdata_free">Free</string>
     <string name="mapdata_list">On the phone</string>
     <string name="mapdata_cells">Roads around your rides</string>
     <string name="mapdata_note">If you delete road data, RidePlan downloads it again when you open a ride there.</string>
@@ -398,8 +403,8 @@
         <item quantity="other">%1$d zones</item>
     </plurals>
     <plurals name="stat_outings_label">
-        <item quantity="one">outing</item>
-        <item quantity="other">outings</item>
+        <item quantity="one">Outing</item>
+        <item quantity="other">Outings</item>
     </plurals>
     <plurals name="stats_repeated_times">
         <item quantity="one">%1$d time · %2$s in all</item>

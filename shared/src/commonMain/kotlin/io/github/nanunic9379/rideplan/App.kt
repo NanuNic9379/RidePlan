@@ -113,7 +113,6 @@ import org.maplibre.compose.camera.CameraUpdate
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
-import org.maplibre.compose.overlay.MapOverlay
 import org.maplibre.compose.overlay.include
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
@@ -356,7 +355,7 @@ private fun MapScreen(
                         },
                     ),
                 ) {
-                    include(MapOverlay.Default)
+                    include(CompactMapOverlay)
                     if (editable && ride != null) {
                         StopHandles(
                             ride.stops,
@@ -370,6 +369,7 @@ private fun MapScreen(
                         )
                     }
                 }
+                StatusBarScrim()
                 Column(
                     Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -461,6 +461,8 @@ private fun MapScreen(
                     // Explore (#33): the main action on the empty map is planning a ride.
                     ExtendedFloatingActionButton(
                         onClick = { rides.startPlan() },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         icon = { Icon(AppIcons.Add, contentDescription = null) },
                         text = { Text(stringResource(Res.string.plan_title), style = MaterialTheme.typography.labelLarge) },
                         modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp).heightIn(min = Touch.Glove),
@@ -483,6 +485,8 @@ private fun MapScreen(
                             }
                         },
                         modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = navBar + (if (showFab) FabHeight else 0.dp)).padding(16.dp).size(Touch.Glove),
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                     ) {
                         if (exploreLocating) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
                         else Icon(AppIcons.MyLocation, contentDescription = stringResource(Res.string.explore_locate))

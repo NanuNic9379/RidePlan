@@ -141,8 +141,15 @@
     <string name="welcome_start">Empezar</string>
     <string name="welcome_skip">Saltar por ahora</string>
     <string name="profile_name">Nombre</string>
-    <string name="stat_km">Km en moto</string>
+    <string name="stat_km">Recorridos</string>
     <string name="stat_longest">Ruta más larga</string>
+    <string name="detail_stop_start">Salida</string>
+    <string name="detail_stop_n">Parada %1$d</string>
+    <string name="detail_stop_finish">Llegada</string>
+    <string name="detail_stop_from_start">%1$s desde la salida</string>
+    <string name="unit_km">km</string>
+    <string name="unit_mi">mi</string>
+    <string name="map_attribution">Créditos de los datos del mapa</string>
     <string name="stats_empty">Cuando marques una ruta como hecha, aquí verás tus km.</string>
     <string name="profile_local">Tus datos se quedan en este teléfono: sin cuenta, sin servidor.</string>
     <string name="backup_title">Copia de seguridad</string>
@@ -258,11 +265,9 @@
     <string name="profile_edit">Tu perfil</string>
     <string name="profile_color">Color</string>
     <string name="profile_your_bike">Tu moto</string>
-    <string name="stat_outings">salidas</string>
-    <string name="stat_mi">Millas recorridas</string>
-    <string name="stat_done">recorridos</string>
-    <string name="stat_longest_ride">la ruta más larga</string>
-    <string name="stat_average">media por salida</string>
+    <string name="stat_outings">Salidas</string>
+    <string name="stat_done">Recorridos</string>
+    <string name="stat_average">Media por salida</string>
     <string name="stats_title">Estadísticas</string>
     <string name="stats_sub">Por año, por mes, por dónde fuiste</string>
     <string name="stats_always">Siempre</string>
@@ -355,8 +360,8 @@
     <string name="mapdata_title">Datos de mapa descargados</string>
     <string name="mapdata_none">No hay datos de carreteras en el móvil</string>
     <string name="mapdata_none_text">RidePlan descarga solo las carreteras alrededor de tus rutas, cuando calcula una.</string>
-    <string name="mapdata_used">usados</string>
-    <string name="mapdata_free">libres</string>
+    <string name="mapdata_used">Usados</string>
+    <string name="mapdata_free">Libres</string>
     <string name="mapdata_list">En el móvil</string>
     <string name="mapdata_cells">Carreteras alrededor de tus rutas</string>
     <string name="mapdata_note">Si eliminas los datos de carreteras, RidePlan los vuelve a descargar cuando abras una ruta allí.</string>
@@ -398,8 +403,8 @@
         <item quantity="other">%1$d zonas</item>
     </plurals>
     <plurals name="stat_outings_label">
-        <item quantity="one">salida</item>
-        <item quantity="other">salidas</item>
+        <item quantity="one">Salida</item>
+        <item quantity="other">Salidas</item>
     </plurals>
     <plurals name="stats_repeated_times">
         <item quantity="one">%1$d vez · %2$s en total</item>

@@ -140,8 +140,15 @@
     <string name="welcome_start">Inizia</string>
     <string name="welcome_skip">Salta per ora</string>
     <string name="profile_name">Nome</string>
-    <string name="stat_km">Km in sella</string>
+    <string name="stat_km">In sella</string>
     <string name="stat_longest">Giro più lungo</string>
+    <string name="detail_stop_start">Partenza</string>
+    <string name="detail_stop_n">Tappa %1$d</string>
+    <string name="detail_stop_finish">Arrivo</string>
+    <string name="detail_stop_from_start">%1$s dalla partenza</string>
+    <string name="unit_km">km</string>
+    <string name="unit_mi">mi</string>
+    <string name="map_attribution">Crediti dei dati della mappa</string>
     <string name="stats_empty">Quando segni un giro come fatto, qui vedi i tuoi km.</string>
     <string name="profile_local">I tuoi dati restano su questo telefono: niente account, niente server.</string>
     <string name="backup_title">Copia di sicurezza</string>
@@ -257,11 +264,9 @@
     <string name="profile_edit">Il tuo profilo</string>
     <string name="profile_color">Colore</string>
     <string name="profile_your_bike">La tua moto</string>
-    <string name="stat_outings">uscite</string>
-    <string name="stat_mi">Miglia in sella</string>
-    <string name="stat_done">fatti</string>
-    <string name="stat_longest_ride">il giro più lungo</string>
-    <string name="stat_average">media per uscita</string>
+    <string name="stat_outings">Uscite</string>
+    <string name="stat_done">In sella</string>
+    <string name="stat_average">Media per uscita</string>
     <string name="stats_title">Statistiche</string>
     <string name="stats_sub">Per anno, per mese, dove hai girato</string>
     <string name="stats_always">Sempre</string>
@@ -354,8 +359,8 @@
     <string name="mapdata_title">Dati mappa scaricati</string>
     <string name="mapdata_none">Nessun dato stradale sul telefono</string>
     <string name="mapdata_none_text">RidePlan scarica solo le strade intorno ai tuoi giri, quando ne calcola uno.</string>
-    <string name="mapdata_used">usati</string>
-    <string name="mapdata_free">liberi</string>
+    <string name="mapdata_used">Usati</string>
+    <string name="mapdata_free">Liberi</string>
     <string name="mapdata_list">Sul telefono</string>
     <string name="mapdata_cells">Strade intorno ai tuoi giri</string>
     <string name="mapdata_note">Se elimini i dati stradali, RidePlan li riscarica quando riapri un giro lì.</string>
@@ -397,8 +402,8 @@
         <item quantity="other">%1$d zone</item>
     </plurals>
     <plurals name="stat_outings_label">
-        <item quantity="one">uscita</item>
-        <item quantity="other">uscite</item>
+        <item quantity="one">Uscita</item>
+        <item quantity="other">Uscite</item>
     </plurals>
     <plurals name="stats_repeated_times">
         <item quantity="one">%1$d volta · %2$s in tutto</item>

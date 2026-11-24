@@ -353,6 +353,8 @@ fun ImportFab(actions: ImportActions, modifier: Modifier = Modifier) {
         ImportMenu(actions, onLink = { linkDialog = true }) { open ->
             ExtendedFloatingActionButton(
                 onClick = open,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(AppIcons.Add, contentDescription = null) },
                 text = { Text(stringResource(Res.string.import_button)) },
             )

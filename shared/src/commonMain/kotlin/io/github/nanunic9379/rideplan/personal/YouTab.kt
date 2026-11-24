@@ -24,11 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -38,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.Period
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.RideStats
-import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.civilDate
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.garage_add
@@ -65,7 +60,6 @@ import io.github.nanunic9379.rideplan.resources.soon_identity_text
 import io.github.nanunic9379.rideplan.resources.soon_title
 import io.github.nanunic9379.rideplan.resources.stat_km
 import io.github.nanunic9379.rideplan.resources.stat_longest
-import io.github.nanunic9379.rideplan.resources.stat_mi
 import io.github.nanunic9379.rideplan.resources.stat_outings
 import io.github.nanunic9379.rideplan.resources.stats_sub
 import io.github.nanunic9379.rideplan.resources.stats_title
@@ -121,14 +115,16 @@ fun YouTab(store: ProfileStore, rides: RideScreenState, platform: PlatformAction
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val open = { rides.open(Dest.Stats) }
-            StatTile("${all.outings}", stringResource(Res.string.stat_outings), Modifier.weight(1f), open)
+            StatTile("${all.outings}", stringResource(Res.string.stat_outings), Modifier.weight(1f), onClick = open)
+            StatTile(distanceNumber(all.km), stringResource(Res.string.stat_km), Modifier.weight(1f), unit = distanceUnit(), onClick = open)
+            val longest = all.longestKm
             StatTile(
-                distanceNumber(all.km),
-                stringResource(if (LocalUnits.current == Units.MILES) Res.string.stat_mi else Res.string.stat_km),
+                longest?.let { distanceNumber(it) } ?: "–",
+                stringResource(Res.string.stat_longest),
                 Modifier.weight(1f),
-                open,
+                unit = longest?.let { distanceUnit() },
+                onClick = open,
             )
-            StatTile(all.longestKm?.let { distanceText(it) } ?: "–", stringResource(Res.string.stat_longest), Modifier.weight(1f), open)
         }
 
         SectionLabel(stringResource(Res.string.you_things))
@@ -180,24 +176,15 @@ fun YouTab(store: ProfileStore, rides: RideScreenState, platform: PlatformAction
     }
 }
 
-/** What will come (#3, #16): shown, not usable, behind a dashed border. */
+/** What will come (#3, #16): a quiet section, shown but not usable, with no card around it. */
 @Composable
 private fun ComingSoon() {
-    val outline = MaterialTheme.colorScheme.outline
-    Column(
-        Modifier.fillMaxWidth().padding(top = 8.dp).drawBehind {
-            drawRoundRect(
-                outline,
-                cornerRadius = CornerRadius(16.dp.toPx()),
-                style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))),
-            )
-        }.padding(vertical = 8.dp),
-    ) {
+    Column(Modifier.fillMaxWidth()) {
         Text(
             stringResource(Res.string.soon_title),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).semantics { heading() },
+            modifier = Modifier.padding(top = 8.dp).semantics { heading() },
         )
         NavRow(AppIcons.Lock, stringResource(Res.string.soon_identity), stringResource(Res.string.soon_identity_text), enabled = false, onClick = null)
         NavRow(AppIcons.Group, stringResource(Res.string.soon_friends), stringResource(Res.string.soon_friends_text), enabled = false, onClick = null)

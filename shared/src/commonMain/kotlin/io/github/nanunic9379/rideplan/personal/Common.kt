@@ -37,7 +37,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -59,11 +61,16 @@ import io.github.nanunic9379.rideplan.resources.months_short
 import io.github.nanunic9379.rideplan.resources.nav_back
 import io.github.nanunic9379.rideplan.resources.ride_km
 import io.github.nanunic9379.rideplan.resources.ride_mi
+import io.github.nanunic9379.rideplan.resources.unit_km
+import io.github.nanunic9379.rideplan.resources.unit_mi
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.formatKm
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Brand
+import io.github.nanunic9379.rideplan.ui.Figure
+import io.github.nanunic9379.rideplan.ui.TabularFigures
 import io.github.nanunic9379.rideplan.ui.Touch
+import io.github.nanunic9379.rideplan.ui.pressable
 import org.jetbrains.compose.resources.stringResource
 
 /** Km or miles, from the settings (#21). */
@@ -80,6 +87,10 @@ fun distanceText(km: Double): String {
 /** Just the number, in the chosen unit. */
 @Composable
 fun distanceNumber(km: Double): String = formatKm(LocalUnits.current.of(km))
+
+/** "km" or "mi", next to a [distanceNumber]. */
+@Composable
+fun distanceUnit(): String = stringResource(if (LocalUnits.current == Units.MILES) Res.string.unit_mi else Res.string.unit_km)
 
 @Composable
 fun monthShort(month: Int): String = stringResource(Res.string.months_short).split('|').getOrElse(month - 1) { "$month" }
@@ -147,7 +158,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text,
         style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(top = 8.dp).semantics { heading() },
     )
 }
@@ -162,11 +173,11 @@ fun RowGroup(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun GroupDivider() = HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outlineVariant)
+fun GroupDivider() = HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
 /**
- * A list row: 64 dp tall, icon in a tonal circle, title, optional line below and something
- * at the end (a value, a chevron, a switch).
+ * A list row: 64 dp tall, a plain icon in its own column, title, optional line below and
+ * something at the end (a value, a chevron, a switch).
  */
 @Composable
 fun NavRow(
@@ -205,14 +216,10 @@ fun NavRow(
     }
 }
 
+/** The icon of a row: one size, one colour, so the icons of a group line up in a column. */
 @Composable
 fun RowIcon(icon: ImageVector, alpha: Float = 1f) {
-    Box(
-        Modifier.size(40.dp).background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = alpha), CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(22.dp))
-    }
+    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha), modifier = Modifier.size(24.dp))
 }
 
 /** A row with a switch: the whole row toggles it. */
@@ -237,15 +244,33 @@ fun SwitchRow(icon: ImageVector?, title: String, subtitle: String?, checked: Boo
     }
 }
 
-/** A number and what it counts: big enough to read at a glance. */
+/**
+ * A number and what it counts, read at a glance like a dashboard: the figure big and tabular,
+ * its [unit] smaller beside it, the label in sentence case below.
+ */
 @Composable
-fun StatTile(value: String, label: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun StatTile(value: String, label: String, modifier: Modifier = Modifier, unit: String? = null, onClick: (() -> Unit)? = null) {
     Card(
-        modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        modifier.then(if (onClick != null) Modifier.pressable(onClick) else Modifier),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Figure(
+                    value,
+                    style = MaterialTheme.typography.headlineSmall.merge(TabularFigures),
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                if (unit != null) {
+                    Text(
+                        unit,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        modifier = Modifier.padding(bottom = 3.dp),
+                    )
+                }
+            }
             Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
         }
     }
@@ -265,28 +290,67 @@ fun NoteCard(icon: ImageVector, text: String, container: Color, content: Color, 
     }
 }
 
-/** The shape of rides without a map: drawn on the phone, nothing downloaded. */
+/**
+ * The shape of rides without a map: drawn on the phone, nothing downloaded. The route looks
+ * as it does on the map (orange line on a dark casing, white start, dark finish) on a quiet
+ * paper-like ground; a [grid] spacing above 0 adds a faint grid like a road map.
+ * [progress] (read only while drawing) trims the line from 0 to 1 for the one-time draw-on.
+ */
 @Composable
-fun RideSketch(lines: List<List<LatLon>>, modifier: Modifier, strokeWidth: Dp = 4.dp, background: Color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-    val line = MaterialTheme.colorScheme.primary
-    val dot = MaterialTheme.colorScheme.onSurface
+fun RideSketch(
+    lines: List<List<LatLon>>,
+    modifier: Modifier,
+    strokeWidth: Dp = 4.dp,
+    background: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    grid: Dp = 0.dp,
+    progress: () -> Float = { 1f },
+) {
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val dark = MaterialTheme.colorScheme.onSurface
     Canvas(modifier.background(background, MaterialTheme.shapes.medium)) {
+        if (grid > 0.dp) {
+            val step = grid.toPx()
+            val hair = 1.dp.toPx()
+            var x = step
+            while (x < size.width) { drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), hair); x += step }
+            var y = step
+            while (y < size.height) { drawLine(gridColor, Offset(0f, y), Offset(size.width, y), hair); y += step }
+        }
         val pad = 16.dp.toPx()
         val shapes = Sketch.project(lines.filter { it.size >= 2 }, size.width, size.height, pad)
-        val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val w = strokeWidth.toPx()
+        val single = shapes.size == 1
+        val p = progress().coerceIn(0f, 1f)
+        val alpha = if (single) 1f else 0.75f
         for (pts in shapes) {
             if (pts.size < 2) continue
-            val path = Path().apply {
+            var path = Path().apply {
                 moveTo(pts[0].x, pts[0].y)
-                for (p in pts.drop(1)) lineTo(p.x, p.y)
+                for (pt in pts.drop(1)) lineTo(pt.x, pt.y)
             }
-            drawPath(path, line.copy(alpha = if (shapes.size > 1) 0.75f else 1f), style = stroke)
+            if (p < 1f) {
+                val measure = PathMeasure().apply { setPath(path, false) }
+                path = Path().also { measure.getSegment(0f, measure.length * p, it, true) }
+            }
+            drawPath(path, RouteCasing.copy(alpha = alpha), style = Stroke(width = w * 1.75f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(path, Brand.Orange.copy(alpha = alpha), style = Stroke(width = w, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
-        if (shapes.size == 1) {
-            shapes[0].firstOrNull()?.let { drawCircle(dot, radius = 5.dp.toPx(), center = androidx.compose.ui.geometry.Offset(it.x, it.y)) }
-            shapes[0].lastOrNull()?.let { drawCircle(line, radius = 5.dp.toPx(), center = androidx.compose.ui.geometry.Offset(it.x, it.y)) }
+        if (single && shapes[0].size >= 2) {
+            val r = (w * 1.25f).coerceAtLeast(3.dp.toPx())
+            val ring = (r * 0.4f).coerceAtLeast(1.dp.toPx())
+            val start = shapes[0].first().let { Offset(it.x, it.y) }
+            val end = shapes[0].last().let { Offset(it.x, it.y) }
+            drawCircle(Color.White, r, start)
+            drawCircle(dark, r, start, style = Stroke(ring))
+            if (p >= 1f) {
+                drawCircle(dark, r, end)
+                drawCircle(Color.White, r, end, style = Stroke(ring))
+            }
         }
     }
 }
+
+/** The casing under the orange route, as on the map. */
+private val RouteCasing = Color(0xFF7A3300)
 
 internal val ListPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)
