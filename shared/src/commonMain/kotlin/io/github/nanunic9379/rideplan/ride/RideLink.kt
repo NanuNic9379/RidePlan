@@ -68,14 +68,14 @@ object RideLink {
 
     private const val SEP = "\u001f"
 
-    /** "MAX,h,t": curves, then h = no motorways, t = no tolls. */
+    /** "MAX,h,t,f": curves, then h = no motorways, t = no tolls, f = no ferries. */
     internal fun optionsCode(o: RouteOptions): String =
-        (listOf(o.curves.name) + listOfNotNull("h".takeIf { o.avoidHighways }, "t".takeIf { o.avoidTolls })).joinToString(",")
+        (listOf(o.curves.name) + listOfNotNull("h".takeIf { o.avoidHighways }, "t".takeIf { o.avoidTolls }, "f".takeIf { o.avoidFerries })).joinToString(",")
 
     internal fun parseOptions(code: String): RouteOptions? {
         val parts = code.split(',')
         val curves = Curves.entries.firstOrNull { it.name == parts[0] } ?: return null
-        return RouteOptions(curves, avoidHighways = "h" in parts, avoidTolls = "t" in parts)
+        return RouteOptions(curves, avoidHighways = "h" in parts, avoidTolls = "t" in parts, avoidFerries = "f" in parts)
     }
 
     /** One letter per stop: S stop, V dragged via point, P pass-by town. */

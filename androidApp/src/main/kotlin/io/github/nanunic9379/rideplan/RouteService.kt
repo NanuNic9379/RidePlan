@@ -6,6 +6,7 @@ import com.valhalla.valhalla.ValhallaException
 import com.valhalla.valhalla.config.ValhallaConfigFactory
 import com.valhalla.valhalla.config.ValhallaConfigManager
 import com.valhalla.valhalla.files.ValhallaFile
+import io.github.nanunic9379.rideplan.personal.MapDataItem
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
@@ -231,6 +232,30 @@ class RouteService(context: Context) {
 
     private fun tar(region: RoutingRegion) = File(dir, region.id + ".tar")
 
+    /** Road data on the phone (#21): each whole region, and all the cells as one item. */
+    fun mapData(): List<MapDataItem> {
+        val regions = installed().map { MapDataItem(it.id, tar(it).length(), isCells = false) }
+        val cells = cellsDir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+        return regions + listOfNotNull(MapDataItem(CELLS_ID, cells, isCells = true).takeIf { cells > 0 })
+    }
+
+    /** Deletes one item of [mapData]; it is downloaded again when a ride there needs it. */
+    @Synchronized
+    fun delete(item: MapDataItem) {
+        closeEngine()
+        if (item.isCells) cellsDir.deleteRecursively()
+        else listOf(".tar", ".json").forEach { File(dir, item.id + it).delete() }
+    }
+
+    fun freeBytes(): Long = dir.usableSpace
+
+    /** "Delete all data" (#21): every piece of road data. */
+    @Synchronized
+    fun wipe() {
+        closeEngine()
+        dir.listFiles().orEmpty().forEach { it.deleteRecursively() }
+    }
+
     /** GitHub answers with a redirect to the real file. */
 
     private fun get(url: String): InputStream {
@@ -249,6 +274,7 @@ class RouteService(context: Context) {
     }
 
     private companion object {
+        const val CELLS_ID = "cells"
         val TILE = Regex("""[012](/\d{3})+\.gph""")
     }
 

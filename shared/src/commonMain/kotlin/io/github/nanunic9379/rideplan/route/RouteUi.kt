@@ -51,6 +51,7 @@ import io.github.nanunic9379.rideplan.resources.route_download
 import io.github.nanunic9379.rideplan.resources.route_downloading
 import io.github.nanunic9379.rideplan.resources.route_err_checksum
 import io.github.nanunic9379.rideplan.resources.route_err_engine
+import io.github.nanunic9379.rideplan.resources.route_err_wifi
 import io.github.nanunic9379.rideplan.resources.route_err_network
 import io.github.nanunic9379.rideplan.resources.route_err_no_route
 import io.github.nanunic9379.rideplan.resources.route_err_no_space
@@ -80,7 +81,7 @@ sealed interface RouteState {
     data class Failed(val error: RouteError, val detail: String? = null) : RouteState
 }
 
-enum class RouteError { NETWORK, CHECKSUM, NO_SPACE, NO_ROUTE, ENGINE }
+enum class RouteError { NETWORK, CHECKSUM, NO_SPACE, NO_ROUTE, ENGINE, WIFI_ONLY }
 
 class RouteException(val error: RouteError, val detail: String? = null) :
     Exception(error.name + (detail?.let { ": $it" } ?: ""))
@@ -269,6 +270,7 @@ private fun failureText(state: RouteState.Failed): String = when (state.error) {
     RouteError.NO_SPACE -> stringResource(Res.string.route_err_no_space)
     RouteError.NO_ROUTE -> stringResource(Res.string.route_err_no_route)
     RouteError.ENGINE -> stringResource(Res.string.route_err_engine, state.detail ?: "?")
+    RouteError.WIFI_ONLY -> stringResource(Res.string.route_err_wifi)
 }
 
 @Composable
@@ -278,7 +280,7 @@ private fun dataName(download: DataDownload): String = when (download) {
 }
 
 @Composable
-private fun regionName(id: String): String = when (id) {
+internal fun regionName(id: String): String = when (id) {
     "it-nord-ovest" -> stringResource(Res.string.region_it_nord_ovest)
     "it-nord-est" -> stringResource(Res.string.region_it_nord_est)
     "it-centro" -> stringResource(Res.string.region_it_centro)

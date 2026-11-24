@@ -1,16 +1,23 @@
 package io.github.nanunic9379.rideplan
 
+import android.app.LocaleManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
+import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.DisposableEffect
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +25,12 @@ import androidx.lifecycle.viewModelScope
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.BackupNotice
 import io.github.nanunic9379.rideplan.profile.ProfileStore
+import io.github.nanunic9379.rideplan.profile.RideExport
+import io.github.nanunic9379.rideplan.profile.ThemeMode
+import io.github.nanunic9379.rideplan.profile.forBike
+import io.github.nanunic9379.rideplan.personal.LanguageActions
+import io.github.nanunic9379.rideplan.personal.MapDataActions
+import io.github.nanunic9379.rideplan.personal.PlatformActions
 import io.github.nanunic9379.rideplan.ride.GpxExport
 import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.Page
@@ -41,6 +54,7 @@ import io.github.nanunic9379.rideplan.route.RegionDownload
 import io.github.nanunic9379.rideplan.route.routed
 import io.github.nanunic9379.rideplan.route.toggledStop
 import io.github.nanunic9379.rideplan.update.UpdateOverlay
+import io.github.nanunic9379.rideplan.update.updateActions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +62,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class MainActivity : ComponentActivity() {
     /** Survives the activity being recreated (theme, language, font size): see [Session]. */
@@ -65,6 +81,9 @@ class MainActivity : ComponentActivity() {
     private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) backupIo {
             contentResolver.openOutputStream(uri, "wt")!!.use { it.write(store.backupText().toByteArray()) }
+            withContext(Dispatchers.Main) {
+                store.update { it.copy(settings = it.settings.copy(lastBackupAt = store.time())) }
+            }
             BackupNotice.Saved
         }
     }
@@ -76,6 +95,31 @@ class MainActivity : ComponentActivity() {
             withContext(Dispatchers.Main) { BackupNotice.Restored(store.restore(ProfileStore.encode(profile))) }
         }
     }
+
+    /** "Export all rides" (#21): one .zip with a GPX per ride, where the user chooses. */
+    private val exportRides = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri == null) return@registerForActivityResult
+        val saved = store.data.rides
+        lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val files = RideExport.files(saved) { "RidePlan" }
+                    contentResolver.openOutputStream(uri, "wt")!!.use { out ->
+                        ZipOutputStream(out).use { zip ->
+                            files.forEach { (name, text) ->
+                                zip.putNextEntry(ZipEntry(name))
+                                zip.write(text.toByteArray())
+                                zip.closeEntry()
+                            }
+                        }
+                    }
+                }.isSuccess
+            }
+            platform.exportNotice = ok
+        }
+    }
+
+    private lateinit var platform: PlatformActions
 
     private fun backupIo(block: suspend () -> BackupNotice) {
         lifecycleScope.launch {
@@ -90,7 +134,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         val actions = ImportActions(
             openFile = { openDocument.launch(arrayOf("*/*")) },
             readClipboard = ::clipboardText,
@@ -122,8 +165,45 @@ class MainActivity : ComponentActivity() {
             save = { saveBackup.launch("rideplan-backup.json") },
             restore = { restoreBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
         )
+        platform = PlatformActions(
+            versionName = BuildConfig.VERSION_NAME,
+            openUrl = ::openUrl,
+            exportAll = { exportRides.launch("rideplan-rides.zip") },
+            language = if (Build.VERSION.SDK_INT >= 33) languageActions() else null,
+            mapData = MapDataActions(
+                list = router::mapData,
+                delete = { item -> cancelRoute(); router.delete(item) },
+                freeBytes = router::freeBytes,
+            ),
+            wipeDevice = ::wipeDevice,
+            updates = updateActions(lifecycleScope),
+        )
         onBackPressedDispatcher.addCallback(this, backToHome)
-        setContent { App(rides = rides, store = store, importActions = actions, routeActions = routeActions, backupActions = backupActions, mapViews = MapViewPrefs(this), navigation = navigation, overlay = { UpdateOverlay() }) }
+        setContent {
+            // The system bars follow the theme chosen in Settings, not only the phone's.
+            val dark = when (store.data.settings.theme) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+            DisposableEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose {}
+            }
+            App(
+                rides = rides,
+                store = store,
+                importActions = actions,
+                routeActions = routeActions,
+                backupActions = backupActions,
+                mapViews = MapViewPrefs(this),
+                platform = platform,
+                navigation = navigation,
+                overlay = { UpdateOverlay(checkAtStart = store.data.settings.checkUpdates) },
+            )
+        }
         if (savedInstanceState == null) handle(intent)
     }
 
@@ -158,16 +238,20 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Back from the map or the profile returns to the home screen (#41);
-     * from the home screen it does what Android always does.
+     * Back always goes one level up (#21): off the map to the page it was opened from, then
+     * page by page, then to the Rides tab; from there it does what Android always does.
      */
     private val backToHome = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             if (rides.navigating) {
                 rides.navigating = false
-            } else if (rides.onMap || rides.page != Page.HOME) {
+            } else if (rides.onMap) {
                 cancelRoute()
                 rides.goHome()
+            } else if (rides.back()) {
+                Unit
+            } else if (rides.page != Page.HOME) {
+                rides.tab(Page.HOME)
             } else {
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
@@ -245,6 +329,38 @@ class MainActivity : ComponentActivity() {
         return clip.getItemAt(0).coerceToText(this)?.toString()
     }
 
+    private fun openUrl(url: String) {
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    }
+
+    /** App language (#21) through Android 13's per-app languages: it survives restarts. */
+    @RequiresApi(33)
+    private fun languageActions(): LanguageActions {
+        val locales = getSystemService(LocaleManager::class.java)
+        return LanguageActions(
+            current = { locales.applicationLocales.takeIf { !it.isEmpty }?.get(0)?.toLanguageTag() },
+            set = { tag -> locales.applicationLocales = if (tag == null) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag) },
+        )
+    }
+
+    /** "Delete all data" (#21): what lives outside the profile file. */
+    private fun wipeDevice() {
+        cancelRoute()
+        rides.goHome()
+        getSharedPreferences("map", MODE_PRIVATE).edit().clear().apply()
+        getSharedPreferences("route", MODE_PRIVATE).edit().clear().apply()
+        rides.options = loadOptions()
+        File(cacheDir, "shared").deleteRecursively()
+        lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
+    }
+
+    /** Road data only on Wi-Fi (#21): checked before every download, metered networks refused. */
+    private fun checkNetwork() {
+        if (!store.data.settings.wifiOnly) return
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return
+        if (cm.isActiveNetworkMetered) throw RouteException(RouteError.WIFI_ONLY)
+    }
+
     private fun load(block: () -> Ride) {
         rides.error = null
         rides.busy = true
@@ -299,6 +415,7 @@ class MainActivity : ComponentActivity() {
         routeJob = session.viewModelScope.launch {
             rides.route = RouteState.Downloading(data, 0)
             routeStep(ride) {
+                checkNetwork()
                 val progress = { done: Long -> rides.route = RouteState.Downloading(data, done) }
                 when (data) {
                     is RegionDownload -> {
@@ -324,6 +441,7 @@ class MainActivity : ComponentActivity() {
             .putString("curves", options.curves.name)
             .putBoolean("avoidHighways", options.avoidHighways)
             .putBoolean("avoidTolls", options.avoidTolls)
+            .putBoolean("avoidFerries", options.avoidFerries)
             .apply()
         rides.ride?.let { reroute(it.unrouted()) }
     }
@@ -349,6 +467,7 @@ class MainActivity : ComponentActivity() {
             curves = Curves.entries.firstOrNull { it.name == p.getString("curves", null) } ?: Curves.NORMAL,
             avoidHighways = p.getBoolean("avoidHighways", false),
             avoidTolls = p.getBoolean("avoidTolls", false),
+            avoidFerries = p.getBoolean("avoidFerries", false),
         )
     }
 
@@ -360,7 +479,8 @@ class MainActivity : ComponentActivity() {
 
     private suspend fun compute(ride: Ride, data: RoutingData) {
         rides.route = RouteState.Computing
-        val options = rides.options
+        // Under 150 cc the bike forbids motorways, whatever the preferences say.
+        val options = rides.options.forBike(store.data.defaultBike)
         val (result, baseline) = withContext(Dispatchers.Default) {
             val main = router.route(ride, data, options)
             // With curves, also compute the normal route, to tell how much longer the ride gets.

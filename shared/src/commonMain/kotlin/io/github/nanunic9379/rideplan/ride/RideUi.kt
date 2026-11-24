@@ -138,8 +138,26 @@ import org.maplibre.compose.util.toDpPadding
 import org.maplibre.spatialk.geojson.BoundingBox
 import kotlin.math.roundToInt
 
-/** Where the user is in the app (#41). The map is also shown when a ride is open. */
-enum class Page { HOME, MAP, PROFILE }
+/** Where the user is in the app (#41, #21): the three tabs. The map is also shown when a ride is open. */
+enum class Page { HOME, MAP, YOU }
+
+/** A page opened on top of a tab (#21); back closes it. */
+sealed interface Dest {
+    data class RideDetail(val id: String) : Dest
+    data object EditProfile : Dest
+    data object Stats : Dest
+    data object Garage : Dest
+    /** A bike of the garage; null id = a new one. */
+    data class BikePage(val id: String?) : Dest
+    data object Log : Dest
+    data object Zones : Dest
+    data object Privacy : Dest
+    data object DeleteAll : Dest
+    data object Settings : Dest
+    data object Language : Dest
+    data object MapData : Dest
+    data object Info : Dest
+}
 
 /** State of the ride on screen. The platform (file, link) changes it and [App] reads it. */
 @Stable
@@ -162,6 +180,27 @@ class RideScreenState {
     /** Turn-by-turn navigation of the ride on screen (#5). */
     var navigating by mutableStateOf(false)
 
+    /** Search, chip, order and filters of the ride list (#21): they stay while you look at a ride. */
+    var query by mutableStateOf(io.github.nanunic9379.rideplan.profile.RideQuery())
+
+    /** Pages opened on top of the current tab, last = on screen (#21). */
+    var stack by mutableStateOf<List<Dest>>(emptyList())
+
+    fun open(dest: Dest) { stack = stack + dest }
+
+    /** Closes the page on top; false when there is none. */
+    fun back(): Boolean {
+        if (stack.isEmpty()) return false
+        stack = stack.dropLast(1)
+        return true
+    }
+
+    /** A tab of the bottom bar: it opens on its first page. */
+    fun tab(to: Page) {
+        stack = emptyList()
+        page = to
+    }
+
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
     /** Ride received by link and not saved yet (#48): no automatic saving. */
@@ -173,12 +212,15 @@ class RideScreenState {
         result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false; navigating = false }.onFailure { error = it }
     }
 
-    /** Back to the home screen; the ride is already saved. */
+    /**
+     * Off the map, back to the page it was opened from (the ride is already saved);
+     * from Explore back to the rides.
+     */
     fun goHome() {
         ride = null
         route = RouteState.Idle
         savedId = null
-        page = Page.HOME
+        if (page == Page.MAP) page = Page.HOME
         stopsEdited = false
         navigating = false
     }
@@ -438,7 +480,7 @@ private fun RideNotes(ride: Ride, route: RouteState) {
  * (#6) are cut out. [onShare] receives only what may leave the phone ([SharePreview]).
  */
 @Composable
-private fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> Unit, onShare: (out: Ride, asLink: Boolean) -> Unit) {
+internal fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> Unit, onShare: (out: Ride, asLink: Boolean) -> Unit) {
     var trim by remember { mutableStateOf(true) }
     var hideZones by remember { mutableStateOf(true) }
     val preview = remember(ride, zones, trim, hideZones) { SharePreview.of(ride, zones, trim, hideZones) }
@@ -480,7 +522,7 @@ private fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> U
 
 /** The ride in a QR to scan at the bar, plus the link to send in a chat (#6). */
 @Composable
-private fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> Unit) {
+internal fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.qr_title)) },
@@ -535,7 +577,7 @@ internal fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
 }
 
 /** "Start → Finish" if the stops have names. */
-private fun defaultName(ride: Ride): String? {
+internal fun defaultName(ride: Ride): String? {
     val first = ride.stops.firstOrNull()?.name
     val last = ride.stops.lastOrNull()?.name
     return if (first != null && last != null && ride.stops.size >= 2) "$first → $last" else null
@@ -554,7 +596,7 @@ private fun stats(ride: Ride): String {
 }
 
 @Composable
-private fun sourceText(ride: Ride): String = stringResource(
+internal fun sourceText(ride: Ride): String = stringResource(
     when (ride.source) {
         Ride.Source.GPX -> Res.string.ride_source_gpx
         Ride.Source.KML -> Res.string.ride_source_kml

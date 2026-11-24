@@ -8,35 +8,72 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import io.github.nanunic9379.rideplan.BuildConfig
+import io.github.nanunic9379.rideplan.personal.UpdateActions
+import io.github.nanunic9379.rideplan.personal.UpdateCheck
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** State of the banner, shared with [InstallResultReceiver]. */
+/** State of the banner, shared with [InstallResultReceiver] and the card on Info & updates. */
 object UpdateStore {
     var ui by mutableStateOf<UpdateUi?>(null)
+    /** The newer Release found by the last check. */
+    var release by mutableStateOf<ReleaseInfo?>(null)
+    /** Checked already in this launch: the start check runs once, not at every recreation. */
+    var checkedAtStart = false
 }
 
-/** Checks once per launch whether there is a new Release and shows the banner. */
+/**
+ * The card on Info & updates (#21): asks GitHub now and, if there is a new Release, brings the
+ * banner back even after it was closed.
+ */
+fun updateActions(scope: CoroutineScope): UpdateActions {
+    lateinit var actions: UpdateActions
+    actions = UpdateActions(check = {
+        if (actions.status != UpdateCheck.CHECKING) {
+            actions.status = UpdateCheck.CHECKING
+            scope.launch {
+                withContext(Dispatchers.IO) { runCatching { GithubUpdater.latestNewer() } }
+                    .onSuccess { r ->
+                        if (r == null) {
+                            actions.status = UpdateCheck.LATEST
+                        } else {
+                            UpdateStore.release = r
+                            actions.available = r.versionName
+                            actions.status = UpdateCheck.AVAILABLE
+                            // Test builds never offer the install: the signature would not match.
+                            if (!BuildConfig.DEBUG) UpdateStore.ui = UpdateUi.Available(r.versionName)
+                        }
+                    }
+                    .onFailure { actions.status = UpdateCheck.FAILED }
+            }
+        }
+    })
+    return actions
+}
+
+/** Checks once per launch, if the user wants it, whether there is a new Release and shows the banner. */
 @Composable
-fun BoxScope.UpdateOverlay() {
+fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
     // Test builds have a different signature: the update would not install.
     if (BuildConfig.DEBUG) return
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var release by remember { mutableStateOf<ReleaseInfo?>(null) }
+    val release = UpdateStore.release
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(checkAtStart) {
+        if (!checkAtStart || UpdateStore.checkedAtStart) return@LaunchedEffect
+        UpdateStore.checkedAtStart = true
         val found = withContext(Dispatchers.IO) { runCatching { GithubUpdater.latestNewer() }.getOrNull() }
         if (found != null) {
-            release = found
+            UpdateStore.release = found
             UpdateStore.ui = UpdateUi.Available(found.versionName)
         }
     }
