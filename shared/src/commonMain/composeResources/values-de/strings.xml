@@ -84,6 +84,8 @@
     <string name="route_curves_max">Maximal</string>
     <string name="route_detour">Die Tour ist %1$s% länger: +%2$s, +%3$s gegenüber der schnellsten Route.</string>
     <string name="route_detour_long">⚠ Deutlich längere Tour: +%1$s% (+%2$s, +%3$s) gegenüber der schnellsten Route. Wähle Schnell oder weniger Kurven, wenn Zeit oder Sprit knapp sind.</string>
+    <string name="route_unpaved">Unbefestigte Straße auf dieser Tour: %1$s Schotter oder verdichteter Belag, längster Abschnitt %2$s. Braun auf der Karte.</string>
+    <string name="route_unpaved_dirt">Unbefestigte Straße auf dieser Tour: %1$s, davon %2$s Erde oder schlechter; längster Abschnitt %3$s. Dunkelbraun auf der Karte: prüfe, ob das zu deinem Motorrad und zum Wetter passt.</string>
     <string name="route_stops_title">Zwischenziele</string>
     <string name="route_stops_hint">Tippen zum Wählen: Halt (du fährst hin) oder vorbei (ohne durch den Ort zu fahren).</string>
     <string name="route_stop_stop">Halt: %1$s</string>

@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.ride
 import io.github.nanunic9379.rideplan.route.Maneuver
 import io.github.nanunic9379.rideplan.route.RouteInfo
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.RoadSurfaces
 import io.github.nanunic9379.rideplan.route.SpeedLimits
 import kotlin.math.asin
 import kotlin.math.cos
@@ -89,6 +90,8 @@ data class Ride(
     val speedLimits: SpeedLimits = SpeedLimits.NONE,
     /** Daily cap of a multi-day trip (#12); null = no automatic split into days. */
     val dayCap: DayCap? = null,
+    /** Unpaved stretches along the computed road (#9). Not saved, like [maneuvers]. */
+    val surfaces: RoadSurfaces = RoadSurfaces.NONE,
 ) {
     enum class Source {
         GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,

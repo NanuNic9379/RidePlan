@@ -84,6 +84,8 @@
     <string name="route_curves_max">Máximo</string>
     <string name="route_detour">La ruta es un %1$s% más larga: +%2$s, +%3$s respecto a la ruta más rápida.</string>
     <string name="route_detour_long">⚠ Ruta mucho más larga: +%1$s% (+%2$s, +%3$s) respecto a la ruta más rápida. Elige Rápido o menos curvas si vas justo de tiempo o de gasolina.</string>
+    <string name="route_unpaved">Tramos sin asfaltar en esta ruta: %1$s de grava o tierra compactada, tramo más largo %2$s. En marrón en el mapa.</string>
+    <string name="route_unpaved_dirt">Tramos sin asfaltar en esta ruta: %1$s, de ellos %2$s de tierra o peor; tramo más largo %3$s. En marrón oscuro en el mapa: comprueba que va bien para tu moto y el tiempo.</string>
     <string name="route_stops_title">Paradas</string>
     <string name="route_stops_hint">Toca para elegir: parada (vas allí) o pasar cerca (sin entrar en el pueblo).</string>
     <string name="route_stop_stop">Parada: %1$s</string>

@@ -17,6 +17,7 @@ on:
       - .github/workflows/routing-data.yml
       - data/routing-data.json
       - data/routing_data.py
+      - data/road_notes.py
 
 permissions:
   contents: write
@@ -72,6 +73,20 @@ jobs:
             --geometry-types=point,polygon -o data-build/fuel.geojsonseq
           rm osm/fuel.osm.pbf
           wc -l data-build/fuel.geojsonseq
+      # Seasonal closures and fixed speed cameras (#13), from the full data before it is cut
+      # down to roads: a small JSON the app can read offline. See docs/pass-closures-and-speed-cameras.md.
+      - name: Road notes (seasonal closures, speed cameras)
+        run: |
+          osmium tags-filter osm/all.osm.pbf \
+            n/highway=speed_camera \
+            w/motor_vehicle:conditional,motorcycle:conditional,vehicle:conditional,access:conditional,seasonal,opening_hours \
+            -o osm/notes.osm.pbf
+          osmium export -f geojsonseq --add-unique-id=type_id --geometry-types=point,linestring \
+            -o osm/notes.geojsonseq osm/notes.osm.pbf
+          mkdir -p notes
+          python3 data/road_notes.py osm/notes.geojsonseq notes/road-notes.json "${{ steps.osm.outputs.date }}"
+          rm osm/notes.osm.pbf osm/notes.geojsonseq
+          ls -la notes
       - name: Only roads, ferries, turn restrictions and boundaries
         run: |
           /usr/bin/time -v osmium tags-filter osm/all.osm.pbf \
@@ -119,6 +134,9 @@ jobs:
           gh release upload routing-data out/*.zip --clobber
           gh release upload routing-data out/*.tsv --clobber
           gh release upload routing-data out/cells.json --clobber
+          # Road notes (#13): one file with a fixed name, replaced in place, so never stale.
+          # Read by the app only once #13 is built on the phone; until then it is just published.
+          gh release upload routing-data notes/road-notes.json --clobber
           # Then remove the packs and fuel lists of earlier builds (a Release holds at most 1000 files).
           gh release view routing-data --json assets -q '.assets[].name' \
             | python3 data/routing_data.py stale out/cells.json \

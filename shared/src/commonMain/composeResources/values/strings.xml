@@ -85,6 +85,8 @@
     <string name="route_curves_max">Max</string>
     <string name="route_detour">The ride is %1$s% longer: +%2$s, +%3$s compared with the fastest route.</string>
     <string name="route_detour_long">⚠ Much longer ride: +%1$s% (+%2$s, +%3$s) compared with the fastest route. Pick Fast or fewer bends if you are short on time or fuel.</string>
+    <string name="route_unpaved">Unpaved road on this ride: %1$s of gravel or compacted surface, longest stretch %2$s. Shown brown on the map.</string>
+    <string name="route_unpaved_dirt">Unpaved road on this ride: %1$s, of which %2$s dirt or worse; longest stretch %3$s. Shown dark brown on the map: check it suits your bike and the weather.</string>
     <string name="route_stops_title">Stops</string>
     <string name="route_stops_hint">Tap to choose: stop (you go there) or pass by (without riding into town).</string>
     <string name="route_stop_stop">Stop: %1$s</string>

@@ -59,8 +59,9 @@ def release_problems(packs):
                 for p in packs if p["bytes"] >= MAX_ASSET_BYTES]
     # Each cell can also carry a fuel station list (#7): one more file in the Release.
     files = len(packs) + sum(1 for p in packs if "fuel" in p)
-    if 2 * files + 1 > MAX_RELEASE_ASSETS:
-        problems.append(f"{len(packs)} packs and their side files: an update needs {2 * files + 1} files, "
+    # Plus cells.json and road-notes.json (#13), replaced in place.
+    if 2 * files + 2 > MAX_RELEASE_ASSETS:
+        problems.append(f"{len(packs)} packs and their side files: an update needs {2 * files + 2} files, "
                         f"over the {MAX_RELEASE_ASSETS}-file limit of a Release; split the area")
     return problems
 

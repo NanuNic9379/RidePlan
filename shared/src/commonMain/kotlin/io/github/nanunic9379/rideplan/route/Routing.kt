@@ -243,6 +243,8 @@ object ValhallaRoute {
         val maneuvers: List<Maneuver> = emptyList(),
         /** Speed limits along [shape] (#31); empty if not computed or not in the data. */
         val speedLimits: SpeedLimits = SpeedLimits.NONE,
+        /** Unpaved stretches along [shape] (#9); empty if not computed or none. */
+        val surfaces: RoadSurfaces = RoadSurfaces.NONE,
     )
 
     /**
@@ -358,6 +360,7 @@ fun Ride.routed(
     track = result.shape,
     maneuvers = result.maneuvers,
     speedLimits = result.speedLimits,
+    surfaces = result.surfaces,
     route = RouteInfo(
         result.km, result.seconds, data.dataId, data.osmDate, "valhalla ${data.valhalla}", options,
         baseline?.let { RouteInfo.Baseline(it.km, it.seconds) },
@@ -372,7 +375,7 @@ fun Ride.routed(
 ): Ride = routed(result, RoutingData.Region(region), options, baseline)
 
 /** The ride as it was before routing, to route it again with other preferences. */
-fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null, maneuvers = emptyList(), speedLimits = SpeedLimits.NONE) else this
+fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null, maneuvers = emptyList(), speedLimits = SpeedLimits.NONE, surfaces = RoadSurfaces.NONE) else this
 
 /** Re-routable: a ride made only of stops, already routed or not yet (not a GPX track). */
 

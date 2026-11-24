@@ -84,6 +84,8 @@
     <string name="route_curves_max">Max</string>
     <string name="route_detour">La balade est plus longue de %1$s% : +%2$s, +%3$s par rapport à l’itinéraire le plus rapide.</string>
     <string name="route_detour_long">⚠ Balade bien plus longue : +%1$s% (+%2$s, +%3$s) par rapport à l’itinéraire le plus rapide. Choisis Rapide ou moins de virages si tu manques de temps ou d’essence.</string>
+    <string name="route_unpaved">Route non goudronnée sur ce parcours : %1$s de gravier ou de terre compactée, plus long tronçon %2$s. En marron sur la carte.</string>
+    <string name="route_unpaved_dirt">Route non goudronnée sur ce parcours : %1$s, dont %2$s de terre ou pire ; plus long tronçon %3$s. En marron foncé sur la carte : vérifie que cela convient à ta moto et à la météo.</string>
     <string name="route_stops_title">Étapes</string>
     <string name="route_stops_hint">Touche pour choisir : arrêt (tu y vas) ou passer à côté (sans traverser le village).</string>
     <string name="route_stop_stop">Arrêt : %1$s</string>

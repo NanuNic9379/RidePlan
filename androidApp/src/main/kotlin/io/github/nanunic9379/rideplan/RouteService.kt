@@ -20,8 +20,8 @@ import io.github.nanunic9379.rideplan.route.RoutingPack
 import io.github.nanunic9379.rideplan.route.RoutingCells
 import io.github.nanunic9379.rideplan.route.RoutingData
 import io.github.nanunic9379.rideplan.route.RoutingRegion
-import io.github.nanunic9379.rideplan.route.SpeedLimits
-import io.github.nanunic9379.rideplan.route.ValhallaSpeedLimits
+import io.github.nanunic9379.rideplan.route.ValhallaRoadAttributes
+import io.github.nanunic9379.rideplan.route.RoadAttributes
 import io.github.nanunic9379.rideplan.route.ValhallaRoute
 import java.io.File
 import java.io.IOException
@@ -254,12 +254,13 @@ class RouteService(context: Context) {
         // Speed limits (#31): only for the route that is ridden, once per computation. Any
         // failure only leaves the limits out: the route itself is fine.
         if (!instructions) return result
-        val limits = try {
-            ValhallaSpeedLimits.compute(result.shape) { valhalla.traceAttributesRaw(it) }
+        // The same walk also gives the unpaved stretches (#9).
+        val roads = try {
+            ValhallaRoadAttributes.compute(result.shape) { valhalla.traceAttributesRaw(it) }
         } catch (e: Exception) {
-            SpeedLimits.NONE
+            RoadAttributes.NONE
         }
-        return result.copy(speedLimits = limits)
+        return result.copy(speedLimits = roads.speedLimits, surfaces = roads.surfaces)
     }
 
     private fun engineFor(data: RoutingData): Valhalla {

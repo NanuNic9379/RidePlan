@@ -84,6 +84,8 @@
     <string name="route_curves_max">Massimo</string>
     <string name="route_detour">Il giro si allunga del %1$s%: +%2$s, +%3$s rispetto al percorso più veloce.</string>
     <string name="route_detour_long">⚠ Giro molto più lungo: +%1$s% (+%2$s, +%3$s) rispetto al percorso più veloce. Scegli Veloce o meno curve se hai poco tempo o poca benzina.</string>
+    <string name="route_unpaved">Sterrato su questo giro: %1$s di ghiaia o terra battuta, tratto più lungo %2$s. In marrone sulla mappa.</string>
+    <string name="route_unpaved_dirt">Sterrato su questo giro: %1$s, di cui %2$s di fondo naturale o peggio; tratto più lungo %3$s. In marrone scuro sulla mappa: valuta se va bene per la tua moto e per il meteo.</string>
     <string name="route_stops_title">Tappe</string>
     <string name="route_stops_hint">Tocca per scegliere: sosta (ci arrivi) o passa vicino (senza entrare in paese).</string>
     <string name="route_stop_stop">Sosta: %1$s</string>
