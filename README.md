@@ -25,6 +25,7 @@ Plan the ride, share it with whoever you want, no account and no company in betw
 - [Project and architecture](docs/PROJECT.md)
 - [How to contribute](CONTRIBUTING.md)
 - [Privacy](docs/PRIVACY.md): no data collected, what connects to the internet and why.
+- [Social design](docs/social.md): Nostr identity, published rides, friends on the map, community (#3, #16, #32).
 - [Security](SECURITY.md): how to report a flaw and verify the APK signature.
 
 ## License
