@@ -128,8 +128,18 @@ object ValhallaRoute {
      * Stops are "break"; dragged points and towns are "through", where no U-turn is made.
      * For a town any road within [PASS_RADIUS_M] is enough: so the route can go around it
      * instead of entering the centre (#29). Start and finish are always stops.
+     *
+     * [language]: Valhalla locale for the turn instructions (#5), see [language]; null = no
+     * instructions (e.g. the comparison route without curves).
+     * [startHeading]: direction of travel at the first stop, in degrees from north: when
+     * re-routing on the move it keeps the engine from starting with a U-turn.
      */
-    fun request(stops: List<Stop>, options: RouteOptions = RouteOptions()): String = buildJsonObject {
+    fun request(
+        stops: List<Stop>,
+        options: RouteOptions = RouteOptions(),
+        language: String? = null,
+        startHeading: Double? = null,
+    ): String = buildJsonObject {
         put("locations", buildJsonArray {
             stops.forEachIndexed { i, stop ->
                 val end = i == 0 || i == stops.lastIndex
@@ -139,6 +149,10 @@ object ValhallaRoute {
                     val kind = if (end) Stop.Kind.STOP else stop.kind
                     put("type", if (kind == Stop.Kind.STOP) "break" else "through")
                     if (kind == Stop.Kind.PASS) put("radius", PASS_RADIUS_M)
+                    if (i == 0 && startHeading != null) {
+                        put("heading", ((startHeading % 360 + 360) % 360).toInt())
+                        put("heading_tolerance", 60)
+                    }
                 })
             }
         })
@@ -153,28 +167,58 @@ object ValhallaRoute {
         })
         put("units", "kilometers")
         put("shape_format", "polyline6")
-        put("directions_type", "none")
+        if (language == null) {
+            put("directions_type", "none")
+        } else {
+            put("directions_type", "instructions")
+            put("directions_options", buildJsonObject {
+                put("language", language)
+                put("units", "kilometers")
+            })
+        }
     }.toString()
 
-    data class Result(val shape: List<LatLon>, val km: Double, val seconds: Double)
+    /** Locales with turn instructions, one per app language. */
+    private val LOCALES = mapOf("en" to "en-US", "it" to "it-IT", "de" to "de-DE", "es" to "es-ES", "fr" to "fr-FR")
 
+    /** Valhalla locale for an app language tag ("it", "it-IT", "de_CH"); English if not translated. */
+    fun language(tag: String): String = LOCALES[tag.lowercase().substringBefore('-').substringBefore('_')] ?: "en-US"
+
+    data class Result(
+        val shape: List<LatLon>,
+        val km: Double,
+        val seconds: Double,
+        /** Turn instructions (#5); empty if they were not requested. */
+        val maneuvers: List<Maneuver> = emptyList(),
+    )
+
+    /**
+     * Joins the legs into one line: each leg repeats the last point of the previous one, and
+     * that point appears only once. Maneuver indices are moved onto the joined line.
+     */
     fun parse(json: String): Result {
         val trip = Json.parseToJsonElement(json).jsonObject.getValue("trip").jsonObject
         val summary = trip.getValue("summary").jsonObject
-        val shape = (trip.getValue("legs") as JsonArray).flatMap { leg ->
+        val shape = ArrayList<LatLon>()
+        val maneuvers = ArrayList<Maneuver>()
+        for (leg in trip.getValue("legs") as JsonArray) {
             val points = Polyline.decode(leg.jsonObject.getValue("shape").jsonPrimitive.content, 6)
-            points
-        }.let(::dropRepeated)
+            val index = IntArray(points.size)
+            points.forEachIndexed { i, p ->
+                if (shape.isEmpty() || shape.last() != p) shape += p
+                index[i] = shape.lastIndex
+            }
+            (leg.jsonObject["maneuvers"] as? JsonArray)?.forEach { m ->
+                maneuvers += Maneuver.fromJson(m.jsonObject) { i -> if (index.isEmpty()) 0 else index[i.coerceIn(0, index.lastIndex)] }
+            }
+        }
         return Result(
             shape = shape,
             km = summary.getValue("length").jsonPrimitive.double,
             seconds = summary.getValue("time").jsonPrimitive.double,
+            maneuvers = maneuvers,
         )
     }
-
-    /** Each leg repeats the last point of the previous one. */
-    private fun dropRepeated(points: List<LatLon>): List<LatLon> =
-        points.filterIndexed { i, p -> i == 0 || p != points[i - 1] }
 }
 
 /** Google polyline with precision 5 or 6 (Valhalla uses 6). */
@@ -259,6 +303,7 @@ fun Ride.routed(
     baseline: ValhallaRoute.Result? = null,
 ): Ride = copy(
     track = result.shape,
+    maneuvers = result.maneuvers,
     route = RouteInfo(
         result.km, result.seconds, data.dataId, data.osmDate, "valhalla ${data.valhalla}", options,
         baseline?.let { RouteInfo.Baseline(it.km, it.seconds) },
@@ -273,7 +318,7 @@ fun Ride.routed(
 ): Ride = routed(result, RoutingData.Region(region), options, baseline)
 
 /** The ride as it was before routing, to route it again with other preferences. */
-fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null) else this
+fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null, maneuvers = emptyList()) else this
 
 /** Re-routable: a ride made only of stops, already routed or not yet (not a GPX track). */
 

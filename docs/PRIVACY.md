@@ -15,12 +15,19 @@ as with any web page, the phone's IP address and the time of the request.
 | You download the road data of an area | GitHub (`routing-data` Release of this repository) | The file name of the area |
 | Update check (GitHub version only) | GitHub (`api.github.com`) | No data beyond the request for the latest version |
 
-The route is computed **on the phone**: stops are not sent to any server.
+The route is computed **on the phone**: stops are not sent to any server. The same holds during
+navigation: your position is used only on the phone.
 
 ## Permissions
 
-Only `INTERNET`. The app does not read your location, contacts or photos. You open files (GPX, KML)
-yourself from the system picker and the app sees only those.
+- `INTERNET`, for the uses in the table above.
+- `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION`, only for turn-by-turn navigation. The app asks
+  for it when you tap **Navigate** and reads your position **only while the navigation screen is open**
+  (foreground; no background location). The position is used on the phone to follow the route and to
+  recompute it when you leave it: it is not stored and never leaves the phone.
+
+Voice instructions are spoken by the phone's text-to-speech engine. The app does not read contacts or
+photos. You open files (GPX, KML) yourself from the system picker and the app sees only those.
 
 ## Sharing
 

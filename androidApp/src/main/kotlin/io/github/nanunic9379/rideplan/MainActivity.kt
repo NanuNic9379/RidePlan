@@ -19,8 +19,10 @@ import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.ride.GpxExport
 import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.Page
+import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
+import io.github.nanunic9379.rideplan.ride.Stop
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
@@ -50,6 +52,8 @@ class MainActivity : ComponentActivity() {
     private val router by lazy { RouteService(this) }
     private var routeJob: Job? = null
     private lateinit var store: ProfileStore
+    /** Turn-by-turn navigation (#5): registered here because it asks for the location permission. */
+    private val navigation = AndroidNavigation(this, ::rerouteFromHere)
 
     /** Backup (#43): the user chooses where to save it (Downloads, Drive, ...). */
     private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -104,7 +108,7 @@ class MainActivity : ComponentActivity() {
             restore = { restoreBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
-        setContent { App(rides = rides, store = store, importActions = actions, routeActions = routeActions, backupActions = backupActions, overlay = { UpdateOverlay() }) }
+        setContent { App(rides = rides, store = store, importActions = actions, routeActions = routeActions, backupActions = backupActions, navigation = navigation, overlay = { UpdateOverlay() }) }
         if (savedInstanceState == null) handle(intent)
     }
 
@@ -138,7 +142,9 @@ class MainActivity : ComponentActivity() {
      */
     private val backToHome = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-            if (rides.onMap || rides.page != Page.HOME) {
+            if (rides.navigating) {
+                rides.navigating = false
+            } else if (rides.onMap || rides.page != Page.HOME) {
                 cancelRoute()
                 rides.goHome()
             } else {
@@ -339,7 +345,7 @@ class MainActivity : ComponentActivity() {
             // With curves, also compute the normal route, to tell how much longer the ride gets.
             // If the comparison fails it does not matter: the ride stays valid.
             val base = if (options.curves == Curves.NORMAL) null
-            else runCatching { router.route(ride, data, options.copy(curves = Curves.NORMAL)) }.getOrNull()
+            else runCatching { router.route(ride, data, options.copy(curves = Curves.NORMAL), instructions = false) }.getOrNull()
             main to base
         }
         if (rides.ride === ride) {
@@ -361,4 +367,25 @@ class MainActivity : ComponentActivity() {
             if (rides.ride === ride) rides.route = RouteState.Failed(RouteError.ENGINE, e.javaClass.simpleName)
         }
     }
+
+    override fun onDestroy() {
+        navigation.close()
+        super.onDestroy()
+    }
+
+    /**
+     * Off-route during navigation (#5): a new route from where the rider is to the stops still
+     * ahead, with the same options, only on the road data already on the phone (no download while
+     * riding). Null if there is no data here or Valhalla finds no road.
+     */
+    private suspend fun rerouteFromHere(ride: Ride, from: LatLon, heading: Double?, stops: List<Stop>, options: RouteOptions): Ride? =
+        withContext(Dispatchers.IO) {
+            val all = listOf(Stop(null, from)) + stops
+            val points = all.map { it.point }
+            val cells = router.localCells()
+            val data = if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), points)) RoutingData.Cells(cells)
+            else RoutingRegion.bestFor(router.installed(), points)?.let { RoutingData.Region(it) } ?: return@withContext null
+            val fresh = ride.copy(track = emptyList(), stops = all, route = null, maneuvers = emptyList())
+            runCatching { fresh.routed(router.route(fresh, data, options, startHeading = heading), data, options) }.getOrNull()
+        }
 }
