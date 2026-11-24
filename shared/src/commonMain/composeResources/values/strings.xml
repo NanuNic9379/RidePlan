@@ -357,8 +357,8 @@
     <string name="mapdata_delete_title">Delete this road data?</string>
     <string name="info_title">About and updates</string>
     <string name="info_version">Version %1$s</string>
-    <string name="update_check_start">Check at start</string>
-    <string name="update_check_text">Asks GitHub whether there is a new version</string>
+    <string name="update_check_start">Check automatically</string>
+    <string name="update_check_text">When you open the app or come back to it, asks GitHub whether there is a new version</string>
     <string name="info_source">Source code</string>
     <string name="info_source_text">Open, on GitHub</string>
     <string name="info_licences">Licences</string>

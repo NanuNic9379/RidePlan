@@ -356,8 +356,8 @@
     <string name="mapdata_delete_title">Diese Straßendaten löschen?</string>
     <string name="info_title">Info und Updates</string>
     <string name="info_version">Version %1$s</string>
-    <string name="update_check_start">Beim Start prüfen</string>
-    <string name="update_check_text">Fragt GitHub, ob es eine neue Version gibt</string>
+    <string name="update_check_start">Automatisch prüfen</string>
+    <string name="update_check_text">Fragt GitHub beim Öffnen der App oder bei der Rückkehr, ob es eine neue Version gibt</string>
     <string name="info_source">Quellcode</string>
     <string name="info_source_text">Offen, auf GitHub</string>
     <string name="info_licences">Lizenzen</string>
