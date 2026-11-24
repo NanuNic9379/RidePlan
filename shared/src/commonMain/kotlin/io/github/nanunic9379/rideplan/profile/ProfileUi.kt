@@ -619,18 +619,3 @@ private fun DayPicker(onDismiss: () -> Unit, onPick: (Long) -> Unit) {
         DatePicker(state, title = { Text(stringResource(Res.string.done_title), Modifier.padding(start = 24.dp, top = 16.dp)) })
     }
 }
-
-/** Day, month and year (UTC) of an instant: no libraries for three numbers. */
-internal fun civilDate(millis: Long): Triple<Int, Int, Int> {
-    val days = millis.floorDiv(86_400_000L)
-    val z = days + 719_468
-    val era = z.floorDiv(146_097L)
-    val doe = z - era * 146_097
-    val yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365
-    val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
-    val mp = (5 * doy + 2) / 153
-    val d = doy - (153 * mp + 2) / 5 + 1
-    val m = if (mp < 10) mp + 3 else mp - 9
-    val y = yoe + era * 400 + if (m <= 2) 1 else 0
-    return Triple(d.toInt(), m.toInt(), y.toInt())
-}

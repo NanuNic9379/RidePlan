@@ -30,6 +30,12 @@ class ProfileStore(
 
     fun time(): Long = now()
 
+    /** Delete everything (#21): a fresh profile, written over the old file. */
+    fun wipe() {
+        backupNotice = null
+        update { it.wiped(now()) }
+    }
+
     /** Outcome of the last backup or restore, to show in the profile; null = nothing to say. */
     var backupNotice by mutableStateOf<BackupNotice?>(null)
 
@@ -49,16 +55,20 @@ class ProfileStore(
     private fun load(): ProfileData {
         val text = read()
         if (text.isNullOrBlank()) return ProfileData.fresh(now()).also { write(encode(it)) }
-        return runCatching { decode(text) }.getOrElse {
+        val data = runCatching { decode(text) }.getOrElse {
             backup(text)
-            ProfileData.fresh(now()).also { write(encode(it)) }
+            return ProfileData.fresh(now()).also { write(encode(it)) }
         }
+        // A file from an older version is brought up to date and written back at once, so the
+        // migration (e.g. the new bike id) happens only once.
+        encode(data).let { if (it != text) write(it) }
+        return data
     }
 
     companion object {
         private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
         fun encode(data: ProfileData): String = json.encodeToString(ProfileData.serializer(), data)
-        fun decode(text: String): ProfileData = json.decodeFromString(ProfileData.serializer(), text)
+        fun decode(text: String): ProfileData = json.decodeFromString(ProfileData.serializer(), text).migrated()
     }
 }
 

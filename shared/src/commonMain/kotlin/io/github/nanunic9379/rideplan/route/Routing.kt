@@ -83,6 +83,7 @@ data class RouteOptions(
     val curves: Curves = Curves.NORMAL,
     val avoidHighways: Boolean = false,
     val avoidTolls: Boolean = false,
+    val avoidFerries: Boolean = false,
 )
 
 /**
@@ -163,6 +164,7 @@ object ValhallaRoute {
                 options.curves.curvature?.let { put("use_curvature", it) }
                 if (options.avoidHighways) put("use_highways", 0.0)
                 if (options.avoidTolls) put("use_tolls", 0.0)
+                if (options.avoidFerries) put("use_ferry", 0.0)
             })
         })
         put("units", "kilometers")
