@@ -363,9 +363,9 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column {
-                        Text(
+                        Figure(
                             shown.speed?.toString() ?: "–",
-                            fontSize = 34.sp, fontWeight = FontWeight.Medium, lineHeight = 36.sp, style = TabularFigures,
+                            style = TabularFigures.merge(TextStyle(fontSize = 34.sp, fontWeight = FontWeight.Medium, lineHeight = 36.sp)),
                             color = speedColor,
                         )
                         Text(unit, style = MaterialTheme.typography.labelMedium)
