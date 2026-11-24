@@ -1,0 +1,20 @@
+{
+  "comment": "Areas of road data (#14). Each area is its own build, published in its own Release, with its own cells.json; the app reads the index (Release routing-index, areas.json) and picks the area that covers the ride. Italy (id it) is still built by routing-data.yml from routing-data.json into the routing-data Release, untouched, so older app versions keep working; it is listed here only for the index. Every other area is built by routing-areas.yml, on demand. bbox = lon min, lat min, lon max, lat max: a sanity check for the build (every cell must touch it). poly: outline of the extract (Osmosis .poly); inside it the data is complete, and the app prefers the area whose outline holds every stop.",
+  "areas": [
+    {
+      "id": "it",
+      "name": "Italy",
+      "release": "routing-data",
+      "poly": "https://download.openstreetmap.fr/polygons/europe/italy.poly",
+      "bbox": [6.0, 35.0, 19.0, 48.0]
+    },
+    {
+      "id": "alps",
+      "name": "Alps",
+      "release": "routing-alps",
+      "source": "https://download.geofabrik.de/europe/alps-latest.osm.pbf",
+      "poly": "https://download.geofabrik.de/europe/alps.poly",
+      "bbox": [4.5, 42.5, 17.0, 48.5]
+    }
+  ]
+}

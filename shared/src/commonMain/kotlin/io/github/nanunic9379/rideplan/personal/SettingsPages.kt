@@ -377,7 +377,7 @@ fun MapDataPage(rides: RideScreenState, platform: PlatformActions?) {
                     if (i > 0) GroupDivider()
                     NavRow(
                         AppIcons.Map,
-                        item.rideMap?.let { rideMapLabel(it) } ?: if (item.isCells) stringResource(Res.string.mapdata_cells) else regionLabel(item.id),
+                        item.rideMap?.let { rideMapLabel(it) } ?: if (item.isCells) io.github.nanunic9379.rideplan.route.cellsLabel(item.area) else regionLabel(item.id),
                         sizeText(item.bytes),
                         onClick = null,
                         end = {

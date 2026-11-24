@@ -158,8 +158,15 @@ data class RegionDownload(val region: RoutingRegion) : DataDownload {
 /**
  * What to download for the ride with grid-cell data. [wipe]: the cells on the phone come from
  * an older build and must be replaced (they cannot be mixed with the new ones).
+ * [area] and [release]: the area of the data and its Release (#14); Italy unless said otherwise.
  */
-data class CellsDownload(val cells: RoutingCells, val packs: List<RoutingPack>, val wipe: Boolean) : DataDownload {
+data class CellsDownload(
+    val cells: RoutingCells,
+    val packs: List<RoutingPack>,
+    val wipe: Boolean,
+    val area: String = RoutingAreas.ITALY,
+    val release: String = RoutingAreas.ITALY_RELEASE,
+) : DataDownload {
     override val bytes: Long get() = packs.sumOf { it.bytes + (it.fuel?.bytes ?: 0) }
     override val tileBytes: Long get() = packs.sumOf { it.tileBytes }
 

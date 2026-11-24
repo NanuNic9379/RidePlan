@@ -369,6 +369,9 @@
     <string name="mapdata_free">Libres</string>
     <string name="mapdata_list">En el móvil</string>
     <string name="mapdata_cells">Carreteras alrededor de tus rutas</string>
+    <string name="mapdata_cells_area">Carreteras alrededor de tus rutas: %1$s</string>
+    <string name="area_it">Italia</string>
+    <string name="area_alps">Alpes</string>
     <string name="mapdata_note">Si eliminas los datos de carreteras, RidePlan los vuelve a descargar cuando abras una ruta allí.</string>
     <string name="mapdata_delete_title">¿Eliminar estos datos de carreteras?</string>
     <string name="info_title">Información y actualizaciones</string>

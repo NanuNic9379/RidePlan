@@ -368,6 +368,9 @@
     <string name="mapdata_free">Liberi</string>
     <string name="mapdata_list">Sul telefono</string>
     <string name="mapdata_cells">Strade intorno ai tuoi giri</string>
+    <string name="mapdata_cells_area">Strade intorno ai tuoi giri: %1$s</string>
+    <string name="area_it">Italia</string>
+    <string name="area_alps">Alpi</string>
     <string name="mapdata_note">Se elimini i dati stradali, RidePlan li riscarica quando riapri un giro lì.</string>
     <string name="mapdata_delete_title">Eliminare questi dati stradali?</string>
     <string name="info_title">Info e aggiornamenti</string>

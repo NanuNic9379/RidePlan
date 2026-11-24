@@ -430,24 +430,23 @@ class MainActivity : ComponentActivity() {
             rides.route = RouteState.Checking
             routeStep(ride) {
                 val points = ride.stops.map { it.point }
-                val local: RoutingData? = withContext(Dispatchers.IO) {
-                    val cells = router.localCells()
-                    if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), points)) RoutingData.Cells(cells)
-                    else RoutingRegion.bestFor(router.installed(), points)?.let { RoutingData.Region(it) }
-                }
+                val local: RoutingData? = withContext(Dispatchers.IO) { router.localData(points) }
                 if (local != null) {
                     compute(ride, local)
                 } else {
                     var outside = emptyList<OutsideStop>()
                     val download: DataDownload? = withContext(Dispatchers.IO) {
-                        val published = router.publishedCells()
-                        outside = outsideStops(ride.stops, published)
-                        if (published != null) CellsDownload.plan(published, router.localCells(), router.installedPacks(), points)
+                        // Areas of road data (#14): the one covering the ride, see RoutingAreas.
+                        val published = router.publishedAreas(points)
+                        outside = outsideStops(ride.stops, published.orEmpty())
+                        if (published != null) router.plan(published, points)
                         else RoutingRegion.bestFor(router.published(), points)?.let(::RegionDownload)
                     }
                     when {
-                        download == null -> rides.route = RouteState.NotCovered(outside)
-                        download is CellsDownload && download.packs.isEmpty() -> compute(ride, RoutingData.Cells(download.cells))
+                        // No area covers it fully: the cells on the phone, if they cover the stops (#14).
+                        download == null -> withContext(Dispatchers.IO) { router.localData(points, strict = false) }
+                            ?.let { compute(ride, it) } ?: run { rides.route = RouteState.NotCovered(outside) }
+                        download is CellsDownload && download.packs.isEmpty() -> compute(ride, RoutingData.Cells(download.cells, download.area))
                         else -> rides.route = RouteState.NeedsData(download)
                     }
                 }
@@ -473,7 +472,7 @@ class MainActivity : ComponentActivity() {
                     }
                     is CellsDownload -> {
                         withContext(Dispatchers.IO) { router.download(data, isActive = { isActive }, progress) }
-                        compute(ride, RoutingData.Cells(data.cells))
+                        compute(ride, RoutingData.Cells(data.cells, data.area))
                     }
                 }
             }
@@ -589,9 +588,7 @@ class MainActivity : ComponentActivity() {
         withContext(Dispatchers.IO) {
             val all = listOf(Stop(null, from)) + stops
             val points = all.map { it.point }
-            val cells = router.localCells()
-            val data = if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), points)) RoutingData.Cells(cells)
-            else RoutingRegion.bestFor(router.installed(), points)?.let { RoutingData.Region(it) } ?: return@withContext null
+            val data = router.localData(points, strict = false) ?: return@withContext null
             val fresh = ride.copy(track = emptyList(), stops = all, route = null, maneuvers = emptyList(), speedLimits = SpeedLimits.NONE)
             runCatching { fresh.routed(router.route(fresh, data, options, startHeading = heading), data, options) }.getOrNull()
         }
