@@ -20,7 +20,7 @@ how it works, and the proposal for the per-country road rules, which still need 
   contributions.
 
 ### Units
-- Setting "Units": **Automatic** (default), Kilometres, Miles. Automatic follows the country of
+- Setting "Units": **Auto** (default), km, mi (short labels so the three buttons fit with gloves on small screens). Auto follows the country of
   the phone (Android system locale, not the app language): miles in the countries whose road
   signs are in miles (US and territories, UK and Crown Dependencies, Liberia, Myanmar, some
   Caribbean countries, see `Regions.MILES`), kilometres elsewhere.

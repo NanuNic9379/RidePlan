@@ -515,7 +515,7 @@
     <string name="plan_leave_keep">Keep planning</string>
     <string name="route_mode_more">More</string>
     <string name="ride_source_planned">planned on the map</string>
-    <string name="units_auto">Automatic</string>
+    <string name="units_auto">Auto</string>
     <string name="units_note">Automatic follows the country of the phone: miles in the US and the UK, kilometres elsewhere.</string>
     <string name="nav_say_continue">Continue for %1$s.</string>
 </resources>

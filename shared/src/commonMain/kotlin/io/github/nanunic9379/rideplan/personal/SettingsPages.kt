@@ -37,6 +37,7 @@ import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.ThemeMode
 import io.github.nanunic9379.rideplan.profile.TonalAction
 import io.github.nanunic9379.rideplan.profile.Units
+import io.github.nanunic9379.rideplan.profile.symbol
 import io.github.nanunic9379.rideplan.profile.WipeSummary
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.ride.Dest
@@ -102,8 +103,6 @@ import io.github.nanunic9379.rideplan.resources.theme_note
 import io.github.nanunic9379.rideplan.resources.theme_system
 import io.github.nanunic9379.rideplan.resources.theme_title
 import io.github.nanunic9379.rideplan.resources.units_auto
-import io.github.nanunic9379.rideplan.resources.units_km
-import io.github.nanunic9379.rideplan.resources.units_mi
 import io.github.nanunic9379.rideplan.resources.units_note
 import io.github.nanunic9379.rideplan.resources.units_title
 import io.github.nanunic9379.rideplan.resources.update_check_start
@@ -280,7 +279,7 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
         // "Automatic" (null) follows the country of the phone (#15).
         val unitChoices = listOf(null) + Units.entries
         Segmented(
-            listOf(stringResource(Res.string.units_auto), stringResource(Res.string.units_km), stringResource(Res.string.units_mi)),
+            listOf(stringResource(Res.string.units_auto), Units.KM.symbol, Units.MILES.symbol),
             unitChoices.indexOf(s.units),
         ) { i -> store.update { it.copy(settings = it.settings.copy(units = unitChoices[i])) } }
         Text(stringResource(Res.string.units_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

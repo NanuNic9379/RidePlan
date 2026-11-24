@@ -514,7 +514,7 @@
     <string name="plan_leave_keep">Weiter planen</string>
     <string name="route_mode_more">Mehr</string>
     <string name="ride_source_planned">auf der Karte geplant</string>
-    <string name="units_auto">Automatisch</string>
+    <string name="units_auto">Auto</string>
     <string name="units_note">Automatisch folgt dem Land des Handys: Meilen in den USA und im Vereinigten Königreich, sonst Kilometer.</string>
     <string name="nav_say_continue">Fahre %1$s weiter.</string>
 </resources>

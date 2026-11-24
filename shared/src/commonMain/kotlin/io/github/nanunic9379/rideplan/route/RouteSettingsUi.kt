@@ -374,7 +374,7 @@ private fun Preview(ride: Ride, applied: RouteOptions, bike: Bike?, pending: Boo
                 Text(stringResource(Res.string.route_preview_none), style = MaterialTheme.typography.titleMedium)
             } else {
                 Text(
-                    "${info.km.roundToInt()} km · ${durationText(info.seconds)}",
+                    "${io.github.nanunic9379.rideplan.personal.distanceText(info.km)} · ${durationText(info.seconds)}",
                     style = MaterialTheme.typography.headlineSmall.merge(TabularFigures),
                 )
                 // Less than a kilometre and a minute apart: the same road, said in words.

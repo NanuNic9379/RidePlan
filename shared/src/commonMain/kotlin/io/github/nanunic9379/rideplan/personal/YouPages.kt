@@ -212,11 +212,12 @@ private fun Bars(bars: List<Pair<String, Double>>) {
         bars.forEach { (label, km) ->
             Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
                 val f = (km / max).toFloat().coerceIn(0.02f, 1f)
+                val spoken = distanceText(km)
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
                     Box(
                         Modifier.fillMaxWidth().fillMaxHeight(f)
                             .background(if (km > 0) color else empty, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .semantics { contentDescription = "$label ${km.roundToInt()}" },
+                            .semantics { contentDescription = "$label $spoken" },
                     )
                 }
                 Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)

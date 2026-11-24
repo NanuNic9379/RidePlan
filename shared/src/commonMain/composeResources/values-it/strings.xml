@@ -514,7 +514,7 @@
     <string name="plan_leave_keep">Continua a pianificare</string>
     <string name="route_mode_more">Altro</string>
     <string name="ride_source_planned">pianificato sulla mappa</string>
-    <string name="units_auto">Automatico</string>
+    <string name="units_auto">Auto</string>
     <string name="units_note">Automatico segue il paese del telefono: miglia negli USA e nel Regno Unito, chilometri altrove.</string>
     <string name="nav_say_continue">Prosegui per %1$s.</string>
 </resources>
