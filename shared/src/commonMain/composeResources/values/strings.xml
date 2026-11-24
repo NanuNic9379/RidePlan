@@ -498,6 +498,8 @@
     <string name="plan_locating">Finding your position…</string>
     <string name="plan_here_failed">Position not found. Check that location is on, or tap the map.</string>
     <string name="plan_round_trip">Round trip</string>
+    <string name="explore_locate">Show my position</string>
+    <string name="explore_locate_failed">Position not found. Check that location is on.</string>
     <string name="plan_done">Done</string>
     <string name="plan_leave_title">Discard this ride?</string>
     <string name="plan_leave_text">The points you placed on the map will be lost.</string>

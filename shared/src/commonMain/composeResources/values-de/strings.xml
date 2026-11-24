@@ -497,6 +497,8 @@
     <string name="plan_locating">Standort wird gesucht…</string>
     <string name="plan_here_failed">Standort nicht gefunden. Prüfe, ob die Standortermittlung an ist, oder tippe auf die Karte.</string>
     <string name="plan_round_trip">Rundtour</string>
+    <string name="explore_locate">Meinen Standort zeigen</string>
+    <string name="explore_locate_failed">Standort nicht gefunden. Prüfe, ob die Standortermittlung an ist.</string>
     <string name="plan_done">Fertig</string>
     <string name="plan_leave_title">Diese Tour verwerfen?</string>
     <string name="plan_leave_text">Die Punkte auf der Karte gehen verloren.</string>

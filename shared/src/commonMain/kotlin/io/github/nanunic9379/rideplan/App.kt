@@ -80,6 +80,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.layout.onSizeChanged
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.plan_title
+import io.github.nanunic9379.rideplan.resources.explore_locate
+import io.github.nanunic9379.rideplan.resources.explore_locate_failed
+import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.ride.pointsJson
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
+import org.maplibre.compose.map.MapState
+import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.rememberGeoJsonSource
 import io.github.nanunic9379.rideplan.ride.PlanDraft
 import io.github.nanunic9379.rideplan.ride.PlanLeaveDialog
 import io.github.nanunic9379.rideplan.ride.PlanSheet
@@ -193,6 +208,8 @@ private fun MapScreen(
     val ride = rides.ride
     val plan = rides.plan
     // Explore opens where you looked last, or around your rides: not on a whole continent.
+    // Explore (#40): your position, shown as a dot once you ask for it.
+    var me by remember { mutableStateOf<LatLon?>(null) }
     val start = remember { MapStart.of(mapViews?.load(), store?.data?.rides.orEmpty()) }
     val state = rememberMapState(
         baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
@@ -201,7 +218,7 @@ private fun MapScreen(
             zoom = start.zoom,
         ),
     ) {
-        if (ride != null) RideLayers(ride)
+        if (ride != null) RideLayers(ride) else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
     LaunchedEffect(state, mapViews) {
@@ -248,6 +265,8 @@ private fun MapScreen(
     val scope = rememberCoroutineScope()
     var locating by remember { mutableStateOf(false) }
     var locateFailed by remember { mutableStateOf(false) }
+    var exploreLocating by remember { mutableStateOf(false) }
+    var exploreFailed by remember { mutableStateOf(false) }
     var modesOpen by remember { mutableStateOf(false) }
     var planSheet by remember { mutableStateOf(0.dp) }
 
@@ -409,16 +428,7 @@ private fun MapScreen(
                                         locateFailed = true
                                     } else {
                                         replan { it.withStartHere(here) }
-                                        state.animateCamera(
-                                            CameraUpdate(
-                                                center = Position(latitude = here.lat, longitude = here.lon),
-                                                zoom = maxOf(state.cameraPosition.zoom, PLAN_ZOOM),
-                                                bearing = state.cameraPosition.bearing,
-                                                pitch = state.cameraPosition.pitch,
-                                                padding = state.cameraPosition.padding,
-                                            ),
-                                            CameraAnimation.Ease(CameraAnimation.Ease.Standard) { duration = 800.milliseconds },
-                                        )
+                                        state.flyTo(here)
                                     }
                                 }
                             }
@@ -458,6 +468,37 @@ private fun MapScreen(
                 } else if (showFab && importActions != null) {
                     ImportFab(importActions, Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp))
                 }
+                if (ride == null && navigation != null) {
+                    // Explore (#40): back to where you are, above the main action.
+                    SmallFloatingActionButton(
+                        onClick = {
+                            if (!exploreLocating) {
+                                exploreLocating = true
+                                exploreFailed = false
+                                scope.launch {
+                                    val here = navigation.currentPosition()
+                                    exploreLocating = false
+                                    if (here == null) exploreFailed = true else { me = here; state.flyTo(here) }
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = navBar + (if (showFab) FabHeight else 0.dp)).padding(16.dp).size(Touch.Glove),
+                    ) {
+                        if (exploreLocating) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        else Icon(AppIcons.MyLocation, contentDescription = stringResource(Res.string.explore_locate))
+                    }
+                    if (exploreFailed) {
+                        LaunchedEffect(Unit) { delay(4.seconds); exploreFailed = false }
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.align(Alignment.BottomStart).padding(bottom = navBar).padding(16.dp).padding(end = Touch.Glove + 16.dp),
+                        ) {
+                            Text(stringResource(Res.string.explore_locate_failed), Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
             }
         }
     }
@@ -468,6 +509,30 @@ private val PlanTopHeight: Dp = 148.dp
 
 /** Zoom when "Use my position" moves the map: a few villages around, enough to tap the next stop. */
 private const val PLAN_ZOOM = 11.0
+
+/** Moves the map to a position at [PLAN_ZOOM] or closer, keeping the current angle and padding. */
+private suspend fun MapState.flyTo(here: LatLon) {
+    animateCamera(
+        CameraUpdate(
+            center = Position(latitude = here.lat, longitude = here.lon),
+            zoom = maxOf(cameraPosition.zoom, PLAN_ZOOM),
+            bearing = cameraPosition.bearing,
+            pitch = cameraPosition.pitch,
+            padding = cameraPosition.padding,
+        ),
+        CameraAnimation.Ease(CameraAnimation.Ease.Standard) { duration = 800.milliseconds },
+    )
+}
+
+/** Your position on the Explore map (#40): the same blue dot as in navigation. */
+@Composable
+private fun MyPositionLayer(me: LatLon) {
+    val source = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(listOf(me))))
+    CircleLayer(
+        id = "explore-me", source = source, color = const(Color(0xFF1A73E8)), radius = const(9.dp),
+        strokeColor = const(Color.White), strokeWidth = const(3.dp),
+    )
+}
 
 /** Material drag handle: a 4 dp bar with 22 dp of padding above and below. */
 private val DragHandleHeight: Dp = 48.dp
