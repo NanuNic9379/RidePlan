@@ -510,7 +510,7 @@ fun RideSheet(
             HorizontalDivider()
             RouteSection(route, routeActions)
             RideNotes(ride, route)
-            if (routeActions != null && ride.routable && route != RouteState.NotCovered) {
+            if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {
                 RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
                 if (ride.stopsEditable) {

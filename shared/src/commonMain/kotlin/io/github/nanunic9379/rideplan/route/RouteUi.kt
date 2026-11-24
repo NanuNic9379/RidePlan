@@ -59,7 +59,6 @@ import io.github.nanunic9379.rideplan.resources.route_err_network
 import io.github.nanunic9379.rideplan.resources.route_err_no_route
 import io.github.nanunic9379.rideplan.resources.route_err_no_space
 import io.github.nanunic9379.rideplan.resources.route_needs_data
-import io.github.nanunic9379.rideplan.resources.route_not_covered
 import io.github.nanunic9379.rideplan.resources.route_curves_max
 import io.github.nanunic9379.rideplan.resources.route_curves_more
 import io.github.nanunic9379.rideplan.resources.route_curves_normal
@@ -78,7 +77,8 @@ sealed interface RouteState {
     data class NeedsData(val download: DataDownload, val onMobile: Boolean = false) : RouteState
     data class Downloading(val download: DataDownload, val done: Long) : RouteState
     data object Computing : RouteState
-    data object NotCovered : RouteState
+    /** [outside]: the stops with no published road data (#14); empty if not known. */
+    data class NotCovered(val outside: List<OutsideStop> = emptyList()) : RouteState
     data class Failed(val error: RouteError, val detail: String? = null) : RouteState
 }
 
@@ -142,7 +142,6 @@ internal fun curvesLabel(level: Curves): String = when (level) {
  */
 @Composable
 fun RouteSection(state: RouteState, actions: RouteActions?) {
-    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     // One state crossfades into the next; a download's progress stays the same content.
     AnimatedContent(
         targetState = state,
@@ -154,11 +153,11 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
             RouteState.Idle -> Unit
             RouteState.Checking -> Waiting(stringResource(Res.string.route_checking))
             RouteState.Computing -> Waiting(stringResource(Res.string.route_computing))
-            RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = MaterialTheme.typography.bodyMedium, color = muted)
+            is RouteState.NotCovered -> NotCoveredText(shown)
             is RouteState.NeedsData -> StatusCard(
                 icon = AppIcons.Download,
                 text = if (shown.onMobile) stringResource(Res.string.route_mobile_ask, formatBytes(shown.download.bytes))
-                    else stringResource(Res.string.route_needs_data, dataName(shown.download), formatBytes(shown.download.bytes)),
+                    else stringResource(Res.string.route_needs_data, dataName(shown.download), formatBytes(shown.download.bytes)) + " " + spaceNote(shown.download),
                 container = MaterialTheme.colorScheme.tertiaryContainer,
                 content = MaterialTheme.colorScheme.onTertiaryContainer,
             ) {

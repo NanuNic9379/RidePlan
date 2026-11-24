@@ -73,6 +73,9 @@
     <string name="route_downloading">Downloading %1$s: %2$s of %3$s</string>
     <string name="route_computing">Calculating the route on the phone…</string>
     <string name="route_not_covered">There is no road data for this area yet, so the stops stay joined with straight lines.</string>
+    <string name="route_not_covered_stops">Stops outside the area RidePlan has road data for: %1$s. The route stays drawn with straight lines: move those stops, or wait until the area is covered.</string>
+    <string name="route_outside_stop_n">stop %1$d</string>
+    <string name="route_needs_space">It takes about %1$s on the phone.</string>
     <string name="route_done_note">Route calculated on the phone · OpenStreetMap data of %1$s</string>
     <string name="route_retry">Retry</string>
     <string name="route_opt_curves">Bends</string>

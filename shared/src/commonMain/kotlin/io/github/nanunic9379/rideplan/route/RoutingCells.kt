@@ -58,11 +58,20 @@ data class RoutingCells(
      */
     fun needed(points: List<LatLon>): List<RoutingPack>? {
         val cells = packs.filter { it.level == 1 }
-        if (points.isEmpty() || points.any { p -> cells.none { it.contains(p) } }) return null
+        if (points.isEmpty() || outside(points).isNotEmpty()) return null
         val legs = if (points.size == 1) listOf(points[0] to points[0]) else points.zipWithNext()
         val chosen = cells.filter { cell -> legs.any { (a, b) -> Corridor.near(a, b, cell.bbox) } }
         val bases = packs.filter { it.level == 0 && chosen.any(it::containsCenterOf) }
         return bases + chosen
+    }
+
+    /**
+     * The positions in [points] that fall outside every published cell (#14): the stops the app
+     * has no road data for, to tell the rider which ones they are.
+     */
+    fun outside(points: List<LatLon>): List<Int> {
+        val cells = packs.filter { it.level == 1 }
+        return points.indices.filter { i -> cells.none { it.contains(points[i]) } }
     }
 
     /** Same format as cells.json: the phone keeps a copy of the downloaded build. */
@@ -172,8 +181,8 @@ internal object Corridor {
 
     fun marginKm(legKm: Double): Double = min(MAX_MARGIN_KM, MIN_MARGIN_KM + MARGIN_SHARE * legKm)
 
-    /** Is the cell [bbox] within the margin of leg a-b? */
-    fun near(a: LatLon, b: LatLon, bbox: List<Double>): Boolean {
+    /** Is the cell [bbox] within the margin of leg a-b? [fixedMarginKm]: instead of [marginKm]. */
+    fun near(a: LatLon, b: LatLon, bbox: List<Double>, fixedMarginKm: Double? = null): Boolean {
         // Local plane in km around the leg's latitude: accurate enough for tens of km.
         val kx = 111.32 * cos((a.lat + b.lat) / 2 * PI / 180)
         val ky = 110.57
@@ -181,7 +190,7 @@ internal object Corridor {
         val ay = a.lat * ky
         val bx = b.lon * kx
         val by = b.lat * ky
-        val margin = marginKm(hypot(bx - ax, by - ay))
+        val margin = fixedMarginKm ?: marginKm(hypot(bx - ax, by - ay))
         val x0 = bbox[0] * kx
         val y0 = bbox[1] * ky
         val x1 = bbox[2] * kx

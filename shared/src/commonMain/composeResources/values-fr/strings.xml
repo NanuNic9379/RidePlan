@@ -72,6 +72,9 @@
     <string name="route_downloading">Téléchargement de %1$s : %2$s sur %3$s</string>
     <string name="route_computing">Calcul de l’itinéraire sur le téléphone…</string>
     <string name="route_not_covered">Il n’y a pas encore de données routières pour cette zone : les étapes restent reliées en ligne droite.</string>
+    <string name="route_not_covered_stops">Étapes hors de la zone pour laquelle RidePlan a des données routières : %1$s. L’itinéraire reste en ligne droite : déplace ces étapes ou attends que la zone soit couverte.</string>
+    <string name="route_outside_stop_n">étape %1$d</string>
+    <string name="route_needs_space">Occupe environ %1$s sur le téléphone.</string>
     <string name="route_done_note">Itinéraire calculé sur le téléphone · données OpenStreetMap du %1$s</string>
     <string name="route_retry">Réessayer</string>
     <string name="route_opt_curves">Virages</string>
