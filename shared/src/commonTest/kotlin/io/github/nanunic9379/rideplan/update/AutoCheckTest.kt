@@ -47,4 +47,12 @@ class AutoCheckTest {
         assertFalse(UpdateRules.mayOfferAutomatically("0.1.130", UpdateUi.NeedsPermission, dismissed = null))
         assertFalse(UpdateRules.mayOfferAutomatically("0.1.130", UpdateUi.Failed(UpdateError.NETWORK), dismissed = null))
     }
+
+    @Test
+    fun pollingStopsWhileABannerIsShown() {
+        assertFalse(UpdateRules.pollingPaused(null))
+        assertTrue(UpdateRules.pollingPaused(UpdateUi.Available("0.1.130")))
+        assertTrue(UpdateRules.pollingPaused(UpdateUi.Downloading(null)))
+        assertTrue(UpdateRules.pollingPaused(UpdateUi.Failed(UpdateError.NETWORK)))
+    }
 }

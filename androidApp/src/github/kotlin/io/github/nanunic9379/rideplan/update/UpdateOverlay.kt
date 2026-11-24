@@ -83,6 +83,8 @@ fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
             if (event != Lifecycle.Event.ON_START || !enabled) return@LifecycleEventObserver
+            // A banner is already on screen: no polling, "Update" fetches the newest Release anyway.
+            if (UpdateRules.pollingPaused(UpdateStore.ui)) return@LifecycleEventObserver
             val now = System.currentTimeMillis()
             if (!UpdateRules.shouldAutoCheck(now, UpdateStore.lastAutoCheckMs)) return@LifecycleEventObserver
             UpdateStore.lastAutoCheckMs = now
@@ -123,7 +125,10 @@ fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
                 UpdateStore.ui = UpdateUi.Downloading(null)
                 try {
                     withContext(Dispatchers.IO) {
-                        val apk = GithubUpdater.download(context, r) { UpdateStore.ui = UpdateUi.Downloading(it) }
+                        // The banner may be hours old: always install the newest Release (#34).
+                        val target = runCatching { GithubUpdater.latestNewer() }.getOrNull() ?: r
+                        UpdateStore.release = target
+                        val apk = GithubUpdater.download(context, target) { UpdateStore.ui = UpdateUi.Downloading(it) }
                         UpdateStore.ui = UpdateUi.Installing
                         GithubUpdater.install(context, apk)
                     }

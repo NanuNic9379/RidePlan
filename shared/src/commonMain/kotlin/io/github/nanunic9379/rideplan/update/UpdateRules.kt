@@ -45,6 +45,12 @@ object UpdateRules {
      * Whether an automatic check that found [found] may show the banner (#34): not over a
      * download, install or error in progress, and not for the version the rider dismissed.
      */
+    /**
+     * Automatic checks stop while any update banner is on screen (#34): an offer, a download,
+     * an install or an error. Tapping "Update" asks GitHub again and installs the newest Release.
+     */
+    fun pollingPaused(current: UpdateUi?): Boolean = current != null
+
     fun mayOfferAutomatically(found: String, current: UpdateUi?, dismissed: String?): Boolean =
         (current == null || current is UpdateUi.Available) && found != dismissed
 }
