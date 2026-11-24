@@ -16,7 +16,7 @@ phone battery, the group waiting at the bar.
    UI in several languages (English as the base, Italian from day one, translations from the
    community), km or miles, per-country rules (e.g. engine size limits on motorways).
 
-## Architecture (proposal, to be verified in the first phase)
+## Architecture
 | Part | Choice | Why |
 |---|---|---|
 | App | Kotlin Multiplatform + Compose Multiplatform | one codebase for Android and iPhone |
@@ -43,19 +43,23 @@ the person is: anyone can republish a copy with their own key.
   public world builds of Protomaps, without hosting anything.
 - **Nostr:** there is no standard format for routes; we have to define it (replaceable event).
 
-## First milestones
-1. Kotlin Multiplatform app skeleton (Android + iPhone) with a map screen.
-2. Offline OpenStreetMap map of an area, anywhere in the world.
-3. Route between two points with a motorcycle profile (Valhalla check on Android and iPhone).
-4. Draggable waypoints, prefer curves / avoid motorways.
-5. GPX export and import.
-6. Sharing with QR code and link.
-7. Key identity and publishing / searching routes on Nostr.
+## Milestones
+Status on 24 November 2026 (beta 0.1.142).
+
+1. Kotlin Multiplatform app skeleton (Android + iPhone) with a map screen. **Done.**
+2. Offline OpenStreetMap map of an area, anywhere in the world. **Partly done:** online map with an offline map per ride; routing data offline for Italy, more areas in #14.
+3. Route between two points with a motorcycle profile. **Done on Android** (Valhalla); iPhone engine still to wire.
+4. Draggable waypoints, prefer curves / avoid motorways. **Done** (#2); field check against Kurviger still open (#4).
+5. GPX export and import. **Done.**
+6. Sharing with QR code and link. **Done**, with private zones (#6).
+7. Key identity and publishing / searching routes on Nostr. **In progress** (#3), external signer first.
 
 The initial analysis ([ANALYSIS.md](ANALYSIS.md)) brought more milestones, all as issues:
 curve check, following the ride in the saddle, private zone, range and fuel stations,
 vehicle profile (engine size), dirt and surface, stops and meeting points, versioned update
-of the ride, multi-day trip, seasonal pass closures.
+of the ride, multi-day trip, seasonal pass closures. Done so far: navigation (#5), range and fuel (#7),
+vehicle profile (#8); stops, versions, stages, surface and country warnings are in the app with
+follow-ups still open in their issues.
 
 ## Decision: route engine and curves (#4)
 Valhalla stays. Since 3.9 its motorcycle profile has a real curvature cost (straight and urban
