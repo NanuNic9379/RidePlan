@@ -80,10 +80,8 @@
     <string name="route_curves_some">More</string>
     <string name="route_curves_more">Lots</string>
     <string name="route_curves_max">Max</string>
-    <string name="route_detour">With more bends the ride is %1$s% longer: +%2$s km, +%3$s compared with the normal route.</string>
-    <string name="route_detour_long">⚠ Much longer ride: +%1$s% (+%2$s km, +%3$s) compared with the normal route. Choose fewer bends if you are short on time or fuel.</string>
-    <string name="route_opt_no_highways">No motorways</string>
-    <string name="route_opt_no_tolls">No tolls</string>
+    <string name="route_detour">The ride is %1$s% longer: +%2$s km, +%3$s compared with the fastest route.</string>
+    <string name="route_detour_long">⚠ Much longer ride: +%1$s% (+%2$s km, +%3$s) compared with the fastest route. Pick Fast or fewer bends if you are short on time or fuel.</string>
     <string name="route_stops_title">Stops</string>
     <string name="route_stops_hint">Tap to choose: stop (you go there) or pass by (without riding into town).</string>
     <string name="route_stop_stop">Stop: %1$s</string>
@@ -205,7 +203,6 @@
     <!-- UX redesign -->
     <string name="nav_back">Back</string>
     <string name="home_new_ride">New ride</string>
-    <string name="route_prefs_title">Route preferences</string>
     <string name="ride_sheet_label">Ride details</string>
     <!-- Personal area (#21) -->
     <string name="nav_rides">Rides</string>
@@ -430,4 +427,55 @@
     <string name="update_check_now">Check for updates</string>
     <string name="update_checking">Checking…</string>
     <string name="update_latest">You have the latest version</string>
+    <!-- Route settings and riding modes (#30) -->
+    <string name="route_mode_title">How do you want to ride?</string>
+    <string name="route_mode_section">Riding mode</string>
+    <string name="route_mode_change">Change</string>
+    <string name="route_mode_fast">Fast</string>
+    <string name="route_mode_fast_line">Get there quickly</string>
+    <string name="route_mode_fast_desc">The quickest route. For transfers, when the road only has to get you there.</string>
+    <string name="route_mode_fast_does">Bends: normal · Motorways and tolls: yes</string>
+    <string name="route_mode_balanced">Balanced</string>
+    <string name="route_mode_balanced_line">Fun without wasting time</string>
+    <string name="route_mode_balanced_desc">Flowing main roads with some bends. Skips the motorway when it saves little time.</string>
+    <string name="route_mode_balanced_does">Bends: more than normal · Motorways: only when they save a lot of time · Tolls: avoided</string>
+    <string name="route_mode_curvy">Curvy</string>
+    <string name="route_mode_curvy_line">As many bends as possible</string>
+    <string name="route_mode_curvy_desc">Looks for passes, back roads and twisty roads. The ride gets longer: that is the point.</string>
+    <string name="route_mode_curvy_does">Bends: maximum · Motorways and tolls: avoided · Towns: avoided where possible</string>
+    <string name="route_mode_scenic">Scenic</string>
+    <string name="route_mode_scenic_line">Lakes, coasts and passes</string>
+    <string name="route_mode_touring">Touring</string>
+    <string name="route_mode_touring_line">Comfortable, two-up with luggage</string>
+    <string name="route_mode_new_roads">New roads</string>
+    <string name="route_mode_new_roads_line">Roads you have never ridden</string>
+    <string name="route_mode_dirt">Dirt</string>
+    <string name="route_mode_dirt_line">Needs the surface of every road</string>
+    <string name="route_mode_soon">Coming soon</string>
+    <string name="route_custom">Custom</string>
+    <string name="route_fine_title">Fine tuning</string>
+    <string name="route_avoid">Avoid</string>
+    <string name="route_avoid_motorways">Motorways and expressways</string>
+    <string name="route_avoid_tolls">Tolls</string>
+    <string name="route_avoid_ferries">Ferries</string>
+    <string name="route_avoid_towns">Towns</string>
+    <string name="route_avoid_towns_sub">Goes around towns where it can</string>
+    <string name="route_avoid_unpaved">Unpaved roads</string>
+    <string name="route_avoid_unpaved_sub">Always avoided for now</string>
+    <string name="route_always">Always</string>
+    <string name="route_bike">Bike</string>
+    <string name="route_bike_none">No bike in the garage: add one in You › Garage.</string>
+    <string name="route_bike_small">Under 150 cc no motorways or motorway ring roads. It is the law: they are always avoided with this bike.</string>
+    <string name="route_presets">Your presets</string>
+    <string name="route_preset_save">Save this</string>
+    <string name="route_preset_title">Save as preset</string>
+    <string name="route_preset_name">Name</string>
+    <string name="route_preset_hint">Touch and hold a preset to delete it.</string>
+    <string name="route_preset_delete_title">Delete “%1$s”?</string>
+    <string name="route_apply">Apply and recalculate</string>
+    <string name="route_reset">Reset</string>
+    <string name="route_preview_vs_fast">compared with the fastest route</string>
+    <string name="route_preview_fastest">This is already the fastest route</string>
+    <string name="route_preview_pending">The exact route is computed when you tap Apply</string>
+    <string name="route_preview_none">Not computed yet</string>
 </resources>

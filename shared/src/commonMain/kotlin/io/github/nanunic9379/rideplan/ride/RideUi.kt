@@ -101,7 +101,6 @@ import io.github.nanunic9379.rideplan.resources.ride_source_link
 import io.github.nanunic9379.rideplan.resources.ride_stops
 import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
 import io.github.nanunic9379.rideplan.resources.route_cancel
-import io.github.nanunic9379.rideplan.resources.route_prefs_title
 import io.github.nanunic9379.rideplan.resources.share_confirm
 import io.github.nanunic9379.rideplan.resources.share_gpx
 import io.github.nanunic9379.rideplan.resources.share_privacy_note
@@ -112,8 +111,11 @@ import io.github.nanunic9379.rideplan.resources.stop_edit_hint
 import io.github.nanunic9379.rideplan.nav.NavigateButton
 import io.github.nanunic9379.rideplan.route.DetourNote
 import io.github.nanunic9379.rideplan.route.RouteActions
-import io.github.nanunic9379.rideplan.route.RouteOptions
-import io.github.nanunic9379.rideplan.route.RouteOptionsRow
+import io.github.nanunic9379.rideplan.route.RidingModeRow
+import io.github.nanunic9379.rideplan.route.RidingMode
+import io.github.nanunic9379.rideplan.route.RoutePreset
+import io.github.nanunic9379.rideplan.route.RouteSettingsSheet
+import io.github.nanunic9379.rideplan.profile.Bike
 import io.github.nanunic9379.rideplan.route.RouteSection
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.StopKindsRow
@@ -168,8 +170,10 @@ class RideScreenState {
     var error by mutableStateOf<Throwable?>(null)
     /** Route calculation of the shown ride (#3). */
     var route by mutableStateOf<RouteState>(RouteState.Idle)
-    /** Route preferences (#4); they apply to all rides. */
-    var options by mutableStateOf(RouteOptions())
+    /** Route preferences (#4); they apply to all rides. A new rider starts on the default mode (#30). */
+    var options by mutableStateOf(RidingMode.DEFAULT.options)
+    /** Route settings the rider saved with a name (#30). */
+    var presets by mutableStateOf<List<RoutePreset>>(emptyList())
     var page by mutableStateOf(Page.HOME)
     /** The shown ride is in "Your rides" with this id: every change updates it. */
     var savedId by mutableStateOf<String?>(null)
@@ -370,6 +374,8 @@ fun RideSheet(
     zones: List<PrivateZone> = emptyList(),
     /** Starts turn-by-turn navigation (#5); null = not available on this platform. */
     onNavigate: (() -> Unit)? = null,
+    /** The default bike: under 150 cc it locks "avoid motorways" in the route settings (#8). */
+    bike: Bike? = null,
 ) {
     val ride = state.ride ?: return
     val route = state.route
@@ -378,6 +384,20 @@ fun RideSheet(
     val busy = route == RouteState.Checking || route == RouteState.Computing || route is RouteState.Downloading
     var linkDialog by remember { mutableStateOf(false) }
     if (linkDialog && actions != null) LinkDialog(actions, onDismiss = { linkDialog = false })
+    var settingsOpen by remember { mutableStateOf(false) }
+    if (settingsOpen && routeActions != null) {
+        RouteSettingsSheet(
+            ride = ride,
+            title = title,
+            applied = state.options,
+            presets = state.presets,
+            bike = bike,
+            onApply = { settingsOpen = false; routeActions.changeOptions(it) },
+            onSavePreset = routeActions.savePreset,
+            onDeletePreset = routeActions.deletePreset,
+            onDismiss = { settingsOpen = false },
+        )
+    }
     val sheetLabel = stringResource(Res.string.ride_sheet_label)
 
     Column(Modifier.fillMaxWidth().navigationBarsPadding().semantics { paneTitle = sheetLabel }) {
@@ -429,12 +449,7 @@ fun RideSheet(
             RouteSection(route, routeActions)
             RideNotes(ride, route)
             if (routeActions != null && ride.routable && route != RouteState.NotCovered) {
-                Text(
-                    stringResource(Res.string.route_prefs_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { heading() },
-                )
-                RouteOptionsRow(state.options, enabled = !busy, onChange = routeActions.changeOptions)
+                RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
                 if (ride.stopsEditable) {
                     Text(stringResource(Res.string.stop_edit_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

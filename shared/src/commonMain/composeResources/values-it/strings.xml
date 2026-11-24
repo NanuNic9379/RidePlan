@@ -79,10 +79,8 @@
     <string name="route_curves_some">Più</string>
     <string name="route_curves_more">Molte</string>
     <string name="route_curves_max">Massimo</string>
-    <string name="route_detour">Con più curve il giro si allunga del %1$s%: +%2$s km, +%3$s rispetto al percorso normale.</string>
-    <string name="route_detour_long">⚠ Giro molto più lungo: +%1$s% (+%2$s km, +%3$s) rispetto al percorso normale. Scegli meno curve se hai poco tempo o poca benzina.</string>
-    <string name="route_opt_no_highways">Niente autostrade</string>
-    <string name="route_opt_no_tolls">Niente pedaggi</string>
+    <string name="route_detour">Il giro si allunga del %1$s%: +%2$s km, +%3$s rispetto al percorso più veloce.</string>
+    <string name="route_detour_long">⚠ Giro molto più lungo: +%1$s% (+%2$s km, +%3$s) rispetto al percorso più veloce. Scegli Veloce o meno curve se hai poco tempo o poca benzina.</string>
     <string name="route_stops_title">Tappe</string>
     <string name="route_stops_hint">Tocca per scegliere: sosta (ci arrivi) o passa vicino (senza entrare in paese).</string>
     <string name="route_stop_stop">Sosta: %1$s</string>
@@ -204,7 +202,6 @@
     <!-- UX redesign -->
     <string name="nav_back">Indietro</string>
     <string name="home_new_ride">Nuovo giro</string>
-    <string name="route_prefs_title">Preferenze del percorso</string>
     <string name="ride_sheet_label">Dettagli del giro</string>
     <!-- Personal area (#21) -->
     <string name="nav_rides">Giri</string>
@@ -429,4 +426,55 @@
     <string name="update_check_now">Controlla gli aggiornamenti</string>
     <string name="update_checking">Controllo in corso…</string>
     <string name="update_latest">Hai l'ultima versione</string>
+    <!-- Route settings and riding modes (#30) -->
+    <string name="route_mode_title">Come vuoi guidare?</string>
+    <string name="route_mode_section">Modalità di guida</string>
+    <string name="route_mode_change">Cambia</string>
+    <string name="route_mode_fast">Veloce</string>
+    <string name="route_mode_fast_line">Arrivare presto</string>
+    <string name="route_mode_fast_desc">Il percorso più rapido. Per i trasferimenti, quando la strada serve solo ad arrivare.</string>
+    <string name="route_mode_fast_does">Curve: normali · Autostrade e pedaggi: sì</string>
+    <string name="route_mode_balanced">Equilibrato</string>
+    <string name="route_mode_balanced_line">Gusto senza perdere tempo</string>
+    <string name="route_mode_balanced_desc">Statali scorrevoli con qualche curva. Evita l’autostrada quando fa risparmiare poco tempo.</string>
+    <string name="route_mode_balanced_does">Curve: più del normale · Autostrade: solo se fanno risparmiare molto · Pedaggi: evitati</string>
+    <string name="route_mode_curvy">Curve</string>
+    <string name="route_mode_curvy_line">Più curve possibili</string>
+    <string name="route_mode_curvy_desc">Cerca passi, provinciali e strade tortuose. Il giro si allunga: è proprio quello che vuoi.</string>
+    <string name="route_mode_curvy_does">Curve: massimo · Autostrade e pedaggi: evitati · Centri abitati: evitati se possibile</string>
+    <string name="route_mode_scenic">Panoramico</string>
+    <string name="route_mode_scenic_line">Laghi, coste e passi</string>
+    <string name="route_mode_touring">Turismo</string>
+    <string name="route_mode_touring_line">Comodo, in due e con le borse</string>
+    <string name="route_mode_new_roads">Strade nuove</string>
+    <string name="route_mode_new_roads_line">Mai fatte da te</string>
+    <string name="route_mode_dirt">Sterrato</string>
+    <string name="route_mode_dirt_line">Serve sapere il fondo di ogni strada</string>
+    <string name="route_mode_soon">In arrivo</string>
+    <string name="route_custom">Personalizzato</string>
+    <string name="route_fine_title">Regola di fino</string>
+    <string name="route_avoid">Evita</string>
+    <string name="route_avoid_motorways">Autostrade e superstrade</string>
+    <string name="route_avoid_tolls">Pedaggi</string>
+    <string name="route_avoid_ferries">Traghetti</string>
+    <string name="route_avoid_towns">Centri abitati</string>
+    <string name="route_avoid_towns_sub">Gira attorno ai paesi quando si può</string>
+    <string name="route_avoid_unpaved">Strade sterrate</string>
+    <string name="route_avoid_unpaved_sub">Per ora sempre evitate</string>
+    <string name="route_always">Sempre</string>
+    <string name="route_bike">Moto</string>
+    <string name="route_bike_none">Nessuna moto in garage: aggiungila in Tu › Garage.</string>
+    <string name="route_bike_small">Sotto i 150 cc niente autostrade e tangenziali autostradali. È la legge: le evito sempre con questa moto.</string>
+    <string name="route_presets">I tuoi preset</string>
+    <string name="route_preset_save">Salva questo</string>
+    <string name="route_preset_title">Salva come preset</string>
+    <string name="route_preset_name">Nome</string>
+    <string name="route_preset_hint">Tieni premuto un preset per eliminarlo.</string>
+    <string name="route_preset_delete_title">Eliminare «%1$s»?</string>
+    <string name="route_apply">Applica e ricalcola</string>
+    <string name="route_reset">Ripristina</string>
+    <string name="route_preview_vs_fast">rispetto al percorso più veloce</string>
+    <string name="route_preview_fastest">È già il percorso più rapido</string>
+    <string name="route_preview_pending">Il percorso esatto si calcola con «Applica»</string>
+    <string name="route_preview_none">Non ancora calcolato</string>
 </resources>
