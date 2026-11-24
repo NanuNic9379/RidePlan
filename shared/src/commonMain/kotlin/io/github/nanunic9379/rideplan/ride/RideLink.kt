@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.ride
 import io.github.nanunic9379.rideplan.route.Curves
 import io.github.nanunic9379.rideplan.route.Polyline
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.withInferredMode
 import kotlin.io.encoding.Base64
 import kotlin.math.cos
 import kotlin.math.sqrt
@@ -68,14 +69,31 @@ object RideLink {
 
     private const val SEP = "\u001f"
 
-    /** "MAX,h,t,f": curves, then h = no motorways, t = no tolls, f = no ferries. */
+    /**
+     * "MAX,h,t,f,n": curves, then h = no motorways, t = no tolls, f = no ferries, n = around
+     * towns (#30; older apps ignore the letter). The riding mode is not sent: the receiver finds
+     * it again from the switches.
+     */
     internal fun optionsCode(o: RouteOptions): String =
-        (listOf(o.curves.name) + listOfNotNull("h".takeIf { o.avoidHighways }, "t".takeIf { o.avoidTolls }, "f".takeIf { o.avoidFerries })).joinToString(",")
+        (
+            listOf(o.curves.name) + listOfNotNull(
+                "h".takeIf { o.avoidHighways },
+                "t".takeIf { o.avoidTolls },
+                "f".takeIf { o.avoidFerries },
+                "n".takeIf { o.avoidTowns },
+            )
+        ).joinToString(",")
 
     internal fun parseOptions(code: String): RouteOptions? {
         val parts = code.split(',')
         val curves = Curves.entries.firstOrNull { it.name == parts[0] } ?: return null
-        return RouteOptions(curves, avoidHighways = "h" in parts, avoidTolls = "t" in parts, avoidFerries = "f" in parts)
+        return RouteOptions(
+            curves,
+            avoidHighways = "h" in parts,
+            avoidTolls = "t" in parts,
+            avoidFerries = "f" in parts,
+            avoidTowns = "n" in parts,
+        ).withInferredMode()
     }
 
     /** One letter per stop: S stop, V dragged via point, P pass-by town. */

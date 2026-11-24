@@ -246,6 +246,7 @@ private fun MapScreen(
                         importActions,
                         routeActions,
                         onNavigate = if (navigation != null) ({ rides.navigating = true }) else null,
+                        bike = store?.data?.defaultBike,
                         maxBodyHeight = screen * 0.5f,
                         onHeaderHeight = { header = it },
                         saved = {
