@@ -98,6 +98,7 @@ import io.github.nanunic9379.rideplan.resources.ride_source_google
 import io.github.nanunic9379.rideplan.resources.ride_source_gpx
 import io.github.nanunic9379.rideplan.resources.ride_source_kml
 import io.github.nanunic9379.rideplan.resources.ride_source_link
+import io.github.nanunic9379.rideplan.resources.ride_source_planned
 import io.github.nanunic9379.rideplan.resources.ride_stops
 import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
 import io.github.nanunic9379.rideplan.resources.route_cancel
@@ -183,6 +184,13 @@ class RideScreenState {
     var stopsEdited by mutableStateOf(false)
     /** Turn-by-turn navigation of the ride on screen (#5). */
     var navigating by mutableStateOf(false)
+    /**
+     * A new ride being planned on the map (#33). [ride] is then the draft's ride, routed after
+     * every change, and is not saved until "Done".
+     */
+    var plan by mutableStateOf<PlanDraft?>(null)
+    /** Leaving the plan was asked (back) while it has points: the map asks whether to discard them. */
+    var planLeaving by mutableStateOf(false)
 
     /** Search, chip, order and filters of the ride list (#21): they stay while you look at a ride. */
     var query by mutableStateOf(io.github.nanunic9379.rideplan.profile.RideQuery())
@@ -213,7 +221,54 @@ class RideScreenState {
     /** Shows the ride or the error. A new ride is not among the saved ones yet. */
     fun show(result: Result<Ride>) {
         busy = false
-        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false; navigating = false }.onFailure { error = it }
+        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false; navigating = false; plan = null; planLeaving = false }.onFailure { error = it }
+    }
+
+    /**
+     * "Plan a ride" (#33): an empty map ready for taps. Leaving it goes back to where it was
+     * opened from (Rides or the map).
+     */
+    fun startPlan() {
+        val draft = PlanDraft()
+        plan = draft
+        planLeaving = false
+        ride = draft.ride()
+        error = null
+        route = RouteState.Idle
+        savedId = null
+        panelOpen = false
+        // The camera stays where the rider taps: no re-framing after every stop.
+        stopsEdited = true
+        navigating = false
+    }
+
+    /**
+     * "Done" (#33): the planned ride becomes a ride like the others. Clearing [plan] lets [App]
+     * save it to "Your rides"; the sheet opens on it and the camera frames it.
+     */
+    fun finishPlan(): Ride? {
+        val draft = plan ?: return null
+        val current = ride ?: return null
+        if (!draft.canFinish) return null
+        val done = draft.finished(current)
+        plan = null
+        planLeaving = false
+        ride = done
+        savedId = null
+        panelOpen = true
+        stopsEdited = false
+        return done
+    }
+
+    /**
+     * Back while planning: with nothing tapped it just leaves, otherwise it asks first. True when
+     * the question was raised: the caller leaves only on false.
+     */
+    fun askBeforeLeavingPlan(): Boolean {
+        val draft = plan ?: return false
+        if (draft.points.isEmpty() || planLeaving) return false
+        planLeaving = true
+        return true
     }
 
     /**
@@ -221,10 +276,14 @@ class RideScreenState {
      * from Explore back to the rides.
      */
     fun goHome() {
+        // A plan started from the map goes back to the map, any other ride back to the rides.
+        val fromPlan = plan != null
+        plan = null
+        planLeaving = false
         ride = null
         route = RouteState.Idle
         savedId = null
-        if (page == Page.MAP) page = Page.HOME
+        if (page == Page.MAP && !fromPlan) page = Page.HOME
         stopsEdited = false
         navigating = false
     }
@@ -600,7 +659,7 @@ internal fun defaultName(ride: Ride): String? {
 
 /** The numbers you look for at a glance: km, time, stops. */
 @Composable
-private fun stats(ride: Ride): String {
+internal fun stats(ride: Ride): String {
     val km = formatKm(ride.lengthKm)
     val parts = buildList {
         add(stringResource(if (ride.straightLines) Res.string.ride_km_straight else Res.string.ride_km, km))
@@ -617,6 +676,7 @@ internal fun sourceText(ride: Ride): String = stringResource(
         Ride.Source.KML -> Res.string.ride_source_kml
         Ride.Source.GOOGLE_LINK -> Res.string.ride_source_google
         Ride.Source.RIDEPLAN_LINK -> Res.string.ride_source_link
+        Ride.Source.PLANNED -> Res.string.ride_source_planned
     },
 )
 

@@ -480,4 +480,25 @@
     <string name="route_preview_fastest">Ya es la ruta más rápida</string>
     <string name="route_preview_pending">La ruta exacta se calcula al pulsar Aplicar</string>
     <string name="route_preview_none">Aún sin calcular</string>
+
+    <!-- Plan a new ride on the map (#33) -->
+    <string name="plan_title">Planificar una ruta</string>
+    <string name="plan_on_map">Planificar en el mapa</string>
+    <string name="plan_leave">Salir de la planificación</string>
+    <string name="plan_undo">Deshacer lo último</string>
+    <string name="plan_hint_start">Toca el mapa para fijar la salida</string>
+    <string name="plan_hint_next">Toca el mapa para añadir la siguiente parada</string>
+    <string name="plan_name">Nombre (opcional)</string>
+    <string name="plan_one_more">Toca otro punto en el mapa para obtener una ruta</string>
+    <string name="plan_here">Salir desde mi posición</string>
+    <string name="plan_locating">Buscando tu posición…</string>
+    <string name="plan_here_failed">Posición no encontrada. Comprueba que la ubicación esté activada, o toca el mapa.</string>
+    <string name="plan_round_trip">Ida y vuelta</string>
+    <string name="plan_done">Listo</string>
+    <string name="plan_leave_title">¿Descartar esta ruta?</string>
+    <string name="plan_leave_text">Se perderán los puntos que pusiste en el mapa.</string>
+    <string name="plan_leave_discard">Descartar</string>
+    <string name="plan_leave_keep">Seguir planificando</string>
+    <string name="route_mode_more">Más</string>
+    <string name="ride_source_planned">planificada en el mapa</string>
 </resources>

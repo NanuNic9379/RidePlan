@@ -249,6 +249,9 @@ class MainActivity : ComponentActivity() {
         override fun handleOnBackPressed() {
             if (rides.navigating) {
                 rides.navigating = false
+            } else if (rides.askBeforeLeavingPlan()) {
+                // Planning with points on the map (#33): the map asks before discarding them.
+                Unit
             } else if (rides.onMap) {
                 cancelRoute()
                 rides.goHome()
@@ -457,7 +460,11 @@ class MainActivity : ComponentActivity() {
      */
     private fun editStops(fresh: Ride) {
         rides.ride = fresh
-        if (fresh.routable && rides.route !is RouteState.Downloading) planRoute(fresh)
+        when {
+            fresh.routable -> if (rides.route !is RouteState.Downloading) planRoute(fresh)
+            // A ride being planned with less than two points (#33): nothing to route yet.
+            rides.route !is RouteState.Downloading -> { routeJob?.cancel(); rides.route = RouteState.Idle }
+        }
     }
 
     /**
@@ -504,6 +511,11 @@ class MainActivity : ComponentActivity() {
         if (rides.ride === ride) {
             rides.ride = ride.routed(result, data, options, baseline)
             rides.route = RouteState.Idle
+        } else {
+            // The ride changed meanwhile (a stop tapped while planning, #33, or edited during a
+            // download): route the ride now on screen instead of leaving "Calculating" behind.
+            val now = rides.ride
+            if (now != null && now.needsRoute) planRoute(now) else if (rides.route == RouteState.Computing) rides.route = RouteState.Idle
         }
     }
 

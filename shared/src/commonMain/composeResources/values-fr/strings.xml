@@ -480,4 +480,25 @@
     <string name="route_preview_fastest">C’est déjà l’itinéraire le plus rapide</string>
     <string name="route_preview_pending">L’itinéraire exact est calculé avec « Appliquer »</string>
     <string name="route_preview_none">Pas encore calculé</string>
+
+    <!-- Plan a new ride on the map (#33) -->
+    <string name="plan_title">Planifier une balade</string>
+    <string name="plan_on_map">Planifier sur la carte</string>
+    <string name="plan_leave">Quitter la planification</string>
+    <string name="plan_undo">Annuler le dernier</string>
+    <string name="plan_hint_start">Touchez la carte pour fixer le départ</string>
+    <string name="plan_hint_next">Touchez la carte pour ajouter l'étape suivante</string>
+    <string name="plan_name">Nom (facultatif)</string>
+    <string name="plan_one_more">Touchez un autre point sur la carte pour obtenir l'itinéraire</string>
+    <string name="plan_here">Partir de ma position</string>
+    <string name="plan_locating">Recherche de votre position…</string>
+    <string name="plan_here_failed">Position introuvable. Vérifiez que la localisation est activée, ou touchez la carte.</string>
+    <string name="plan_round_trip">Boucle</string>
+    <string name="plan_done">Terminé</string>
+    <string name="plan_leave_title">Abandonner cette balade ?</string>
+    <string name="plan_leave_text">Les points placés sur la carte seront perdus.</string>
+    <string name="plan_leave_discard">Abandonner</string>
+    <string name="plan_leave_keep">Continuer à planifier</string>
+    <string name="route_mode_more">Plus</string>
+    <string name="ride_source_planned">planifiée sur la carte</string>
 </resources>

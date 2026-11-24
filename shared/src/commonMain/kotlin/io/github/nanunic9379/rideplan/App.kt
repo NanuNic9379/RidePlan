@@ -71,6 +71,30 @@ import io.github.nanunic9379.rideplan.nav.NavigationScreen
 import io.github.nanunic9379.rideplan.ui.RidePlanTheme
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.layout.onSizeChanged
+import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.plan_title
+import io.github.nanunic9379.rideplan.ride.PlanDraft
+import io.github.nanunic9379.rideplan.ride.PlanLeaveDialog
+import io.github.nanunic9379.rideplan.ride.PlanSheet
+import io.github.nanunic9379.rideplan.ride.PlanTopBar
+import io.github.nanunic9379.rideplan.ride.canRemoveStop
+import io.github.nanunic9379.rideplan.ride.currentPosition
+import io.github.nanunic9379.rideplan.route.RidingModeChips
+import io.github.nanunic9379.rideplan.route.RouteSettingsSheet
+import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Touch
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.compose.resources.stringResource
+import org.maplibre.compose.camera.CameraAnimation
+import org.maplibre.compose.camera.CameraUpdate
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
@@ -114,8 +138,9 @@ fun App(
         val ride = rides.ride
         // Every opened ride ends up in "Your rides" and stays up to date (route, preferences, name).
         // A ride received by link waits in "Received" until you keep or discard it (#48, #21).
-        LaunchedEffect(ride) {
-            if (ride != null && store != null) {
+        // A ride being planned (#33) is saved only on "Done", when the plan ends.
+        LaunchedEffect(ride, rides.plan == null) {
+            if (ride != null && store != null && rides.plan == null) {
                 store.update { d ->
                     val (fresh, id) = if (rides.isPreview) d.receive(ride, store.time()) else d.save(ride, rides.savedId, store.time())
                     rides.savedId = id
@@ -166,6 +191,7 @@ private fun MapScreen(
     tabs: Boolean,
 ) {
     val ride = rides.ride
+    val plan = rides.plan
     // Explore opens where you looked last, or around your rides: not on a whole continent.
     val start = remember { MapStart.of(mapViews?.load(), store?.data?.rides.orEmpty()) }
     val state = rememberMapState(
@@ -185,7 +211,9 @@ private fun MapScreen(
             .collect { p -> p?.let { mapViews.save(MapView(it.center.latitude, it.center.longitude, it.zoom)) } }
     }
     // Editing the stops on the map (#2): only rides made of stops, and not while data is downloading.
-    val editable = ride != null && routeActions != null && ride.stopsEditable && rides.route !is RouteState.Downloading
+    // A ride being planned (#33) is always editable: the data offer comes after the taps.
+    val editable = ride != null && routeActions != null &&
+        (plan != null || (ride.stopsEditable && rides.route !is RouteState.Downloading))
     var selected by remember { mutableStateOf<Int?>(null) }
     val selectedStop = selected?.takeIf { editable && ride != null && it in ride.stops.indices }
     fun edit(change: (Ride) -> Ride) {
@@ -195,10 +223,33 @@ private fun MapScreen(
         rides.stopsEdited = true
         routeActions?.editStops?.invoke(fresh)
     }
+    // Planning (#33): every change goes through the draft (so it can be undone) and is routed again.
+    fun replan(change: (PlanDraft) -> PlanDraft) {
+        val old = rides.plan ?: return
+        val fresh = change(old)
+        if (fresh == old) return
+        rides.plan = fresh
+        if (fresh.points != old.points) routeActions?.editStops?.invoke(fresh.ride())
+    }
     val interactions = rememberStopInteractions(
-        onAdd = if (editable) ({ point -> selected = null; edit { it.withStopAdded(point) } }) else null,
-        onTapMap = { if (selected != null) { selected = null; true } else false },
+        onAdd = when {
+            !editable -> null
+            plan != null -> ({ point -> selected = null; replan { it.withTap(point) } })
+            else -> ({ point -> selected = null; edit { it.withStopAdded(point) } })
+        },
+        onTapMap = { point ->
+            when {
+                selected != null -> { selected = null; true }
+                rides.plan != null && point != null && routeActions != null -> { replan { it.withTap(point) }; true }
+                else -> false
+            }
+        },
     )
+    val scope = rememberCoroutineScope()
+    var locating by remember { mutableStateOf(false) }
+    var locateFailed by remember { mutableStateOf(false) }
+    var modesOpen by remember { mutableStateOf(false) }
+    var planSheet by remember { mutableStateOf(0.dp) }
 
     val sheet = rememberStandardBottomSheetState(
         initialValue = if (rides.panelOpen) SheetValue.Expanded else SheetValue.PartiallyExpanded,
@@ -209,15 +260,17 @@ private fun MapScreen(
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     // Height of the sheet header, measured: the collapsed sheet shows exactly that.
     var header by remember { mutableStateOf(0.dp) }
-    val peek = if (ride == null) 0.dp else DragHandleHeight + header + navBar
+    // While planning the ride sheet stays away: the plan has its own sheet (#33).
+    val rideSheet = ride != null && plan == null
+    val peek = if (!rideSheet) 0.dp else DragHandleHeight + header + navBar
 
     // Sheet <-> state, both ways: the platform opens a new ride expanded, the user drags it.
-    LaunchedEffect(rides.panelOpen, ride == null) {
-        if (ride == null) return@LaunchedEffect
+    LaunchedEffect(rides.panelOpen, rideSheet) {
+        if (!rideSheet) return@LaunchedEffect
         if (rides.panelOpen) sheet.expand() else sheet.partialExpand()
     }
     LaunchedEffect(sheet) {
-        snapshotFlow { sheet.currentValue }.collect { if (rides.ride != null) rides.panelOpen = it == SheetValue.Expanded }
+        snapshotFlow { sheet.currentValue }.collect { if (rides.ride != null && rides.plan == null) rides.panelOpen = it == SheetValue.Expanded }
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -237,10 +290,10 @@ private fun MapScreen(
         BottomSheetScaffold(
             scaffoldState = scaffold,
             sheetPeekHeight = peek,
-            sheetSwipeEnabled = ride != null,
-            sheetDragHandle = if (ride != null) ({ BottomSheetDefaults.DragHandle() }) else null,
+            sheetSwipeEnabled = rideSheet,
+            sheetDragHandle = if (rideSheet) ({ BottomSheetDefaults.DragHandle() }) else null,
             sheetContent = {
-                if (ride != null) {
+                if (ride != null && rideSheet) {
                     RideSheet(
                         rides,
                         importActions,
@@ -277,6 +330,7 @@ private fun MapScreen(
                     viewportInsets = PaddingValues(
                         top = statusBar + TopBarHeight,
                         bottom = when {
+                            plan != null -> planSheet
                             ride != null -> peek
                             showFab -> navBar + FabHeight
                             else -> navBar
@@ -290,7 +344,10 @@ private fun MapScreen(
                             selectedStop,
                             state,
                             onSelect = { selected = it },
-                            onMove = { i, point -> selected = i; edit { it.withStopMoved(i, point) } },
+                            onMove = { i, point ->
+                                selected = i
+                                if (plan != null) replan { it.withMoved(i, point) } else edit { it.withStopMoved(i, point) }
+                            },
                         )
                     }
                 }
@@ -298,26 +355,119 @@ private fun MapScreen(
                     Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (store != null && !tabs) HomeButton(onClick = { routeActions?.cancel?.invoke(); rides.goHome() })
+                    if (plan != null) {
+                        PlanTopBar(
+                            plan,
+                            onBack = { if (!rides.askBeforeLeavingPlan()) { routeActions?.cancel?.invoke(); rides.goHome() } },
+                            onUndo = { selected = null; replan { it.undone() } },
+                        )
+                        RidingModeChips(
+                            rides.options,
+                            onPick = { mode -> routeActions?.changeOptions?.invoke(mode.options) },
+                            onMore = { modesOpen = true },
+                        )
+                    } else if (store != null && !tabs) {
+                        HomeButton(onClick = { routeActions?.cancel?.invoke(); rides.goHome() })
+                    }
                     ImportStatus(rides)
                 }
                 if (ride != null && selectedStop != null) {
                     StopToolbar(
                         ride,
                         selectedStop,
-                        onReorder = { from, to -> selected = to; edit { it.withStopReordered(from, to) } },
-                        onRemove = { i -> selected = null; edit { it.withStopRemoved(i) } },
+                        onReorder = { from, to ->
+                            selected = to
+                            if (plan != null) replan { it.withReordered(from, to) } else edit { it.withStopReordered(from, to) }
+                        },
+                        onRemove = { i -> selected = null; if (plan != null) replan { it.withRemoved(i) } else edit { it.withStopRemoved(i) } },
                         onDone = { selected = null },
-                        modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(start = 80.dp, top = 12.dp, end = 12.dp),
+                        // While planning the toolbar goes under the top bar and the mode chips.
+                        modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding()
+                            .padding(start = 80.dp, top = if (plan != null) PlanTopHeight else 12.dp, end = 12.dp),
+                        canRemove = if (plan != null) true else ride.canRemoveStop,
                     )
                 }
-                if (showFab && importActions != null) {
+                if (plan != null && ride != null) {
+                    PlanSheet(
+                        plan,
+                        ride,
+                        rides.route,
+                        routeActions,
+                        canLocate = navigation != null,
+                        locating = locating,
+                        locateFailed = locateFailed,
+                        onName = { name -> rides.plan = rides.plan?.withName(name) },
+                        onHere = {
+                            val platform = navigation
+                            if (platform != null) {
+                                locating = true
+                                locateFailed = false
+                                scope.launch {
+                                    val here = platform.currentPosition()
+                                    locating = false
+                                    if (here == null) {
+                                        locateFailed = true
+                                    } else {
+                                        replan { it.withStartHere(here) }
+                                        state.animateCamera(
+                                            CameraUpdate(
+                                                center = Position(latitude = here.lat, longitude = here.lon),
+                                                zoom = maxOf(state.cameraPosition.zoom, PLAN_ZOOM),
+                                                bearing = state.cameraPosition.bearing,
+                                                pitch = state.cameraPosition.pitch,
+                                                padding = state.cameraPosition.padding,
+                                            ),
+                                            CameraAnimation.Ease(CameraAnimation.Ease.Standard) { duration = 800.milliseconds },
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        onRoundTrip = { replan { it.withRoundTrip() } },
+                        onDone = { selected = null; rides.finishPlan() },
+                        modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged { planSheet = with(density) { it.height.toDp() } },
+                    )
+                    if (rides.planLeaving) {
+                        PlanLeaveDialog(
+                            onKeep = { rides.planLeaving = false },
+                            onDiscard = { routeActions?.cancel?.invoke(); rides.goHome() },
+                        )
+                    }
+                    if (modesOpen && routeActions != null) {
+                        RouteSettingsSheet(
+                            ride = ride,
+                            title = plan.name.ifBlank { stringResource(Res.string.plan_title) },
+                            applied = rides.options,
+                            presets = rides.presets,
+                            bike = store?.data?.defaultBike,
+                            onApply = { modesOpen = false; routeActions.changeOptions(it) },
+                            onSavePreset = routeActions.savePreset,
+                            onDeletePreset = routeActions.deletePreset,
+                            onDismiss = { modesOpen = false },
+                        )
+                    }
+                }
+                if (showFab && store != null && routeActions != null) {
+                    // Explore (#33): the main action on the empty map is planning a ride.
+                    ExtendedFloatingActionButton(
+                        onClick = { rides.startPlan() },
+                        icon = { Icon(AppIcons.Add, contentDescription = null) },
+                        text = { Text(stringResource(Res.string.plan_title), style = MaterialTheme.typography.labelLarge) },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp).heightIn(min = Touch.Glove),
+                    )
+                } else if (showFab && importActions != null) {
                     ImportFab(importActions, Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp))
                 }
             }
         }
     }
 }
+
+/** Room taken by the plan's top bar and mode chips (#33): the stop toolbar goes under them. */
+private val PlanTopHeight: Dp = 148.dp
+
+/** Zoom when "Use my position" moves the map: a few villages around, enough to tap the next stop. */
+private const val PLAN_ZOOM = 11.0
 
 /** Material drag handle: a 4 dp bar with 22 dp of padding above and below. */
 private val DragHandleHeight: Dp = 48.dp

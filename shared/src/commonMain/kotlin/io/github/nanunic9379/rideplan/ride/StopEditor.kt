@@ -54,9 +54,11 @@ import kotlin.math.roundToInt
 /**
  * Map gestures for editing the stops (#2): a long press adds a stop, a tap on the map
  * clears the selected stop. [onAdd] is null when the ride cannot be edited: the map behaves as usual.
+ * [onTapMap] gets the tapped point (when the map gives one) and returns true when it used the tap:
+ * while planning a ride (#33) every tap adds a stop.
  */
 @Composable
-fun rememberStopInteractions(onAdd: ((LatLon) -> Unit)?, onTapMap: () -> Boolean): MapInteractions {
+fun rememberStopInteractions(onAdd: ((LatLon) -> Unit)?, onTapMap: (LatLon?) -> Boolean): MapInteractions {
     val add by rememberUpdatedState(onAdd)
     val tap by rememberUpdatedState(onTapMap)
     return remember {
@@ -74,7 +76,12 @@ fun rememberStopInteractions(onAdd: ((LatLon) -> Unit)?, onTapMap: () -> Boolean
                         }
                     }
                 }
-                click { onEvent { if (tap()) ClickResult.Consume else ClickResult.Pass } }
+                click {
+                    onEvent { e ->
+                        val point = e.position?.let { mapLatLon(it.latitude, it.longitude) }
+                        if (tap(point)) ClickResult.Consume else ClickResult.Pass
+                    }
+                }
             }
         }
     }
@@ -148,6 +155,8 @@ fun StopToolbar(
     onRemove: (Int) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    /** While planning (#33) any stop can go; on a saved ride start and finish stay. */
+    canRemove: Boolean = ride.canRemoveStop,
 ) {
     val stop = ride.stops.getOrNull(index) ?: return
     Card(modifier.widthIn(max = 360.dp)) {
@@ -169,7 +178,7 @@ fun StopToolbar(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(
                     onClick = { onRemove(index) },
-                    enabled = ride.canRemoveStop,
+                    enabled = canRemove,
                     modifier = Modifier.heightIn(min = 48.dp),
                 ) { Text(stringResource(Res.string.stop_edit_remove)) }
                 TextButton(onClick = onDone, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(Res.string.stop_edit_done)) }

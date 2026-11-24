@@ -80,6 +80,7 @@ import io.github.nanunic9379.rideplan.resources.home_empty_text
 import io.github.nanunic9379.rideplan.resources.home_empty_title
 import io.github.nanunic9379.rideplan.resources.home_new_ride
 import io.github.nanunic9379.rideplan.resources.home_paste_link
+import io.github.nanunic9379.rideplan.resources.plan_on_map
 import io.github.nanunic9379.rideplan.resources.import_open_file
 import io.github.nanunic9379.rideplan.resources.len_100_200
 import io.github.nanunic9379.rideplan.resources.len_over_200
@@ -130,7 +131,7 @@ fun MainNavBar(rides: RideScreenState, modifier: Modifier = Modifier) {
     }
 }
 
-/** "New ride" (#21): an extended FAB that opens the three ways to start one. */
+/** "New ride" (#21): an extended FAB that opens the ways to start one; planning on the map first (#33). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewRideFab(actions: ImportActions, rides: RideScreenState, modifier: Modifier = Modifier) {
@@ -151,6 +152,7 @@ fun NewRideFab(actions: ImportActions, rides: RideScreenState, modifier: Modifie
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).semantics { heading() },
                 )
+                NavRow(AppIcons.Route, stringResource(Res.string.plan_on_map), onClick = { sheet = false; rides.startPlan() }, end = {})
                 NavRow(AppIcons.Link, stringResource(Res.string.home_paste_link), onClick = { sheet = false; link = true }, end = {})
                 NavRow(AppIcons.File, stringResource(Res.string.import_open_file), onClick = { sheet = false; actions.openFile() }, end = {})
                 NavRow(AppIcons.Map, stringResource(Res.string.new_ride_explore), onClick = { sheet = false; rides.tab(Page.MAP) }, end = {})
