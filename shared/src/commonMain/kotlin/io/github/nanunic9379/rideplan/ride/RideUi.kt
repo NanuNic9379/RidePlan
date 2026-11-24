@@ -516,6 +516,7 @@ fun RideSheet(
             RouteSection(route, routeActions)
             RideNotes(ride, route)
             FuelSection(state, routeActions, bike)
+            CountryWarningsSection(ride)
             if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {
                 RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
