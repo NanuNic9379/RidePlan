@@ -145,6 +145,7 @@ class MainActivity : ComponentActivity() {
             importText = { text -> load { RideIntake.fromText(text) } },
             openRide = ::openRide,
             shareGpx = ::shareGpx,
+            shareFiles = ::shareGpxFiles,
             shareText = ::shareText,
         )
         val routeActions = RouteActions(
@@ -328,6 +329,30 @@ class MainActivity : ComponentActivity() {
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_TITLE, uri.lastPathSegment)
                 clipData = ClipData.newRawUri(null, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, null))
+        }
+    }
+
+    /** The days of a trip (#12): several GPX files in one share, each readable only by the chosen app. */
+    private fun shareGpxFiles(files: List<Pair<String, String>>) {
+        if (files.isEmpty()) return
+        lifecycleScope.launch {
+            val uris = withContext(Dispatchers.IO) {
+                runCatching {
+                    val dir = File(cacheDir, "shared").apply { deleteRecursively(); mkdirs() }
+                    files.map { (name, gpx) ->
+                        val file = File(dir, name).apply { writeText(gpx) }
+                        FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
+                    }
+                }.getOrNull()
+            } ?: return@launch
+            val send = if (uris.size == 1) Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, uris[0])
+            else Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+            send.apply {
+                type = "application/gpx+xml"
+                clipData = ClipData.newRawUri(null, uris[0]).also { clip -> uris.drop(1).forEach { clip.addItem(ClipData.Item(it)) } }
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             startActivity(Intent.createChooser(send, null))

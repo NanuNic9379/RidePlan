@@ -1,5 +1,6 @@
 package io.github.nanunic9379.rideplan.profile
 
+import io.github.nanunic9379.rideplan.ride.DayCap
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.PrivateZone
 import io.github.nanunic9379.rideplan.ride.Ride
@@ -26,9 +27,9 @@ data class Profile(
     val color: Int = 0,
 )
 
-/** A saved stop: [kind] is the name of [Stop.Kind], so the file stays readable. */
+/** A saved stop: [kind] is the name of [Stop.Kind], so the file stays readable. [overnight]: see [Stop.overnight]. */
 @Serializable
-data class SavedStop(val name: String?, val lat: Double, val lon: Double, val kind: String = Stop.Kind.STOP.name)
+data class SavedStop(val name: String?, val lat: Double, val lon: Double, val kind: String = Stop.Kind.STOP.name, val overnight: Boolean = false)
 
 /** A ride that arrived from someone else (#21): it waits in "Received" until you keep or discard it. */
 @Serializable
@@ -60,6 +61,8 @@ data class SavedRide(
     val openedAt: Long? = null,
     val received: Received? = null,
     val riddenWith: Map<Long, String> = emptyMap(),
+    /** Daily cap of a multi-day trip (#12), see [SavedDayCap]. */
+    val dayCap: SavedDayCap? = null,
 ) {
     val lastOpened: Long get() = openedAt ?: savedAt
     val lastRidden: Long? get() = ridden.maxOrNull()
@@ -72,8 +75,9 @@ data class SavedRide(
     fun toRide(): Ride = Ride(
         name = name,
         track = track.chunked(2).filter { it.size == 2 }.map { LatLon(it[0], it[1]) },
-        stops = stops.map { s -> Stop(s.name, LatLon(s.lat, s.lon), Stop.Kind.entries.firstOrNull { it.name == s.kind } ?: Stop.Kind.STOP) },
+        stops = stops.map { s -> Stop(s.name, LatLon(s.lat, s.lon), Stop.Kind.entries.firstOrNull { it.name == s.kind } ?: Stop.Kind.STOP, s.overnight) },
         source = Ride.Source.entries.firstOrNull { it.name == source } ?: Ride.Source.GPX,
+        dayCap = dayCap?.toDayCap(),
     )
 
     companion object {
@@ -84,10 +88,11 @@ data class SavedRide(
             km = ride.lengthKm,
             seconds = ride.route?.seconds?.toLong(),
             source = ride.source.name,
-            stops = ride.stops.map { SavedStop(it.name, it.point.lat, it.point.lon, it.kind.name) },
+            stops = ride.stops.map { SavedStop(it.name, it.point.lat, it.point.lon, it.kind.name, it.overnight) },
             // The route calculated by RidePlan is rebuilt from the stops: the file stays small.
             track = if (ride.route != null) emptyList() else ride.track.flatMap { listOf(it.lat, it.lon) },
             ridden = ridden,
+            dayCap = ride.dayCap?.let(SavedDayCap::from),
         )
     }
 }
@@ -283,3 +288,16 @@ data class Stats(
     val longestKm: Double?,
     val lastRidden: Long?,
 )
+
+/**
+ * Daily cap of a multi-day trip (#12). [unit] is the name of [DayCap.Unit], so the file stays
+ * readable; an unknown unit (from a newer version) is ignored.
+ */
+@Serializable
+data class SavedDayCap(val unit: String, val value: Double) {
+    fun toDayCap(): DayCap? = DayCap.Unit.entries.firstOrNull { it.name == unit }?.let { DayCap(it, value) }?.takeIf { it.valid }
+
+    companion object {
+        fun from(cap: DayCap) = SavedDayCap(cap.unit.name, cap.value)
+    }
+}

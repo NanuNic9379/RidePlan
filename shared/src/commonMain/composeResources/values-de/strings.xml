@@ -520,4 +520,19 @@
     <string name="units_auto">Auto</string>
     <string name="units_note">Automatisch folgt dem Land des Handys: Meilen in den USA und im Vereinigten Königreich, sonst Kilometer.</string>
     <string name="nav_say_continue">Fahre %1$s weiter.</string>
+    <string name="days_title">Tage</string>
+    <string name="days_hint">Teile eine lange Reise auf: Jeder Tag endet dort, wo du übernachtest.</string>
+    <string name="days_cap_switch">Tageslimit</string>
+    <string name="days_cap_km">Strecke</string>
+    <string name="days_cap_hours">Fahrzeit</string>
+    <string name="days_cap_value">%1$s pro Tag</string>
+    <string name="days_cap_less">Weniger pro Tag</string>
+    <string name="days_cap_more">Mehr pro Tag</string>
+    <string name="days_overnights">Übernachtungen</string>
+    <string name="days_overnights_hint">Tippe, wo du schläfst: Dort endet der Tag.</string>
+    <string name="day_title">Tag %1$d</string>
+    <string name="day_on_road">unterwegs bei %1$s</string>
+    <string name="day_time_estimate">~%1$s</string>
+    <string name="day_share">Tag %1$d als GPX teilen</string>
+    <string name="days_share_all">Jeden Tag als GPX teilen</string>
 </resources>
