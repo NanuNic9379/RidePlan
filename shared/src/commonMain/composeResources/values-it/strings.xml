@@ -176,6 +176,8 @@
     <string name="nav_start">Naviga</string>
     <string name="nav_exit">Esci</string>
     <string name="nav_mute">Silenzia</string>
+    <string name="nav_overview">Percorso</string>
+    <string name="nav_recenter">Ricentra</string>
     <string name="nav_unmute">Voce attiva</string>
     <string name="nav_waiting_gps">In attesa del GPS…</string>
     <string name="nav_permission_text">Per guidarti, RidePlan ha bisogno della tua posizione mentre questa schermata è aperta. Non esce mai dal telefono.</string>
