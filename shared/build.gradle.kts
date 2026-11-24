@@ -35,9 +35,15 @@ kotlin {
             implementation(libs.maplibre.compose)
             implementation(libs.qrose)
             implementation(libs.kotlinx.serialization.json)
+            // Nostr signature check (#3). The native part comes from the app (jni-android) or,
+            // in host tests, from jni-jvm below.
+            implementation(libs.secp256k1.kmp)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.secp256k1.jni.jvm)
         }
     }
 }

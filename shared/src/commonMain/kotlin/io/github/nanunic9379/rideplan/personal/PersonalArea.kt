@@ -30,7 +30,7 @@ fun PersonalArea(
     if (top != null) {
         Surface(Modifier.fillMaxSize()) {
             when (top) {
-                is Dest.RideDetail -> RideDetailPage(store, rides, importActions, top.id, snackbar)
+                is Dest.RideDetail -> RideDetailPage(store, rides, importActions, top.id, snackbar, platform)
                 Dest.EditProfile -> EditProfilePage(store, rides)
                 Dest.Stats -> StatsPage(store, rides)
                 Dest.Garage -> GaragePage(store, rides)
@@ -43,6 +43,7 @@ fun PersonalArea(
                 Dest.Language -> LanguagePage(rides, platform)
                 Dest.MapData -> MapDataPage(rides, platform)
                 Dest.Info -> InfoPage(store, rides, platform)
+                Dest.Nostr -> platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrSettingsPage(it, rides, platform.openUrl) }
             }
         }
         return

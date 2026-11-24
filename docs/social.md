@@ -166,12 +166,63 @@ geocaches, kind 37516, and workouts, kind 1301, neither fits). Proposal:
 
 ### Relays
 
-- The user picks; defaults are 3-5 large free public relays that accept and keep addressable events
-  and forward ephemeral events (candidates to verify at implementation: `relay.damus.io`, `nos.lol`,
-  `relay.primal.net`, plus one European relay). Published as the user's NIP-65 relay list (kind 10002).
-- Reading: query the defaults plus the author's NIP-65 relays when opening a profile.
-- Risk: free relays may delete old events or close. Publishing to several mitigates it; the ride
-  also stays on the author's phone and can be republished.
+Implemented in phase 1 (`social/Relays.kt`). The user can remove, add (up to 8, `wss://` only) and
+restore them in Settings, Publish on Nostr. Defaults, checked in November 2026 through their NIP-11
+documents (all free, no account, no payment, all running strfry, which keeps the newest version of an
+addressable event):
+
+| Relay | Max message | Why |
+|---|---|---|
+| `wss://relay.damus.io` | 1 MB | one of the largest relays, read by most clients (Damus, Amethyst, Primal) |
+| `wss://nos.lol` | 128 KB | large general relay with long retention and spam filtering |
+| `wss://relay.primal.net` | 1 MB | Primal's public relay, high uptime, also read by its web client |
+| `wss://offchain.pub` | 128 KB | independent operator, so the defaults do not depend on the big apps only |
+
+Left out: `nostr.mom` (same operator as `nos.lol`, so no extra safety if one closes) and
+`relay.nostr.band` (did not answer when checked). A ride event is at most 12 KB, far below every limit.
+
+- Reading a ride: the user's relays first, then the relay hints inside its `naddr` (at most 8 in all).
+- Not done yet: publishing the user's relay list (NIP-65, kind 10002) and reading the author's list.
+- Risk: free relays may delete old events or close. Publishing to four operators mitigates it; the
+  ride also stays on the author's phone and can be published again with one tap.
+
+### Phase 1 as built (November 2026)
+
+- **No key in RidePlan.** Publishing goes through a signer app on the phone (NIP-55, for example
+  Amber, also on F-Droid, Obtainium and zap.store). RidePlan asks it for the public key
+  (`get_public_key`) and, for each publish, to sign the event (`sign_event`, with `id` and
+  `current_user`). The answer (the signed event or only the signature) is **checked before anything
+  is sent**: same content, same author, right id, valid BIP-340 signature. A wrong answer is refused
+  (`Signing.signedEvent`).
+- **Off by default.** Settings, Publish on Nostr has a switch; with it off, no Nostr part appears
+  and nothing is contacted. With it on, the network is used only when the user taps **Publish** or
+  checks a followed ride (when opening it, or with the button).
+- **Publish** (ride page): a dialog with the same privacy options and preview as every other share
+  (private zones, first and last km), an optional one-line summary, the relays, and the warning that
+  a published ride is public and cannot be really deleted. The `d` tag is the ride's version id
+  (`RideVersion.rideId`, #11): publishing a new version of the ride replaces the old one on the
+  relays. A ride saved before versions existed gets its first version at the first publish.
+- **Following**: the author taps **Send the Nostr address** (`nostr:naddr1...`, with author, `d`,
+  kind and two relay hints) and sends it as they like. The rider pastes it in Settings, Publish on
+  Nostr, Follow a ride. The ride is saved among the received rides; every time it is opened (or with
+  **Look for a new version**) the app asks the relays for the address and applies a newer version
+  with the existing #11 logic (`ProfileData.receive`, "updated from vN to vM" note).
+- **Only the author can publish a new version** (`RideUpdates`): an event is used only if its kind is
+  30455, its author and `d` are those of the address, its id and signature are valid, and the ride
+  inside has the same version id. Among valid ones the highest version number wins, then the newest.
+  Anyone else's event at the same `d` is ignored.
+- **Relays down**: if no relay answers within 10 s the ride is not touched and the app says
+  "No relay answered. You keep the last version received". The last accepted event is also kept in
+  `nostr.json`.
+- **Storage**: `nostr.json` in the app's private files (switch, relays, signer public key and app,
+  published and followed rides). Not in the backup file; "Delete all data" clears it.
+- **Code**: `shared/.../social/` (`NostrEvent`, `Nip19`, `Sha256`, `RelayProtocol`, `RelayPool`,
+  `Relays`, `RideUpdates`, `SocialStore`, `NostrService`, `NostrUi`); Android: `AndroidNostrSigner`
+  (NIP-55 intents, `<queries>` for `nostrsigner:`) and `OkHttpRelayTransport` (websockets).
+- **Tests**: `NostrProtocolTest` and `RideUpdatesTest` (common: SHA-256 vectors, bech32 and NIP-19
+  vectors and round trips, event id and JSON, relay messages, publish and fetch exchanges, relay
+  list, version choice) and `NostrCryptoTest` (host: real signatures, signer answers, publish,
+  follow, update, forged versions, relays down or silent, against fake relays).
 
 ## 4. Friends on the map during the ride (#16)
 
@@ -277,23 +328,32 @@ Checked on Maven Central, November 2026.
 | `org.nostrdevkit:nostr-sdk-kmp` 0.45.2 | rust-nostr Kotlin bindings (UniFFI) | MIT | Android, iOS | 19.6 MB AAR (Rust natives) | README says "ALPHA, API will change in breaking ways"; Rust toolchain only for building it |
 
 Recommendation: **secp256k1-kmp + our own small code** for the first phases (event, id with SHA-256,
-NIP-19, NIP-49, NIP-44) — RidePlan needs few NIPs, and a small dependency keeps the APK small and the
+NIP-19, NIP-49, NIP-44): RidePlan needs few NIPs, and a small dependency keeps the APK small and the
 code reviewable; NIP-44 has official test vectors. Re-evaluate Quartz if the community part grows
-(relay pool, outbox model). Avoid nostr-sdk-kmp while it is alpha. A NIP-55 signer path needs no
-crypto library at all.
+(relay pool, outbox model). Avoid nostr-sdk-kmp while it is alpha.
+
+**Used in phase 1:**
+
+- `secp256k1-kmp` 0.24.0 (Apache-2.0), only to **verify** signatures (`verifySchnorr`). The common
+  part is pure Kotlin; the native library comes from `secp256k1-kmp-jni-android` in the app (about
+  1.4 MB of `.so` per ABI, so roughly 1.4 MB more per split APK) and `-jni-jvm` in host tests only.
+  R8 keeps `fr.acinq.secp256k1.**` (it finds its native loader by reflection).
+- `okhttp` 4.12.0 (Apache-2.0, pure Java/Kotlin, about 0.8 MB before R8) for websockets on Android;
+  Okio was already in the app. No Google services: the F-Droid build is the same.
+- SHA-256 and bech32 are our own small code, checked against the standard test vectors.
 
 ## 8. Phased plan
 
 | Phase | What | Servers | Status |
 |---|---|---|---|
 | 0 | Ride → unsigned Nostr event draft (kind, tags, geohash, size limit, privacy via `SharePreview`), parse back | none | **done** (`social/RideEvent.kt`, `RideEventTest`) |
-| 1 | "Copy as Nostr event" / send to a NIP-55 signer app (Amber) and let the user post it with their own Nostr client | none of ours, nothing contacted by RidePlan | no key in RidePlan; small UI |
-| 2 | Own key: generate, Keystore storage, NIP-49 backup, `npub` display; sign with secp256k1-kmp; publish to user-chosen relays; read a ride from an `naddr` link | public relays | needs relays + key defaults (open 3-4) |
+| 1 | Publish a ride through a NIP-55 signer app (Amber) to user-editable public relays, off by default; follow a ride by its `naddr` and receive its new versions (only from the author) | public relays (not ours) | **done** (see "Phase 1 as built") |
+| 2 | Own key: generate, Keystore storage, NIP-49 backup, `npub` display; sign with secp256k1-kmp; NIP-65 relay list | public relays | for riders without a signer app |
 | 3 | Explore tab: search by area (`g`), ride page, ratings (NIP-25) and comments (NIP-22), report/mute | public relays | needs moderation (open 2) |
 | 4 | Friends on the map: group secret in the QR, NIP-44 ephemeral events, foreground service, auto-stop | public relays (ciphertext only) | needs max time and interval (open 4), privacy text |
 | 5 | Photos on Blossom; BLE offline positions; BLE ride transfer | media servers (third party) | needs photo hosting (open 1) |
 
-Phases 0-1 need **zero servers**: nothing in RidePlan talks to the network.
+Phase 0 needs no network. Phase 1 talks only to the public relays in the user's list, and only when they tap Publish or check a followed ride.
 
 ## Decided (no longer open)
 
@@ -302,19 +362,18 @@ Phases 0-1 need **zero servers**: nothing in RidePlan talks to the network.
 - Live positions go through public relays as NIP-44 encrypted ephemeral events with throwaway keys,
   BLE between nearby bikes as offline fallback; pure-internet P2P (WebRTC) is not used (#16).
 - The project never runs a relay, a media server or a search index.
+- Photos are postponed (#32).
+- Moderation is client-side: content is hidden after 3 reports from people you follow (#32, phase 3).
+- Default relays: the four above, editable; publishing is opt-in (switch off by default) and per tap.
+- Phase 1 keys: signer app (NIP-55) only; RidePlan holds no private key.
 
 ## Open decisions for the owner
 
-1. **Photo hosting** (#32): third-party Blossom servers chosen by the user, or postpone photos.
-   RidePlan never runs a media server. Recommended: postpone, text and ratings first; then
-   user-chosen Blossom servers, EXIF stripped, unknown keys' images blurred.
-2. **Moderation** (#32): client-side only (NIP-56 report + mute + "people I follow first"); no central
-   moderator is possible without a server of ours. Confirm, and choose the report threshold that hides
-   content. Recommended: yes, hide after 3 reports from people you follow.
-3. **Which relays**: the default 3-5 public relays (to be verified that they keep kind 30455 and
-   forward ephemeral events), user-editable. Recommended: big free relays, one in Europe.
-4. **Defaults**:
+1. **Defaults** still open:
    - event kind: provisional 30455 and the format above, NIP proposal later (recommended: yes);
-   - keys: signer app (NIP-55) first, then own key in Keystore with NIP-49 backup, no NIP-06 words;
-   - live positions: maximum sharing time (proposed 8 h) and update interval (proposed 15-60 s);
-   - library: secp256k1-kmp + own code (recommended) or Quartz (MIT, bigger).
+   - own key for riders without a signer app (phase 2): Keystore with NIP-49 backup, no NIP-06 words;
+   - live positions: maximum sharing time (proposed 8 h) and update interval (proposed 15-60 s).
+2. **Followed rides are checked only on open**: today a followed ride is checked when its page is
+   opened or with the button. A periodic check in the background (for example once a day on Wi-Fi)
+   would bring updates without opening the app, at the cost of contacting relays on its own.
+   Recommended: keep it manual until the Explore tab exists.

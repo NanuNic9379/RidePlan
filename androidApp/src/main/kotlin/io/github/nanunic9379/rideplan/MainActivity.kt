@@ -81,6 +81,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var store: ProfileStore
     /** Turn-by-turn navigation (#5): registered here because it asks for the location permission. */
     private val navigation = AndroidNavigation(this, ::rerouteFromHere)
+    /** Public sharing on Nostr (#3): the key stays in the signer app. */
+    private val nostrSigner = AndroidNostrSigner(this)
+    private lateinit var nostr: io.github.nanunic9379.rideplan.social.NostrService
 
     /** Backup (#43): the user chooses where to save it (Downloads, Drive, ...). */
     private val saveBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -176,6 +179,7 @@ class MainActivity : ComponentActivity() {
             save = { saveBackup.launch("rideplan-backup.json") },
             restore = { restoreBackup.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
         )
+        nostr = nostrService()
         platform = PlatformActions(
             versionName = BuildConfig.VERSION_NAME,
             openUrl = ::openUrl,
@@ -190,6 +194,7 @@ class MainActivity : ComponentActivity() {
             updates = updateActions(lifecycleScope),
             region = android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { null },
             rideMap = session.rideMaps.actions.also { session.rideMaps.mustAskForMobile = ::mustAskForMobile },
+            nostr = nostr,
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
         setContent {
@@ -294,6 +299,21 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    /** Nostr settings, relays and followed rides (#3): their own app file, never in the backup. */
+    private fun nostrService(): io.github.nanunic9379.rideplan.social.NostrService {
+        val file = File(filesDir, "nostr.json")
+        val social = io.github.nanunic9379.rideplan.social.SocialStore(
+            read = { file.takeIf { it.exists() }?.readText() },
+            write = { text ->
+                val tmp = File(filesDir, "nostr.json.tmp")
+                tmp.writeText(text)
+                if (!tmp.renameTo(file)) { file.delete(); tmp.renameTo(file) }
+            },
+        )
+        val pool = io.github.nanunic9379.rideplan.social.RelayPool(OkHttpRelayTransport())
+        return io.github.nanunic9379.rideplan.social.NostrService(social, store, nostrSigner, pool)
+    }
+
     /** A ride from "Your rides": straight onto the map, routed again if needed. */
     private fun openRide(ride: Ride) {
         routeJob?.cancel()
@@ -393,6 +413,7 @@ class MainActivity : ComponentActivity() {
         File(cacheDir, "shared").deleteRecursively()
         lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
         session.rideMaps.wipe()
+        nostr.store.wipe()
     }
 
     /**

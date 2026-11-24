@@ -15,6 +15,8 @@ as with any web page, the phone's IP address and the time of the request.
 | You download the map of a ride for use without signal | OpenFreeMap (`tiles.openfreemap.org`) | The map tiles along the ride |
 | You download the road data of an area (roads, fuel stations, road notes) | GitHub (Releases of this repository) | The file name of the area |
 | Update check (GitHub version only) | GitHub (`api.github.com`) | No data beyond the request for the latest version |
+| You tap Publish on Nostr (off by default) | The Nostr relays in your list (by default `relay.damus.io`, `nos.lol`, `relay.primal.net`, `offchain.pub`) | The ride as shared (private zones and first and last km removed), its name, your summary, your Nostr public key: **public** |
+| You follow a ride on Nostr and open or check it | Your relays and the relays named in its address | The address of the ride (author key and ride id) |
 
 The route is computed **on the phone**: stops are not sent to any server. The same holds during
 navigation: your position is used only on the phone.
@@ -37,7 +39,7 @@ are often your home or garage, so before anything leaves the phone the app can b
 
 - **Private zones.** In the profile you can mark places such as home or the garage as private
   zones (500 m, 750 m or 1 km). They are applied to every way of sharing (GPX file, QR, link, and
-  Nostr when it arrives), on by default: track points inside a zone are dropped, a start or finish
+  Nostr), on by default: track points inside a zone are dropped, a start or finish
   inside a zone is moved to the first point of the ride outside every zone and loses its name, and
   other stops inside a zone are removed. A ride calculated on the phone is then shared as the cut
   track, so whoever opens it does not recalculate the road from your door.
@@ -55,8 +57,12 @@ are often your home or garage, so before anything leaves the phone the app can b
 Private zones are stored only in the profile file on the phone (and in the backup file, if you
 make one); they are never shared.
 
-When sharing via Nostr arrives: what you publish on Nostr is **public** and
-copied to several servers (relays), which we cannot delete. The app will tell you before publishing.
+**Nostr (off by default).** In Settings, Publish on Nostr you can turn on public sharing. What you
+publish is **public**, copied to several servers (relays) run by others, and cannot be really
+deleted; the app says so before publishing. Your Nostr key stays in a separate signer app (such as
+Amber): RidePlan never sees it and only stores your public key. Relays see your IP address, the time
+and what you publish or ask for. RidePlan runs no relay. Your Nostr settings (relays, followed rides)
+are stored in a separate file on the phone, not in the backup, and "Delete all data" removes them.
 
 ## GDPR
 
