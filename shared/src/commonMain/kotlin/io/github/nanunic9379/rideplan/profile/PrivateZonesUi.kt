@@ -47,6 +47,7 @@ import io.github.nanunic9379.rideplan.resources.zones_title
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.PrivateZone
 import io.github.nanunic9379.rideplan.ride.PrivateZones
+import io.github.nanunic9379.rideplan.ui.Radius
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -77,7 +78,7 @@ fun PrivateZonesSection(store: ProfileStore) {
                 }
             }
         }
-        FilledTonalButton(onClick = { adding = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+        FilledTonalButton(onClick = { adding = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape = Radius.Control) {
             Text(stringResource(Res.string.zones_add))
         }
     }
@@ -146,7 +147,7 @@ private fun AddZoneDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { place?.let { onSave(it, name.ifBlank { defaultName }, radius) } }, enabled = place != null) {
+            Button(onClick = { place?.let { onSave(it, name.ifBlank { defaultName }, radius) } }, enabled = place != null, shape = Radius.Control) {
                 Text(stringResource(Res.string.zones_save))
             }
         },

@@ -118,6 +118,8 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.horizontalScroll
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
+import io.github.nanunic9379.rideplan.ui.TabularFigures
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -149,7 +151,7 @@ fun RidingModeRow(options: RouteOptions, enabled: Boolean, onOpen: () -> Unit) {
     Surface(
         onClick = onOpen,
         enabled = enabled,
-        shape = RoundedCornerShape(16.dp),
+        shape = Radius.Card,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
     ) {
@@ -208,7 +210,7 @@ fun RidingModeChips(options: RouteOptions, onPick: (RidingMode) -> Unit, onMore:
 
 @Composable
 private fun CustomBadge() {
-    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
+    Surface(shape = Radius.Tag, color = MaterialTheme.colorScheme.tertiaryContainer) {
         Text(
             stringResource(Res.string.route_custom),
             style = MaterialTheme.typography.labelMedium,
@@ -320,7 +322,7 @@ fun RouteSettingsSheet(
                     enabled = draft.custom,
                     modifier = Modifier.heightIn(min = Touch.Glove),
                 ) { Text(stringResource(Res.string.route_reset)) }
-                Button(onClick = { onApply(draft) }, modifier = Modifier.weight(1f).heightIn(min = Touch.Glove)) {
+                Button(onClick = { onApply(draft) }, modifier = Modifier.weight(1f).heightIn(min = Touch.Glove), shape = Radius.Control) {
                     Text(stringResource(Res.string.route_apply))
                 }
             }
@@ -373,15 +375,14 @@ private fun Preview(ride: Ride, applied: RouteOptions, bike: Bike?, pending: Boo
             } else {
                 Text(
                     "${info.km.roundToInt()} km · ${durationText(info.seconds)}",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall.merge(TabularFigures),
                 )
                 // Less than a kilometre and a minute apart: the same road, said in words.
                 val base = info.baseline?.takeIf { kotlin.math.abs(info.km - it.km) >= 1 || info.seconds - it.seconds >= 60 }
                 val fastest = applied.forBike(bike) == RidingMode.FAST.options.forBike(bike) || info.baseline != null
                 when {
                     base != null -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                        Surface(shape = Radius.Tag, color = MaterialTheme.colorScheme.primaryContainer) {
                             Text(
                                 deltaText(info.km - base.km, info.seconds - base.seconds),
                                 style = MaterialTheme.typography.labelLarge,
@@ -430,7 +431,7 @@ private fun ModeTile(look: ModeLook, mode: RidingMode?, selected: Boolean, onPic
     val soon = mode == null
     val colors = MaterialTheme.colorScheme
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = Radius.Card,
         color = when {
             selected -> colors.primaryContainer
             soon -> colors.surface
@@ -453,7 +454,7 @@ private fun ModeTile(look: ModeLook, mode: RidingMode?, selected: Boolean, onPic
                 Spacer(Modifier.weight(1f))
                 when {
                     selected -> Icon(AppIcons.Check, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                    soon -> Surface(shape = RoundedCornerShape(8.dp), color = colors.surfaceContainerHighest) {
+                    soon -> Surface(shape = Radius.Tag, color = colors.surfaceContainerHighest) {
                         Text(
                             stringResource(Res.string.route_mode_soon),
                             style = MaterialTheme.typography.labelSmall,
@@ -479,7 +480,7 @@ private fun ModeDescription(mode: RidingMode) {
     }
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(desc), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(desc), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             stringResource(does).split(" · ").forEach { line ->
                 Text("• $line", style = MaterialTheme.typography.bodySmall)
             }

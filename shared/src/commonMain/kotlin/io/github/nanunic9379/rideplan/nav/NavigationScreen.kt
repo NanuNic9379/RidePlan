@@ -1,5 +1,6 @@
 package io.github.nanunic9379.rideplan.nav
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,8 +37,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.text.TextStyle
 import io.github.nanunic9379.rideplan.resources.nav_overview
 import io.github.nanunic9379.rideplan.resources.nav_recenter
+import io.github.nanunic9379.rideplan.ui.Figure
+import io.github.nanunic9379.rideplan.ui.Motion
+import io.github.nanunic9379.rideplan.ui.Radius
+import io.github.nanunic9379.rideplan.ui.TabularFigures
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraFit
 import org.maplibre.compose.camera.CameraMoveReason
@@ -209,9 +215,10 @@ fun NavigationScreen(
                             }
                         },
                         modifier = Modifier.heightIn(min = ButtonHeight),
+                        shape = Radius.Control,
                     ) { Text(stringResource(Res.string.nav_overview), style = MaterialTheme.typography.titleMedium) }
                 } else {
-                    Button(onClick = { follow = true }, modifier = Modifier.heightIn(min = ButtonHeight)) {
+                    Button(onClick = { follow = true }, modifier = Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) {
                         Text(stringResource(Res.string.nav_recenter), style = MaterialTheme.typography.titleMedium)
                     }
                 }
@@ -227,11 +234,11 @@ fun NavigationScreen(
             text = if (onMarkDone != null) ({ Text(stringResource(Res.string.nav_arrived_text)) }) else null,
             confirmButton = {
                 if (onMarkDone != null) {
-                    Button(onClick = { onMarkDone(); session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight)) {
+                    Button(onClick = { onMarkDone(); session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) {
                         Text(stringResource(Res.string.nav_mark_done))
                     }
                 } else {
-                    Button(onClick = { session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight)) {
+                    Button(onClick = { session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) {
                         Text(stringResource(Res.string.nav_exit))
                     }
                 }
@@ -272,8 +279,8 @@ private fun Banner(session: NavigationSession, onExit: () -> Unit) {
     when {
         session.permission == false -> Message(stringResource(Res.string.nav_permission_text), scheme.errorContainer, scheme.onErrorContainer) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = session::start, Modifier.heightIn(min = ButtonHeight)) { Text(stringResource(Res.string.nav_permission_allow)) }
-                OutlinedButton(onClick = onExit, Modifier.heightIn(min = ButtonHeight)) { Text(stringResource(Res.string.nav_exit)) }
+                Button(onClick = session::start, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) { Text(stringResource(Res.string.nav_permission_allow)) }
+                OutlinedButton(onClick = onExit, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) { Text(stringResource(Res.string.nav_exit)) }
             }
         }
         u == null -> Message(stringResource(Res.string.nav_waiting_gps), scheme.surface, scheme.onSurface)
@@ -305,20 +312,23 @@ private fun Banner(session: NavigationSession, onExit: () -> Unit) {
 @Composable
 private fun TurnBanner(sign: TurnSign, distance: String, text: String, then: PlacedManeuver?) {
     val scheme = MaterialTheme.colorScheme
-    Surface(color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp) {
+    // Dark on light, light on dark: the most contrast in direct sunlight. Orange stays the route's.
+    Surface(color = scheme.inverseSurface, contentColor = scheme.inverseOnSurface, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp) {
         Column {
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                TurnArrow(sign, scheme.onPrimaryContainer, Modifier.size(76.dp))
+                TurnArrow(sign, scheme.inverseOnSurface, Modifier.size(76.dp))
                 Column(Modifier.padding(start = 12.dp)) {
-                    Text(distance, fontSize = 40.sp, fontWeight = FontWeight.Bold, lineHeight = 44.sp)
+                    // The distance to the turn rolls down as it changes; the speed below does not,
+                    // as a number that moves every second would be harder to read at a glance.
+                    Figure(distance, TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Medium, lineHeight = 44.sp).merge(TabularFigures))
                     Text(text, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (then != null) {
-                Surface(color = scheme.primary, contentColor = scheme.onPrimary) {
+                Surface(color = scheme.inverseOnSurface.copy(alpha = 0.12f), contentColor = scheme.inverseOnSurface) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(Res.string.nav_then), style = MaterialTheme.typography.titleSmall)
-                        TurnArrow(then.maneuver.sign, scheme.onPrimary, Modifier.padding(start = 8.dp).size(28.dp))
+                        TurnArrow(then.maneuver.sign, scheme.inverseOnSurface, Modifier.padding(start = 8.dp).size(28.dp))
                     }
                 }
             }
@@ -346,12 +356,17 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
                 val units = LocalUnits.current
                 val shown = speedShown(u.speedMps, u.speedLimitKmh, units)
                 val unit = stringResource(if (units == Units.MILES) Res.string.nav_speed_mph else Res.string.nav_speed_kmh)
+                val speedColor by animateColorAsState(
+                    if (shown.over) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    Motion.feedback(),
+                    label = "speed",
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(
                             shown.speed?.toString() ?: "–",
-                            fontSize = 34.sp, fontWeight = FontWeight.Bold, lineHeight = 36.sp,
-                            color = if (shown.over) MaterialTheme.colorScheme.error else Color.Unspecified,
+                            fontSize = 34.sp, fontWeight = FontWeight.Medium, lineHeight = 36.sp, style = TabularFigures,
+                            color = speedColor,
                         )
                         Text(unit, style = MaterialTheme.typography.labelMedium)
                     }
@@ -362,19 +377,20 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
                     Spacer(Modifier.width(20.dp))
                     Column(Modifier.weight(1f)) {
                         val parts = listOfNotNull(distanceText(u.remainingM), u.remainingSeconds?.let { durationText(it) })
-                        Text(parts.joinToString(" · "), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                        Text(parts.joinToString(" · "), style = MaterialTheme.typography.titleLarge.merge(TabularFigures))
                         Text(stringResource(Res.string.nav_to_finish), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = session::toggleMute, Modifier.weight(1f).heightIn(min = ButtonHeight)) {
+                OutlinedButton(onClick = session::toggleMute, Modifier.weight(1f).heightIn(min = ButtonHeight), shape = Radius.Control) {
                     Text(stringResource(if (session.muted) Res.string.nav_unmute else Res.string.nav_mute), style = MaterialTheme.typography.titleMedium)
                 }
                 Button(
                     onClick = onExit,
                     modifier = Modifier.weight(1f).heightIn(min = ButtonHeight),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                    shape = Radius.Control,
                 ) {
                     Text(stringResource(Res.string.nav_exit), style = MaterialTheme.typography.titleMedium)
                 }

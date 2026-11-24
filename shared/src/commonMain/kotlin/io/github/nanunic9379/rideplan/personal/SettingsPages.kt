@@ -42,6 +42,7 @@ import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.ride.Dest
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -182,6 +183,7 @@ fun PrivacyPage(store: ProfileStore, rides: RideScreenState, backup: BackupActio
             onClick = { rides.open(Dest.DeleteAll) },
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+            shape = Radius.Control,
         ) {
             Icon(AppIcons.Delete, contentDescription = null)
             Text(stringResource(Res.string.wipe_open), Modifier.padding(start = 8.dp))
@@ -221,7 +223,7 @@ fun DeleteAllPage(store: ProfileStore, rides: RideScreenState, backup: BackupAct
             NavRow(AppIcons.Lock, pluralStringResource(Res.plurals.wipe_zones, w.zones, w.zones), onClick = null)
         }
         if (backup != null) {
-            OutlinedButton(onClick = backup.save, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+            OutlinedButton(onClick = backup.save, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                 Icon(AppIcons.Upload, contentDescription = null)
                 Text(stringResource(Res.string.wipe_backup_first), Modifier.padding(start = 8.dp))
             }
@@ -244,6 +246,7 @@ fun DeleteAllPage(store: ProfileStore, rides: RideScreenState, backup: BackupAct
             enabled = understood,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+            shape = Radius.Control,
         ) { Text(stringResource(Res.string.wipe_confirm)) }
         TextButton(onClick = { rides.back() }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Min)) {
             Text(stringResource(Res.string.route_cancel))
@@ -389,7 +392,7 @@ fun MapDataPage(rides: RideScreenState, platform: PlatformActions?) {
             title = { Text(stringResource(Res.string.mapdata_delete_title)) },
             text = { Text(stringResource(Res.string.mapdata_note)) },
             confirmButton = {
-                Button(onClick = { md?.delete(item); confirm = null; version++ }, modifier = Modifier.heightIn(min = Touch.Min)) {
+                Button(onClick = { md?.delete(item); confirm = null; version++ }, modifier = Modifier.heightIn(min = Touch.Min), shape = Radius.Control) {
                     Text(stringResource(Res.string.zones_delete))
                 }
             },

@@ -125,6 +125,7 @@ import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.routeDoneNote
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Brand
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import org.jetbrains.compose.resources.StringResource
@@ -352,6 +353,8 @@ fun ImportFab(actions: ImportActions, modifier: Modifier = Modifier) {
         ImportMenu(actions, onLink = { linkDialog = true }) { open ->
             ExtendedFloatingActionButton(
                 onClick = open,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(AppIcons.Add, contentDescription = null) },
                 text = { Text(stringResource(Res.string.import_button)) },
             )
@@ -518,7 +521,7 @@ fun RideSheet(
             saved()
             if (actions != null) {
                 ImportMenu(actions, onLink = { linkDialog = true }) { open ->
-                    OutlinedButton(onClick = open, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                    OutlinedButton(onClick = open, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                         Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(stringResource(Res.string.import_another))
@@ -573,6 +576,7 @@ internal fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> 
                     onClick = { onShare(preview.ride, true) },
                     enabled = !preview.empty,
                     modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) {
                     Icon(AppIcons.Qr, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -582,6 +586,7 @@ internal fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> 
                     onClick = { onShare(preview.ride, false) },
                     enabled = !preview.empty,
                     modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) {
                     Icon(AppIcons.File, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -610,7 +615,7 @@ internal fun QrDialog(link: String, send: ((String) -> Unit)?, onDismiss: () -> 
             }
         },
         confirmButton = {
-            if (send != null) Button(onClick = { send(link) }) { Text(stringResource(Res.string.qr_send_link)) }
+            if (send != null) Button(onClick = { send(link) }, shape = Radius.Control) { Text(stringResource(Res.string.qr_send_link)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
     )
@@ -638,7 +643,7 @@ internal fun LinkDialog(actions: ImportActions, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            Button(enabled = text.isNotBlank(), onClick = { onDismiss(); actions.importText(text) }) {
+            Button(enabled = text.isNotBlank(), onClick = { onDismiss(); actions.importText(text) }, shape = Radius.Control) {
                 Text(stringResource(Res.string.link_dialog_import))
             }
         },

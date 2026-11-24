@@ -34,6 +34,7 @@ import io.github.nanunic9379.rideplan.resources.update_open_settings
 import io.github.nanunic9379.rideplan.resources.update_permission_text
 import io.github.nanunic9379.rideplan.resources.update_permission_title
 import io.github.nanunic9379.rideplan.resources.update_retry
+import io.github.nanunic9379.rideplan.ui.Radius
 import org.jetbrains.compose.resources.stringResource
 
 /** Banner at the top over the map. Non-blocking: "Later" closes it until the next launch. */
@@ -85,7 +86,7 @@ fun UpdateBanner(
 private fun Actions(primary: String, onPrimary: () -> Unit, onDismiss: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         TextButton(onClick = onDismiss) { Text(stringResource(Res.string.update_later)) }
-        Button(onClick = onPrimary) { Text(primary) }
+        Button(onClick = onPrimary, shape = Radius.Control) { Text(primary) }
     }
 }
 

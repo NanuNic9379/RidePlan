@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +47,7 @@ import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteSection
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -78,7 +78,7 @@ suspend fun NavigationPlatform.currentPosition(timeoutMs: Long = 20_000): LatLon
 @Composable
 fun PlanTopBar(draft: PlanDraft, onBack: () -> Unit, onUndo: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = Radius.Card,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 3.dp,
         modifier = modifier.fillMaxWidth().heightIn(min = Touch.Glove),
@@ -123,7 +123,7 @@ fun PlanSheet(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = Radius.Sheet,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shadowElevation = 6.dp,
         modifier = modifier.fillMaxWidth(),
@@ -150,6 +150,7 @@ fun PlanSheet(
                     onClick = onHere,
                     enabled = !locating,
                     modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) {
                     if (locating) CircularProgressIndicator(Modifier.size(ButtonDefaults.IconSize), strokeWidth = 2.dp)
                     else Icon(AppIcons.MyLocation, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
@@ -165,6 +166,7 @@ fun PlanSheet(
                     onClick = onRoundTrip,
                     enabled = draft.canRoundTrip,
                     modifier = Modifier.weight(1f).heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) {
                     Icon(AppIcons.Loop, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
@@ -174,6 +176,7 @@ fun PlanSheet(
                     onClick = onDone,
                     enabled = draft.canFinish,
                     modifier = Modifier.weight(1f).heightIn(min = Touch.Glove),
+                    shape = Radius.Control,
                 ) {
                     Icon(AppIcons.Check, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
