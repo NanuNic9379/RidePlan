@@ -47,13 +47,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.Sketch
 import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.civilDate
-import io.github.nanunic9379.rideplan.profile.of
+import io.github.nanunic9379.rideplan.profile.FuelUnits
+import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.date_medium
 import io.github.nanunic9379.rideplan.resources.months_long
@@ -64,7 +66,6 @@ import io.github.nanunic9379.rideplan.resources.ride_mi
 import io.github.nanunic9379.rideplan.resources.unit_km
 import io.github.nanunic9379.rideplan.resources.unit_mi
 import io.github.nanunic9379.rideplan.ride.LatLon
-import io.github.nanunic9379.rideplan.ride.formatKm
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Brand
 import io.github.nanunic9379.rideplan.ui.Figure
@@ -76,17 +77,23 @@ import org.jetbrains.compose.resources.stringResource
 /** Km or miles, from the settings (#21). */
 val LocalUnits = staticCompositionLocalOf { Units.KM }
 
+/** Litres or gallons, km/l or mpg: from the units and the country (#15). */
+val LocalFuelUnits = staticCompositionLocalOf { FuelUnits.METRIC }
+
+/** The app language writes decimals with a comma ("12,5 km", #15). */
+fun decimalComma(): Boolean = Measures.decimalComma(Locale.current.language)
+
 /** "54 km" or "34 mi". */
 @Composable
 fun distanceText(km: Double): String {
     val units = LocalUnits.current
-    val n = formatKm(units.of(km))
+    val n = Measures.lengthNumber(km, units, decimalComma())
     return if (units == Units.MILES) stringResource(Res.string.ride_mi, n) else stringResource(Res.string.ride_km, n)
 }
 
 /** Just the number, in the chosen unit. */
 @Composable
-fun distanceNumber(km: Double): String = formatKm(LocalUnits.current.of(km))
+fun distanceNumber(km: Double): String = Measures.lengthNumber(km, LocalUnits.current, decimalComma())
 
 /** "km" or "mi", next to a [distanceNumber]. */
 @Composable

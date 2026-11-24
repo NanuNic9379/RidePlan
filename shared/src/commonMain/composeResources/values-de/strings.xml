@@ -18,7 +18,7 @@
     <string name="close">Schließen</string>
     <string name="ride_default_name">Importierte Tour</string>
     <string name="ride_km">%1$s km</string>
-    <string name="ride_km_straight">%1$s km Luftlinie</string>
+    <string name="ride_km_straight">%1$s Luftlinie</string>
     <string name="ride_source_gpx">aus GPX</string>
     <string name="ride_source_kml">aus KML</string>
     <string name="ride_source_google">aus Google Maps</string>
@@ -79,8 +79,8 @@
     <string name="route_curves_some">Mehr</string>
     <string name="route_curves_more">Viele</string>
     <string name="route_curves_max">Maximal</string>
-    <string name="route_detour">Die Tour ist %1$s% länger: +%2$s km, +%3$s gegenüber der schnellsten Route.</string>
-    <string name="route_detour_long">⚠ Deutlich längere Tour: +%1$s% (+%2$s km, +%3$s) gegenüber der schnellsten Route. Wähle Schnell oder weniger Kurven, wenn Zeit oder Sprit knapp sind.</string>
+    <string name="route_detour">Die Tour ist %1$s% länger: +%2$s, +%3$s gegenüber der schnellsten Route.</string>
+    <string name="route_detour_long">⚠ Deutlich längere Tour: +%1$s% (+%2$s, +%3$s) gegenüber der schnellsten Route. Wähle Schnell oder weniger Kurven, wenn Zeit oder Sprit knapp sind.</string>
     <string name="route_stops_title">Zwischenziele</string>
     <string name="route_stops_hint">Tippen zum Wählen: Halt (du fährst hin) oder vorbei (ohne durch den Ort zu fahren).</string>
     <string name="route_stop_stop">Halt: %1$s</string>
@@ -160,8 +160,8 @@
     <string name="backup_failed">Diese Datei ist keine RidePlan-Sicherung.</string>
     <string name="share_hide_zones">Meine Privatzonen ausblenden (%1$d)</string>
     <string name="share_no_zones">Tipp: Füge dein Zuhause im Profil als Privatzone hinzu, dann wird es aus jeder geteilten Tour ausgeblendet.</string>
-    <string name="share_preview_summary">Was das Handy verlässt: %1$s km, %2$d Stopps</string>
-    <string name="share_preview_moved">Start um %1$s km verschoben, Ziel um %2$s km</string>
+    <string name="share_preview_summary">Was das Handy verlässt: %1$s, %2$d Stopps</string>
+    <string name="share_preview_moved">Start um %1$s verschoben, Ziel um %2$s</string>
     <string name="share_preview_hidden">%1$d Stopps ausgeblendet</string>
     <string name="share_preview_empty">Die ganze Tour liegt in deinen Privatzonen: Es gibt nichts zu teilen.</string>
     <string name="zones_title">Privatzonen</string>
@@ -235,9 +235,9 @@
     <string name="filter_bike">Motorrad</string>
     <string name="filter_length">Länge</string>
     <string name="filter_reset">Filter zurücksetzen</string>
-    <string name="len_up_100">Bis 100 km</string>
-    <string name="len_100_200">100–200 km</string>
-    <string name="len_over_200">Über 200 km</string>
+    <string name="len_up_100">Bis %1$s</string>
+    <string name="len_100_200">%1$s – %2$s</string>
+    <string name="len_over_200">Über %1$s</string>
     <string name="new_ride_explore">Karte erkunden</string>
     <string name="rides_empty_filter">Keine Touren mit diesen Filtern.</string>
     <string name="rides_search">Touren, Orte, Notizen suchen</string>
@@ -514,4 +514,7 @@
     <string name="plan_leave_keep">Weiter planen</string>
     <string name="route_mode_more">Mehr</string>
     <string name="ride_source_planned">auf der Karte geplant</string>
+    <string name="units_auto">Automatisch</string>
+    <string name="units_note">Automatisch folgt dem Land des Handys: Meilen in den USA und im Vereinigten Königreich, sonst Kilometer.</string>
+    <string name="nav_say_continue">Fahre %1$s weiter.</string>
 </resources>

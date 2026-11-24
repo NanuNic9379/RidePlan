@@ -19,7 +19,7 @@
     <string name="close">Close</string>
     <string name="ride_default_name">Imported ride</string>
     <string name="ride_km">%1$s km</string>
-    <string name="ride_km_straight">%1$s km as the crow flies</string>
+    <string name="ride_km_straight">%1$s as the crow flies</string>
     <string name="ride_source_gpx">from GPX</string>
     <string name="ride_source_kml">from KML</string>
     <string name="ride_source_google">from Google Maps</string>
@@ -80,8 +80,8 @@
     <string name="route_curves_some">More</string>
     <string name="route_curves_more">Lots</string>
     <string name="route_curves_max">Max</string>
-    <string name="route_detour">The ride is %1$s% longer: +%2$s km, +%3$s compared with the fastest route.</string>
-    <string name="route_detour_long">⚠ Much longer ride: +%1$s% (+%2$s km, +%3$s) compared with the fastest route. Pick Fast or fewer bends if you are short on time or fuel.</string>
+    <string name="route_detour">The ride is %1$s% longer: +%2$s, +%3$s compared with the fastest route.</string>
+    <string name="route_detour_long">⚠ Much longer ride: +%1$s% (+%2$s, +%3$s) compared with the fastest route. Pick Fast or fewer bends if you are short on time or fuel.</string>
     <string name="route_stops_title">Stops</string>
     <string name="route_stops_hint">Tap to choose: stop (you go there) or pass by (without riding into town).</string>
     <string name="route_stop_stop">Stop: %1$s</string>
@@ -161,8 +161,8 @@
     <string name="backup_failed">This file is not a RidePlan backup.</string>
     <string name="share_hide_zones">Hide my private zones (%1$d)</string>
     <string name="share_no_zones">Tip: add your home as a private zone in the profile, it will be hidden from every shared ride.</string>
-    <string name="share_preview_summary">What leaves the phone: %1$s km, %2$d stops</string>
-    <string name="share_preview_moved">Start moved by %1$s km, finish by %2$s km</string>
+    <string name="share_preview_summary">What leaves the phone: %1$s, %2$d stops</string>
+    <string name="share_preview_moved">Start moved by %1$s, finish by %2$s</string>
     <string name="share_preview_hidden">%1$d stops hidden</string>
     <string name="share_preview_empty">The whole ride is inside your private zones: there is nothing to share.</string>
     <string name="zones_title">Private zones</string>
@@ -236,9 +236,9 @@
     <string name="filter_bike">Bike</string>
     <string name="filter_length">Length</string>
     <string name="filter_reset">Clear filters</string>
-    <string name="len_up_100">Up to 100 km</string>
-    <string name="len_100_200">100–200 km</string>
-    <string name="len_over_200">Over 200 km</string>
+    <string name="len_up_100">Up to %1$s</string>
+    <string name="len_100_200">%1$s – %2$s</string>
+    <string name="len_over_200">Over %1$s</string>
     <string name="new_ride_explore">Explore the map</string>
     <string name="rides_empty_filter">No rides with these filters.</string>
     <string name="rides_search">Search rides, places, notes</string>
@@ -515,4 +515,7 @@
     <string name="plan_leave_keep">Keep planning</string>
     <string name="route_mode_more">More</string>
     <string name="ride_source_planned">planned on the map</string>
+    <string name="units_auto">Automatic</string>
+    <string name="units_note">Automatic follows the country of the phone: miles in the US and the UK, kilometres elsewhere.</string>
+    <string name="nav_say_continue">Continue for %1$s.</string>
 </resources>

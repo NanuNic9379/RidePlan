@@ -63,7 +63,8 @@ fun parseDecimal(text: String): Double? =
 /** The settings of the app (#21). They are part of the backup. */
 @Serializable
 data class AppSettings(
-    val units: Units = Units.KM,
+    /** Km or miles; null = "Automatic", from the country of the phone (#15), see [unitsFor]. */
+    val units: Units? = null,
     val theme: ThemeMode = ThemeMode.SYSTEM,
     /** Road data only on Wi-Fi: it can weigh tens of MB. */
     val wifiOnly: Boolean = true,
@@ -82,4 +83,4 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 /** Distance in the chosen unit. */
 fun Units.of(km: Double): Double = if (this == Units.MILES) km * KM_TO_MILES else km
 
-private const val KM_TO_MILES = 0.621371
+private const val KM_TO_MILES = 1 / MILE_KM

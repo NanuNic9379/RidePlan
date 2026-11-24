@@ -23,6 +23,8 @@ class PlatformActions(
     val wipeDevice: () -> Unit = {},
     /** The update card of Info & updates; null where the store handles updates (F-Droid). */
     val updates: UpdateActions? = null,
+    /** Country of the phone (ISO code, "US"), for the automatic units (#15); null = from the locale. */
+    val region: String? = null,
 ) {
     /** Outcome of the last export, to show on the Data & privacy page. */
     var exportNotice by mutableStateOf<Boolean?>(null)

@@ -407,14 +407,12 @@ private fun SortSheet(store: ProfileStore, current: RideQuery, onChange: (RideQu
                         onClick = { q = q.copy(length = len) },
                         label = {
                             Text(
-                                stringResource(
-                                    when (len) {
-                                        LengthFilter.ANY -> Res.string.filter_any
-                                        LengthFilter.UP_TO_100 -> Res.string.len_up_100
-                                        LengthFilter.FROM_100_TO_200 -> Res.string.len_100_200
-                                        LengthFilter.OVER_200 -> Res.string.len_over_200
-                                    },
-                                ),
+                                when (len) {
+                                    LengthFilter.ANY -> stringResource(Res.string.filter_any)
+                                    LengthFilter.UP_TO_100 -> stringResource(Res.string.len_up_100, distanceText(len.maxKm))
+                                    LengthFilter.FROM_100_TO_200 -> stringResource(Res.string.len_100_200, distanceText(len.minKm), distanceText(len.maxKm))
+                                    LengthFilter.OVER_200 -> stringResource(Res.string.len_over_200, distanceText(len.minKm))
+                                },
                             )
                         },
                         modifier = Modifier.heightIn(min = Touch.Min),

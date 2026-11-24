@@ -118,7 +118,7 @@ fun DetourNote(info: RouteInfo) {
     val text = stringResource(
         if (long) Res.string.route_detour_long else Res.string.route_detour,
         "${(share * 100).roundToInt()}",
-        "${(info.km - base.km).roundToInt()}",
+        io.github.nanunic9379.rideplan.personal.distanceText((info.km - base.km).coerceAtLeast(0.0)),
         durationText((info.seconds - base.seconds).coerceAtLeast(0.0)),
     )
     Text(

@@ -56,6 +56,9 @@ import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.RideStats
 import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.civilDate
+import io.github.nanunic9379.rideplan.profile.of
+import io.github.nanunic9379.rideplan.profile.symbol
+import io.github.nanunic9379.rideplan.profile.toKm
 import io.github.nanunic9379.rideplan.profile.parseDecimal
 import io.github.nanunic9379.rideplan.profile.title
 import io.github.nanunic9379.rideplan.resources.Res
@@ -363,9 +366,16 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
     var name by remember(id) { mutableStateOf(old?.name.orEmpty()) }
     var type by remember(id) { mutableStateOf(old?.type ?: BikeType.NAKED) }
     var engine by remember(id) { mutableStateOf(old?.engine ?: Engine.OVER_150) }
-    var tank by remember(id) { mutableStateOf(old?.tankLitres?.let(::decimalText).orEmpty()) }
-    var use by remember(id) { mutableStateOf(old?.kmPerLitre?.let(::decimalText).orEmpty()) }
-    var electric by remember(id) { mutableStateOf(old?.electricRangeKm?.let(::decimalText).orEmpty()) }
+    // Shown and typed in the units of the settings (#15), stored in litres and km. An unchanged
+    // field keeps the stored value, so opening and saving never drifts through the conversion.
+    val fuel = LocalFuelUnits.current
+    val units = LocalUnits.current
+    val tank0 = remember(id) { old?.tankLitres?.let { decimalText(fuel.tankFromLitres(it)) }.orEmpty() }
+    val use0 = remember(id) { old?.kmPerLitre?.let { decimalText(fuel.economyFromKmPerLitre(it)) }.orEmpty() }
+    val electric0 = remember(id) { old?.electricRangeKm?.let { decimalText(units.of(it)) }.orEmpty() }
+    var tank by remember(id) { mutableStateOf(tank0) }
+    var use by remember(id) { mutableStateOf(use0) }
+    var electric by remember(id) { mutableStateOf(electric0) }
     var isDefault by remember(id) { mutableStateOf(old == null && data.bikes.isEmpty() || old != null && data.defaultBike?.id == old.id) }
     var confirmDelete by remember { mutableStateOf(false) }
     val draft = Bike(
@@ -373,9 +383,9 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
         name = name.trim(),
         type = type,
         engine = engine,
-        tankLitres = parseDecimal(tank),
-        kmPerLitre = parseDecimal(use),
-        electricRangeKm = parseDecimal(electric),
+        tankLitres = if (tank == tank0) old?.tankLitres else parseDecimal(tank)?.let(fuel::tankToLitres),
+        kmPerLitre = if (use == use0) old?.kmPerLitre else parseDecimal(use)?.let(fuel::economyToKmPerLitre),
+        electricRangeKm = if (electric == electric0) old?.electricRangeKm else parseDecimal(electric)?.let(units::toKm),
     )
     SubPage(old?.name ?: stringResource(Res.string.bike_new), onBack = { rides.back() }) {
         OutlinedTextField(
@@ -414,7 +424,7 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
                 value = electric,
                 onValueChange = { electric = it.take(8) },
                 label = { Text(stringResource(Res.string.bike_electric_range)) },
-                suffix = { Text("km") },
+                suffix = { Text(units.symbol) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
@@ -425,7 +435,7 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
                     value = tank,
                     onValueChange = { tank = it.take(6) },
                     label = { Text(stringResource(Res.string.bike_tank)) },
-                    suffix = { Text("l") },
+                    suffix = { Text(fuel.tankSymbol) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
@@ -434,7 +444,7 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
                     value = use,
                     onValueChange = { use = it.take(6) },
                     label = { Text(stringResource(Res.string.bike_use)) },
-                    suffix = { Text("km/l") },
+                    suffix = { Text(fuel.economySymbol) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),

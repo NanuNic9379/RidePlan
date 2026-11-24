@@ -152,7 +152,7 @@ class NavigatorTest {
         assertEquals(arrive, after.next?.maneuver)
         near(1900.0, assertNotNull(after.distanceToNextM))
         near(90.0, assertNotNull(after.bearing), 0.5)
-        assertTrue(all.flatMap { it.announcements }.contains(Announcement.Continue("Continue for 2 kilometers.")))
+        assertTrue(all.flatMap { it.announcements }.filterIsInstance<Announcement.Continue>().any { it.text == "Continue for 2 kilometers." && (it.distanceM ?: 0.0) > 1000 })
     }
 
     @Test

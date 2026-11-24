@@ -101,8 +101,10 @@ import io.github.nanunic9379.rideplan.resources.theme_light
 import io.github.nanunic9379.rideplan.resources.theme_note
 import io.github.nanunic9379.rideplan.resources.theme_system
 import io.github.nanunic9379.rideplan.resources.theme_title
+import io.github.nanunic9379.rideplan.resources.units_auto
 import io.github.nanunic9379.rideplan.resources.units_km
 import io.github.nanunic9379.rideplan.resources.units_mi
+import io.github.nanunic9379.rideplan.resources.units_note
 import io.github.nanunic9379.rideplan.resources.units_title
 import io.github.nanunic9379.rideplan.resources.update_check_start
 import io.github.nanunic9379.rideplan.resources.update_check_text
@@ -275,10 +277,13 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             }
         }
         SectionLabel(stringResource(Res.string.units_title))
+        // "Automatic" (null) follows the country of the phone (#15).
+        val unitChoices = listOf(null) + Units.entries
         Segmented(
-            listOf(stringResource(Res.string.units_km), stringResource(Res.string.units_mi)),
-            Units.entries.indexOf(s.units),
-        ) { i -> store.update { it.copy(settings = it.settings.copy(units = Units.entries[i])) } }
+            listOf(stringResource(Res.string.units_auto), stringResource(Res.string.units_km), stringResource(Res.string.units_mi)),
+            unitChoices.indexOf(s.units),
+        ) { i -> store.update { it.copy(settings = it.settings.copy(units = unitChoices[i])) } }
+        Text(stringResource(Res.string.units_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionLabel(stringResource(Res.string.theme_title))
         Segmented(
             listOf(stringResource(Res.string.theme_system), stringResource(Res.string.theme_light), stringResource(Res.string.theme_dark)),
