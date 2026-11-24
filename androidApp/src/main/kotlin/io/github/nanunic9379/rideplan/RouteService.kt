@@ -28,6 +28,8 @@ import io.github.nanunic9379.rideplan.route.RoutingRegion
 import io.github.nanunic9379.rideplan.route.ValhallaRoadAttributes
 import io.github.nanunic9379.rideplan.route.RoadAttributes
 import io.github.nanunic9379.rideplan.route.ValhallaRoute
+import io.github.nanunic9379.rideplan.route.TrackBans
+import io.github.nanunic9379.rideplan.route.ValhallaTrackCheck
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -422,6 +424,13 @@ class RouteService(context: Context) {
             RoadAttributes.NONE
         }
         return result.copy(speedLimits = roads.speedLimits, surfaces = roads.surfaces)
+    }
+
+    /** Roads closed to motorcycles, or motorways under 150 cc, on a track drawn as it is (#9). */
+    @Synchronized
+    fun checkTrack(track: List<LatLon>, data: RoutingData, noMotorways: Boolean): TrackBans? {
+        val valhalla = engineFor(data)
+        return ValhallaTrackCheck.check(track, noMotorways) { valhalla.traceAttributesRaw(it) }
     }
 
     private fun engineFor(data: RoutingData): Valhalla {

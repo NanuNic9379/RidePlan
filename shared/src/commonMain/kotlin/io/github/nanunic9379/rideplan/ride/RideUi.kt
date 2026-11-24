@@ -110,6 +110,7 @@ import io.github.nanunic9379.rideplan.resources.share_title
 import io.github.nanunic9379.rideplan.resources.share_trim_ends
 import io.github.nanunic9379.rideplan.resources.stop_edit_hint
 import io.github.nanunic9379.rideplan.nav.NavigateButton
+import io.github.nanunic9379.rideplan.route.CurvesLoweredNote
 import io.github.nanunic9379.rideplan.route.DetourNote
 import io.github.nanunic9379.rideplan.route.RoughLayers
 import io.github.nanunic9379.rideplan.route.SurfaceNote
@@ -523,6 +524,7 @@ fun RideSheet(
             FuelSection(state, routeActions, bike)
             RoadNotesSection(state, routeActions)
             CountryWarningsSection(ride)
+            TrackBansSection(ride, bike?.avoidsMotorways == true, routeActions?.checkTrack)
             if (route == RouteState.Idle) offlineMap(ride)
             if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {
                 RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
@@ -563,7 +565,7 @@ private fun RideNotes(ride: Ride, route: RouteState) {
             else -> null
         }
         if (note != null) Text(note, style = MaterialTheme.typography.bodyMedium, color = muted)
-        ride.route?.let { DetourNote(it) }
+        ride.route?.let { DetourNote(it); CurvesLoweredNote(it) }
         SurfaceNote(ride.surfaces)
     }
 }

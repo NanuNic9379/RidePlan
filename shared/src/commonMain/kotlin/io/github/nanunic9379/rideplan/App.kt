@@ -67,6 +67,10 @@ import io.github.nanunic9379.rideplan.ride.withStopMoved
 import io.github.nanunic9379.rideplan.ride.withStopRemoved
 import io.github.nanunic9379.rideplan.ride.withStopReordered
 import io.github.nanunic9379.rideplan.ride.fitRide
+import io.github.nanunic9379.rideplan.route.OffroadControls
+import io.github.nanunic9379.rideplan.route.OffroadLayers
+import io.github.nanunic9379.rideplan.route.offroadColors
+import io.github.nanunic9379.rideplan.route.optionsKeeping
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
@@ -223,6 +227,9 @@ private fun MapScreen(
     // Explore opens where you looked last, or around your rides: not on a whole continent.
     // Explore (#40): your position, shown as a dot once you ask for it.
     var me by remember { mutableStateOf<LatLon?>(null) }
+    // Unpaved and closed roads over the map (#9), off by default.
+    var offroad by remember { mutableStateOf(false) }
+    val roadColors = offroadColors()
     val start = remember { MapStart.of(mapViews?.load(), store?.data?.rides.orEmpty()) }
     val state = rememberMapState(
         baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
@@ -231,6 +238,7 @@ private fun MapScreen(
             zoom = start.zoom,
         ),
     ) {
+        if (ride == null && offroad) OffroadLayers(roadColors)
         if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, routeActions?.roadNotes) } else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
@@ -397,7 +405,7 @@ private fun MapScreen(
                         )
                         RidingModeChips(
                             rides.options,
-                            onPick = { mode -> routeActions?.changeOptions?.invoke(mode.options) },
+                            onPick = { mode -> routeActions?.changeOptions?.invoke(mode.optionsKeeping(rides.options)) },
                             onMore = { modesOpen = true },
                         )
                     } else if (store != null && !tabs) {
@@ -485,6 +493,7 @@ private fun MapScreen(
                 } else if (showFab && importActions != null) {
                     ImportFab(importActions, Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp))
                 }
+                if (ride == null) OffroadControls(offroad, { offroad = !offroad }, roadColors, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp))
                 if (ride == null && navigation != null) {
                     // Explore (#40): back to where you are, above the main action.
                     SmallFloatingActionButton(

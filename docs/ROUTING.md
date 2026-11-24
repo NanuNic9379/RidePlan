@@ -16,9 +16,9 @@ Every route uses `costing: motorcycle`. The `motorcycle` costing options built b
 
 | Option | When | Value | Effect in the engine |
 |---|---|---|---|
-| `use_trails` | always | 0 | bad surfaces cost the most the engine allows (see below) |
-| `use_tracks` | always | 0 | tracks: cost ×4 and 300 s to enter one |
-| `exclude_unpaved` | always | true | **ignored by the motorcycle costing in 3.9.2** (only `auto` applies it); sent for newer engines |
+| `use_trails` | unpaved: Avoid 0, Allow 0.5, Prefer 1 | 0 by default | Avoid: bad surfaces cost the most the engine allows (see below); Allow: neutral; Prefer: small bonus (#9) |
+| `use_tracks` | unpaved: Avoid 0, Allow 0.5, Prefer 1 | 0 by default | Avoid: tracks cost ×4 and 300 s to enter one; Allow: neutral; Prefer: ×0.8 |
+| `exclude_unpaved` | unpaved = Avoid | true | **ignored by the motorcycle costing in 3.9.2** (only `auto` applies it); sent for newer engines |
 | `destination_only_penalty` | always | 1800 s | entering a road open only to reach a destination (default 600 s) |
 | `use_curvature` | curves | Some 0.6, More 0.75, Max 1.0 | see "What drives the curves" |
 | `use_highways` | avoid motorways / under 150 cc | 0 | motorway cost +8, trunk +4 (additive factors) |
@@ -128,7 +128,10 @@ on the phone, where the engine and the data are):
 - since 3.9 it has a real curvature cost, which was the reason for this issue.
 
 Follow-ups, in order of value:
-1. **Check the result, not only the request.** Valhalla marks every maneuver that touches an
+1. **Check the result, not only the request.** Done in #9 (`CurvesFallback`, `route/Unpaved.kt`): with
+   unpaved roads avoided at Max, a route with at least 300 m of unpaved road away from the stops is
+   computed again at More and kept if it has at least 100 m less; the ride sheet says so. Original
+   note: Valhalla marks every maneuver that touches an
    unpaved or rough stretch (`rough` in the maneuver; to verify on 3.9.2). If a More/Max route
    has one in the middle, compute it again one level lower and tell the rider. This turns
    "dirt is expensive" into "dirt is never shown silently". It belongs with #9 (surface).

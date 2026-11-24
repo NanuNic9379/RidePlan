@@ -482,8 +482,6 @@
     <string name="route_avoid_towns">Ortschaften</string>
     <string name="route_avoid_towns_sub">Fährt um Orte herum, wo es geht</string>
     <string name="route_avoid_unpaved">Unbefestigte Straßen</string>
-    <string name="route_avoid_unpaved_sub">Vorerst immer vermieden</string>
-    <string name="route_always">Immer</string>
     <string name="route_bike">Motorrad</string>
     <string name="route_bike_none">Kein Motorrad in der Garage: füge eins unter Du › Garage hinzu.</string>
     <string name="route_bike_small">Unter 150 cm³ keine Autobahnen und autobahnähnlichen Ringstraßen. Das ist Gesetz: mit diesem Motorrad werden sie immer vermieden.</string>
@@ -732,4 +730,23 @@
         <item quantity="one">%1$d fester Blitzer auf dieser Tour, aus OpenStreetMap.</item>
         <item quantity="other">%1$d feste Blitzer auf dieser Tour, aus OpenStreetMap.</item>
     </plurals>
+    <string name="route_unpaved_avoid">Meiden</string>
+    <string name="route_unpaved_allow">Erlauben</string>
+    <string name="route_unpaved_prefer">Bevorzugen</string>
+    <string name="route_unpaved_avoid_desc">Wo immer möglich asphaltierte Straßen. Schotter nur, wenn es keinen anderen Weg gibt.</string>
+    <string name="route_unpaved_allow_desc">Schotter- und Feldwege zählen wie jede andere Straße: gut für eine Reiseenduro bei gutem Wetter.</string>
+    <string name="route_unpaved_prefer_desc">Abenteuer: Schotter- und Feldwege werden gesucht, wo es sie gibt. Prüfe, ob sie zu deinem Motorrad und dem Wetter passen.</string>
+    <string name="route_curves_lowered">Die kurvigste Route führte weiter über unbefestigte Straßen, daher nutzt diese eine Kurvenstufe weniger.</string>
+    <string name="offroad_toggle">Unbefestigte und gesperrte Straßen</string>
+    <string name="offroad_on">Angezeigt</string>
+    <string name="offroad_off">Ausgeblendet</string>
+    <string name="offroad_legend_unpaved">Unbefestigte Straße</string>
+    <string name="offroad_legend_no_access">Für den Verkehr gesperrt</string>
+    <string name="offroad_legend_note">Hineinzoomen, um sie zu sehen. Daten von OpenStreetMap, eventuell unvollständig.</string>
+    <string name="track_bans_title">Dieser Track nutzt Straßen, die für dein Motorrad nicht erlaubt sind</string>
+    <string name="track_bans_motorway">%1$s auf Autobahnen, unter 150 cm³ nicht erlaubt</string>
+    <string name="track_bans_no_access">%1$s auf Straßen, die für Motorräder gesperrt sind</string>
+    <string name="track_bans_roads">Straßen: %1$s</string>
+    <string name="track_bans_partial">Nur ein Teil des Tracks konnte mit den Straßendaten geprüft werden.</string>
+    <string name="track_bans_unchecked">Verbote nicht geprüft: Auf dem Handy gibt es keine Straßendaten für diesen Track.</string>
 </resources>

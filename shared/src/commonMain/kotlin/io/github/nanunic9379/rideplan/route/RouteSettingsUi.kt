@@ -59,7 +59,6 @@ import io.github.nanunic9379.rideplan.profile.forBike
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.close
 import io.github.nanunic9379.rideplan.resources.menu_delete
-import io.github.nanunic9379.rideplan.resources.route_always
 import io.github.nanunic9379.rideplan.resources.route_apply
 import io.github.nanunic9379.rideplan.resources.route_avoid
 import io.github.nanunic9379.rideplan.resources.route_avoid_ferries
@@ -67,8 +66,6 @@ import io.github.nanunic9379.rideplan.resources.route_avoid_motorways
 import io.github.nanunic9379.rideplan.resources.route_avoid_tolls
 import io.github.nanunic9379.rideplan.resources.route_avoid_towns
 import io.github.nanunic9379.rideplan.resources.route_avoid_towns_sub
-import io.github.nanunic9379.rideplan.resources.route_avoid_unpaved
-import io.github.nanunic9379.rideplan.resources.route_avoid_unpaved_sub
 import io.github.nanunic9379.rideplan.resources.route_bike
 import io.github.nanunic9379.rideplan.resources.route_bike_none
 import io.github.nanunic9379.rideplan.resources.route_bike_small
@@ -261,7 +258,7 @@ fun RouteSettingsSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Section(stringResource(Res.string.route_mode_section))
-                ModeGrid(draft.mode, onPick = { draft = it.options })
+                ModeGrid(draft.mode, onPick = { draft = it.optionsKeeping(draft) })
                 draft.mode?.let { ModeDescription(it) }
 
                 Section(stringResource(Res.string.route_presets))
@@ -306,8 +303,8 @@ fun RouteSettingsSheet(
                     SwitchRow(null, stringResource(Res.string.route_avoid_towns), stringResource(Res.string.route_avoid_towns_sub), draft.avoidTowns) {
                         draft = draft.copy(avoidTowns = it)
                     }
-                    UnpavedRow()
                 }
+                UnpavedChoice(draft.unpaved) { draft = draft.copy(unpaved = it) }
                 Spacer(Modifier.size(8.dp))
             }
             HorizontalDivider()
@@ -318,7 +315,7 @@ fun RouteSettingsSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TextButton(
-                    onClick = { draft = (draft.mode ?: RidingMode.DEFAULT).options },
+                    onClick = { draft = (draft.mode ?: RidingMode.DEFAULT).optionsKeeping(draft) },
                     enabled = draft.custom,
                     modifier = Modifier.heightIn(min = Touch.Glove),
                 ) { Text(stringResource(Res.string.route_reset)) }
@@ -525,25 +522,6 @@ private fun BikeRow(bike: Bike?) {
                     Text(stringResource(Res.string.route_bike_small), style = MaterialTheme.typography.bodyMedium)
                 }
             }
-        }
-    }
-}
-
-/** Unpaved roads are always avoided today: a row with a lock, not a switch. */
-@Composable
-private fun UnpavedRow() {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(Res.string.route_avoid_unpaved), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(Res.string.route_avoid_unpaved_sub), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(AppIcons.Lock, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(stringResource(Res.string.route_always), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

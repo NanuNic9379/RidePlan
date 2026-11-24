@@ -93,15 +93,21 @@ object ValhallaSpeedLimits {
     /**
      * Walks [shape] piece by piece with [engine] and reads each response with [read] (the JSON
      * and where the piece starts on the route, in metres). A piece the engine cannot walk is
-     * tried again in halves, then left out. Shared with [ValhallaRoadAttributes] (#9).
+     * tried again in halves, then left out. Shared with [ValhallaRoadAttributes] (#9) and, with
+     * another [requestFor], with the ban check of imported tracks ([ValhallaTrackCheck]).
      */
-    fun <T> walk(shape: List<LatLon>, engine: (String) -> String, read: (String, Double) -> T): List<T> {
+    fun <T> walk(
+        shape: List<LatLon>,
+        engine: (String) -> String,
+        requestFor: (List<LatLon>) -> String = ::request,
+        read: (String, Double) -> T,
+    ): List<T> {
         if (shape.size < 2) return emptyList()
         val along = DoubleArray(shape.size)
         for (i in 1 until shape.size) along[i] = along[i - 1] + distanceKm(shape[i - 1], shape[i]) * 1000
         val out = ArrayList<T>()
         fun walk(range: IntRange, splits: Int) {
-            val piece = runCatching { read(engine(request(shape.subList(range.first, range.last + 1))), along[range.first]) }
+            val piece = runCatching { read(engine(requestFor(shape.subList(range.first, range.last + 1))), along[range.first]) }
             when {
                 piece.isSuccess -> out += piece.getOrThrow()
                 splits > 0 && range.last - range.first >= MIN_SPLIT_POINTS -> {
