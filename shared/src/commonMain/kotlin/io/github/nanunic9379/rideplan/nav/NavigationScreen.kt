@@ -1,5 +1,6 @@
 package io.github.nanunic9379.rideplan.nav
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,8 +37,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.text.TextStyle
 import io.github.nanunic9379.rideplan.resources.nav_overview
 import io.github.nanunic9379.rideplan.resources.nav_recenter
+import io.github.nanunic9379.rideplan.ui.Figure
+import io.github.nanunic9379.rideplan.ui.Motion
 import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.TabularFigures
 import kotlinx.coroutines.launch
@@ -314,7 +318,9 @@ private fun TurnBanner(sign: TurnSign, distance: String, text: String, then: Pla
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 TurnArrow(sign, scheme.inverseOnSurface, Modifier.size(76.dp))
                 Column(Modifier.padding(start = 12.dp)) {
-                    Text(distance, fontSize = 40.sp, fontWeight = FontWeight.Medium, lineHeight = 44.sp, style = TabularFigures)
+                    // The distance to the turn rolls down as it changes; the speed below does not,
+                    // as a number that moves every second would be harder to read at a glance.
+                    Figure(distance, TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Medium, lineHeight = 44.sp).merge(TabularFigures))
                     Text(text, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -350,12 +356,17 @@ private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: 
                 val units = LocalUnits.current
                 val shown = speedShown(u.speedMps, u.speedLimitKmh, units)
                 val unit = stringResource(if (units == Units.MILES) Res.string.nav_speed_mph else Res.string.nav_speed_kmh)
+                val speedColor by animateColorAsState(
+                    if (shown.over) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    Motion.feedback(),
+                    label = "speed",
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(
                             shown.speed?.toString() ?: "–",
                             fontSize = 34.sp, fontWeight = FontWeight.Medium, lineHeight = 36.sp, style = TabularFigures,
-                            color = if (shown.over) MaterialTheme.colorScheme.error else Color.Unspecified,
+                            color = speedColor,
                         )
                         Text(unit, style = MaterialTheme.typography.labelMedium)
                     }

@@ -1,5 +1,9 @@
 package io.github.nanunic9379.rideplan.route
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.ui.Motion
 import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.Touch
 import androidx.compose.ui.unit.dp
@@ -138,66 +143,74 @@ internal fun curvesLabel(level: Curves): String = when (level) {
 @Composable
 fun RouteSection(state: RouteState, actions: RouteActions?) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    when (state) {
-        RouteState.Idle -> Unit
-        RouteState.Checking -> Waiting(stringResource(Res.string.route_checking))
-        RouteState.Computing -> Waiting(stringResource(Res.string.route_computing))
-        RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = MaterialTheme.typography.bodyMedium, color = muted)
-        is RouteState.NeedsData -> StatusCard(
-            icon = AppIcons.Download,
-            text = if (state.onMobile) stringResource(Res.string.route_mobile_ask, formatBytes(state.download.bytes))
-                else stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
-            container = MaterialTheme.colorScheme.tertiaryContainer,
-            content = MaterialTheme.colorScheme.onTertiaryContainer,
-        ) {
-            if (actions != null) {
-                if (state.onMobile) {
-                    Button(onClick = { actions.downloadOnMobile(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
+    // One state crossfades into the next; a download's progress stays the same content.
+    AnimatedContent(
+        targetState = state,
+        contentKey = { it::class },
+        transitionSpec = { (fadeIn(Motion.enter()) togetherWith Motion.fadeOut).using(SizeTransform(clip = false)) },
+        label = "route",
+    ) { shown ->
+        when (shown) {
+            RouteState.Idle -> Unit
+            RouteState.Checking -> Waiting(stringResource(Res.string.route_checking))
+            RouteState.Computing -> Waiting(stringResource(Res.string.route_computing))
+            RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = MaterialTheme.typography.bodyMedium, color = muted)
+            is RouteState.NeedsData -> StatusCard(
+                icon = AppIcons.Download,
+                text = if (shown.onMobile) stringResource(Res.string.route_mobile_ask, formatBytes(shown.download.bytes))
+                    else stringResource(Res.string.route_needs_data, dataName(shown.download), formatBytes(shown.download.bytes)),
+                container = MaterialTheme.colorScheme.tertiaryContainer,
+                content = MaterialTheme.colorScheme.onTertiaryContainer,
+            ) {
+                if (actions != null) {
+                    if (shown.onMobile) {
+                        Button(onClick = { actions.downloadOnMobile(shown.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
+                            Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                            Text(stringResource(Res.string.route_mobile_confirm))
+                        }
+                        TextButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Min)) {
+                            Text(stringResource(Res.string.route_mobile_wait))
+                        }
+                    } else {
+                    Button(onClick = { actions.download(shown.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
                         Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text(stringResource(Res.string.route_mobile_confirm))
+                        Text(stringResource(Res.string.route_download))
                     }
-                    TextButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Min)) {
-                        Text(stringResource(Res.string.route_mobile_wait))
                     }
-                } else {
-                Button(onClick = { actions.download(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
-                    Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(Res.string.route_download))
-                }
                 }
             }
-        }
-        is RouteState.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                stringResource(
-                    Res.string.route_downloading,
-                    dataName(state.download),
-                    formatBytes(state.done),
-                    formatBytes(state.download.bytes),
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            LinearProgressIndicator(
-                progress = { (state.done.toFloat() / state.download.bytes.coerceAtLeast(1)).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (actions != null) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = actions.cancel, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) }
+            is RouteState.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(
+                        Res.string.route_downloading,
+                        dataName(shown.download),
+                        formatBytes(shown.done),
+                        formatBytes(shown.download.bytes),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                LinearProgressIndicator(
+                    progress = { (shown.done.toFloat() / shown.download.bytes.coerceAtLeast(1)).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (actions != null) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = actions.cancel, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) }
+                    }
                 }
             }
-        }
-        is RouteState.Failed -> StatusCard(
-            icon = AppIcons.Warning,
-            text = failureText(state),
-            container = MaterialTheme.colorScheme.errorContainer,
-            content = MaterialTheme.colorScheme.onErrorContainer,
-        ) {
-            if (actions != null) {
-                OutlinedButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
-                    Text(stringResource(Res.string.route_retry))
+            is RouteState.Failed -> StatusCard(
+                icon = AppIcons.Warning,
+                text = failureText(shown),
+                container = MaterialTheme.colorScheme.errorContainer,
+                content = MaterialTheme.colorScheme.onErrorContainer,
+            ) {
+                if (actions != null) {
+                    OutlinedButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove), shape = Radius.Control) {
+                        Text(stringResource(Res.string.route_retry))
+                    }
                 }
             }
         }
