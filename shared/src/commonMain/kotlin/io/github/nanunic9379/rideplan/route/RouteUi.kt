@@ -46,6 +46,9 @@ import io.github.nanunic9379.rideplan.resources.route_downloading
 import io.github.nanunic9379.rideplan.resources.route_err_checksum
 import io.github.nanunic9379.rideplan.resources.route_err_engine
 import io.github.nanunic9379.rideplan.resources.route_err_wifi
+import io.github.nanunic9379.rideplan.resources.route_mobile_ask
+import io.github.nanunic9379.rideplan.resources.route_mobile_confirm
+import io.github.nanunic9379.rideplan.resources.route_mobile_wait
 import io.github.nanunic9379.rideplan.resources.route_err_network
 import io.github.nanunic9379.rideplan.resources.route_err_no_route
 import io.github.nanunic9379.rideplan.resources.route_err_no_space
@@ -65,7 +68,8 @@ import kotlin.math.roundToLong
 sealed interface RouteState {
     data object Idle : RouteState
     data object Checking : RouteState
-    data class NeedsData(val download: DataDownload) : RouteState
+    /** [onMobile]: the rider asked to download while on mobile data with "Wi-Fi only" on: confirm first. */
+    data class NeedsData(val download: DataDownload, val onMobile: Boolean = false) : RouteState
     data class Downloading(val download: DataDownload, val done: Long) : RouteState
     data object Computing : RouteState
     data object NotCovered : RouteState
@@ -80,6 +84,8 @@ class RouteException(val error: RouteError, val detail: String? = null) :
 /** What the user can do; the platform carries it out. */
 class RouteActions(
     val download: (DataDownload) -> Unit,
+    /** Download confirmed on mobile data, despite "Download only on Wi-Fi". */
+    val downloadOnMobile: (DataDownload) -> Unit = {},
     val cancel: () -> Unit,
     val retry: () -> Unit,
     /** Preferences changed: the platform remembers them and routes the ride again (#4). */
@@ -138,15 +144,27 @@ fun RouteSection(state: RouteState, actions: RouteActions?) {
         RouteState.NotCovered -> Text(stringResource(Res.string.route_not_covered), style = MaterialTheme.typography.bodyMedium, color = muted)
         is RouteState.NeedsData -> StatusCard(
             icon = AppIcons.Download,
-            text = stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
+            text = if (state.onMobile) stringResource(Res.string.route_mobile_ask, formatBytes(state.download.bytes))
+                else stringResource(Res.string.route_needs_data, dataName(state.download), formatBytes(state.download.bytes)),
             container = MaterialTheme.colorScheme.tertiaryContainer,
             content = MaterialTheme.colorScheme.onTertiaryContainer,
         ) {
             if (actions != null) {
+                if (state.onMobile) {
+                    Button(onClick = { actions.downloadOnMobile(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
+                        Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(Res.string.route_mobile_confirm))
+                    }
+                    TextButton(onClick = actions.retry, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Min)) {
+                        Text(stringResource(Res.string.route_mobile_wait))
+                    }
+                } else {
                 Button(onClick = { actions.download(state.download) }, modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)) {
                     Icon(AppIcons.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text(stringResource(Res.string.route_download))
+                }
                 }
             }
         }

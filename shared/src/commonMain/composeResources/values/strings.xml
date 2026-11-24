@@ -347,7 +347,10 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_note">Dark is easier on the eyes in the evening; light reads better in the sun.</string>
     <string name="wifi_only">Download only on Wi-Fi</string>
-    <string name="wifi_only_text">Road data can weigh tens of MB</string>
+    <string name="wifi_only_text">Road data can weigh tens of MB: on mobile data the app asks first</string>
+    <string name="route_mobile_ask">You are on mobile data. Download the road data anyway? It uses about %1$s of your data plan.</string>
+    <string name="route_mobile_confirm">Download on mobile data</string>
+    <string name="route_mobile_wait">Wait for Wi-Fi</string>
     <string name="route_err_wifi">Road data downloads only on Wi-Fi. Connect to a Wi-Fi network, or change it in Settings.</string>
     <string name="mapdata_title">Downloaded map data</string>
     <string name="mapdata_none">No road data on the phone</string>

@@ -347,7 +347,10 @@
     <string name="theme_dark">Sombre</string>
     <string name="theme_note">Le sombre fatigue moins les yeux le soir ; le clair se lit mieux au soleil.</string>
     <string name="wifi_only">Télécharger uniquement en Wi-Fi</string>
-    <string name="wifi_only_text">Les données routières peuvent peser des dizaines de Mo</string>
+    <string name="wifi_only_text">Les données routières peuvent peser des dizaines de Mo : en données mobiles, l'app demande d'abord</string>
+    <string name="route_mobile_ask">Vous êtes en données mobiles. Télécharger quand même les données routières ? Cela consomme environ %1$s de votre forfait.</string>
+    <string name="route_mobile_confirm">Télécharger en données mobiles</string>
+    <string name="route_mobile_wait">Attendre le Wi-Fi</string>
     <string name="route_err_wifi">Les données routières se téléchargent uniquement en Wi-Fi. Connecte-toi à un réseau Wi-Fi ou change-le dans les Réglages.</string>
     <string name="mapdata_title">Données de carte téléchargées</string>
     <string name="mapdata_none">Aucune donnée routière sur le téléphone</string>

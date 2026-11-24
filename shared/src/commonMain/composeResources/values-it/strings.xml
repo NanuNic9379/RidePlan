@@ -346,7 +346,10 @@
     <string name="theme_dark">Scuro</string>
     <string name="theme_note">Lo scuro stanca meno gli occhi la sera; il chiaro si legge meglio al sole.</string>
     <string name="wifi_only">Scarica solo con il Wi-Fi</string>
-    <string name="wifi_only_text">I dati stradali possono pesare decine di MB</string>
+    <string name="wifi_only_text">I dati stradali possono pesare decine di MB: sulla rete mobile l'app chiede prima</string>
+    <string name="route_mobile_ask">Sei sulla rete mobile. Scarico lo stesso i dati stradali? Usano circa %1$s del tuo traffico dati.</string>
+    <string name="route_mobile_confirm">Scarica con la rete mobile</string>
+    <string name="route_mobile_wait">Aspetto il Wi-Fi</string>
     <string name="route_err_wifi">I dati stradali si scaricano solo con il Wi-Fi. Collegati a una rete Wi-Fi, o cambia nelle Impostazioni.</string>
     <string name="mapdata_title">Dati mappa scaricati</string>
     <string name="mapdata_none">Nessun dato stradale sul telefono</string>
