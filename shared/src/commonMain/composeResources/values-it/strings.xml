@@ -493,6 +493,8 @@
     <string name="plan_locating">Cerco la tua posizione…</string>
     <string name="plan_here_failed">Posizione non trovata. Controlla che la localizzazione sia attiva, oppure tocca la mappa.</string>
     <string name="plan_round_trip">Ad anello</string>
+    <string name="explore_locate">Mostra dove sono</string>
+    <string name="explore_locate_failed">Posizione non trovata. Controlla che la localizzazione sia attiva.</string>
     <string name="plan_done">Fatto</string>
     <string name="plan_leave_title">Scartare questo giro?</string>
     <string name="plan_leave_text">I punti messi sulla mappa andranno persi.</string>
