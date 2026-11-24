@@ -270,7 +270,7 @@ private fun failureText(state: RouteState.Failed): String = when (state.error) {
 @Composable
 private fun dataName(download: DataDownload): String = when (download) {
     is RegionDownload -> regionName(download.region.id)
-    is CellsDownload -> stringResource(Res.string.region_around_ride)
+    is CellsDownload, is AreasDownload -> stringResource(Res.string.region_around_ride)
 }
 
 @Composable
