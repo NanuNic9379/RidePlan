@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.ridemap_attribution
 import io.github.nanunic9379.rideplan.resources.ridemap_busy
@@ -126,6 +128,10 @@ fun RideMapSection(ride: Ride, actions: RideMapActions) {
     }
 }
 
+/** How wide the saved map is on each side of the road: "5 km" or "3 mi" (#15). */
+@Composable
+private fun marginText(): String = Measures.roundDistance(RideMap.MARGIN_KM, LocalUnits.current)
+
 @Composable
 private fun Title() {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -139,7 +145,7 @@ private fun Offer(offer: RideMap.Offer?, ride: Ride, key: String, actions: RideM
     when (offer) {
         null -> LinearProgressIndicator(Modifier.fillMaxWidth())
         is RideMap.Offer.Full -> {
-            Body(stringResource(Res.string.ridemap_size, "${offer.plan.estimate.tiles}", formatBytes(offer.plan.estimate.bytes)))
+            Body(stringResource(Res.string.ridemap_size, "${offer.plan.estimate.tiles}", formatBytes(offer.plan.estimate.bytes), marginText()))
             DownloadButton(stringResource(Res.string.ridemap_download), AppIcons.Download, enabled = !busy) {
                 actions.download(RideMapRequest(key, ride.name, offer.plan), false)
             }

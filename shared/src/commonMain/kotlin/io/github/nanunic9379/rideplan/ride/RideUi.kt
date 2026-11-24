@@ -335,6 +335,7 @@ fun RideLayers(ride: Ride) {
         strokeColor = const(StopStroke),
         strokeWidth = const(2.5.dp),
     )
+    DayEndLayers(ride)
 }
 
 /**

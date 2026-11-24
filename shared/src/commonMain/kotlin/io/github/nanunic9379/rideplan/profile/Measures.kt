@@ -98,6 +98,9 @@ object Measures {
     fun distance(km: Double, units: Units, comma: Boolean): String =
         "${lengthNumber(km, units, comma)} ${units.symbol}"
 
+    /** A rough distance, whole number in the chosen unit: "5 km" or "3 mi" (never "3.1 mi"). */
+    fun roundDistance(km: Double, units: Units): String = "${units.of(km).roundToLong()} ${units.symbol}"
+
     /**
      * A distance during navigation, [m] metres: tens of metres below 1 km ("450 m"), feet
      * below a tenth of a mile ("300 ft"), then [distance].

@@ -543,9 +543,9 @@
     <string name="days_share_all">Partager chaque jour en GPX</string>
     <string name="fuel_title">Carburant</string>
     <string name="fuel_longest">Plus long tronçon sans station : %1$s</string>
-    <string name="fuel_over_range">Plus long que l\'autonomie de ta moto (%1$s) :</string>
+    <string name="fuel_over_range">Plus long que l'autonomie de ta moto (%1$s) :</string>
     <string name="fuel_stretch">de %1$s à %2$s depuis le départ</string>
-    <string name="fuel_within_range">Dans l\'autonomie de ta moto (%1$s).</string>
+    <string name="fuel_within_range">Dans l'autonomie de ta moto (%1$s).</string>
     <string name="fuel_no_range">Indique le réservoir et la consommation de ta moto dans le garage pour être averti quand un tronçon est trop long.</string>
     <string name="fuel_none">Aucune station-service le long de la route.</string>
     <string name="fuel_unknown">Stations-service inconnues ici : les données routières du téléphone ne les contiennent pas.</string>
@@ -557,7 +557,7 @@
         <item quantity="other">Afficher %1$d stations sur la balade</item>
     </plurals>
     <string name="sheet_title">Fiche de la balade</string>
-    <string name="sheet_hint">Touchez une étape pour indiquer rendez-vous, essence ou déjeuner, l\'heure et la durée de l\'arrêt.</string>
+    <string name="sheet_hint">Touchez une étape pour indiquer rendez-vous, essence ou déjeuner, l'heure et la durée de l'arrêt.</string>
     <string name="sheet_share">Partager la fiche</string>
     <string name="sheet_version">Version %1$d · mise à jour le %2$s</string>
     <string name="version_note_add">Écrire ce qui a changé</string>
@@ -565,7 +565,7 @@
     <string name="version_note_hint">ex. éboulement sur la SP12, on passe par Pietrapertosa</string>
     <string name="sheet_totals">Conduite %1$s · avec arrêts %2$s</string>
     <string name="sheet_finish">arrivée vers %1$s</string>
-    <string name="sheet_rough">Horaires estimés à 50 km/h : ouvrez la balade sur la carte pour calculer l\'itinéraire.</string>
+    <string name="sheet_rough">Horaires estimés à 50 km/h : ouvrez la balade sur la carte pour calculer l'itinéraire.</string>
     <string name="sheet_late">en retard</string>
     <string name="sheet_pause">arrêt de %1$d min</string>
     <string name="sheet_private">Lieu privé</string>
@@ -577,7 +577,7 @@
     <string name="purpose_photo">Arrêt photo</string>
     <string name="plan_none">Simple étape</string>
     <string name="plan_time">Heure (ex. 08:30)</string>
-    <string name="plan_time_invalid">Écrivez l\'heure comme 08:30</string>
+    <string name="plan_time_invalid">Écrivez l'heure comme 08:30</string>
     <string name="plan_pause">Arrêt</string>
     <string name="plan_note">Note pour le groupe</string>
     <string name="plan_save">Enregistrer</string>
@@ -638,7 +638,7 @@
     <string name="country_sm">Saint-Marin</string>
     <string name="country_xk">Kosovo</string>
     <string name="ridemap_title">Carte sans réseau</string>
-    <string name="ridemap_size">La carte le long de la route, 5 km de chaque côté : %1$s tuiles, environ %2$s. Elle fonctionne sans réseau.</string>
+    <string name="ridemap_size">La carte le long de la route, %3$s de chaque côté : %1$s tuiles, environ %2$s. Elle fonctionne sans réseau.</string>
     <string name="ridemap_reduced">Avec tout le détail, cette carte ferait %1$s, plus qu’un téléchargement ne le permet. Avec moins de détail (quelques petites rues manquent en zoomant de près) : %2$s tuiles, environ %3$s.</string>
     <string name="ridemap_too_long">Cette balade est trop longue pour un seul téléchargement de carte : même avec moins de détail, elle fait environ %1$s et la limite est de %2$s. Divisez-la en étapes pour enregistrer la carte.</string>
     <string name="ridemap_download">Télécharger la carte de cette balade</string>

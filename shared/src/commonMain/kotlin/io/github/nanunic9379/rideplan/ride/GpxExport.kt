@@ -11,7 +11,8 @@ import kotlin.math.roundToLong
  *   the road through them.
  * - `trk`: the actual road, when there is one (imported GPX/KML or route calculated on the phone).
  *   For those who want to follow exactly that road.
- * - Stop plans (#10) on `wpt` and `rtept`, the ride version (#11) in the metadata: see [planTags].
+ * - Stop plans (#10) and overnights (#12) on `wpt` and `rtept`, the ride version (#11) and the
+ *   daily cap (#12) in the metadata: see [planTags].
  */
 object GpxExport {
     fun write(ride: Ride, fallbackName: String): String {
@@ -22,21 +23,30 @@ object GpxExport {
         sb.append("  <metadata><name>").append(escape(name)).append("</name>")
         ride.version?.let { v ->
             if (v.note.isNotBlank()) sb.append("<desc>").append(escape("v${v.number}: ${v.note}")).append("</desc>")
-            sb.append("<extensions><rideplan:version id=\"").append(escape(v.rideId)).append("\" number=\"").append(v.number)
-                .append("\" updated=\"").append(v.updatedAt).append("\"/></extensions>")
+        }
+        val cap = ride.dayCap?.takeIf { it.valid }
+        if (ride.version != null || cap != null) {
+            sb.append("<extensions>")
+            ride.version?.let { v ->
+                sb.append("<rideplan:version id=\"").append(escape(v.rideId)).append("\" number=\"").append(v.number)
+                    .append("\" updated=\"").append(v.updatedAt).append("\"/>")
+            }
+            // Daily cap of a multi-day trip (#12), in the same form as the ride link.
+            cap?.let { sb.append("<rideplan:days cap=\"").append(RideLink.dayCapCode(it)).append("\"/>") }
+            sb.append("</extensions>")
         }
         sb.append("</metadata>\n")
         // Stops as wpt only next to a track: without a track the route points are enough
         // (and whoever reads the file back does not mistake the route for the road).
         if (!ride.straightLines) ride.stops.forEachIndexed { i, stop ->
             sb.append("  <wpt ").append(attrs(stop.point)).append("><name>")
-                .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan)).append("</wpt>\n")
+                .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan, overnight(ride, i))).append("</wpt>\n")
         }
         if (ride.stops.size >= 2) {
             sb.append("  <rte>\n    <name>").append(escape(name)).append("</name>\n")
             ride.stops.forEachIndexed { i, stop ->
                 sb.append("    <rtept ").append(attrs(stop.point)).append("><name>")
-                    .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan)).append("</rtept>\n")
+                    .append(escape(stopName(stop, i))).append("</name>").append(planTags(stop.plan, overnight(ride, i))).append("</rtept>\n")
             }
             sb.append("  </rte>\n")
         }
@@ -63,6 +73,9 @@ object GpxExport {
 
     private fun stopName(stop: Stop, i: Int) = stop.name ?: "${i + 1}"
 
+    /** The rider sleeps at stop [i] (#12): only intermediate stops count. */
+    private fun overnight(ride: Ride, i: Int) = i != 0 && i != ride.stops.lastIndex && ride.stops[i].overnight
+
     /** Namespace of the RidePlan extensions (#10, #11): other apps skip them. */
     const val NAMESPACE = "https://nanunic9379.github.io/RidePlan/gpx/1"
 
@@ -70,8 +83,9 @@ object GpxExport {
      * The plan of a stop (#10), in GPX order after the name: the note in `cmt`, a readable
      * line in `desc` for other apps, the purpose in `type`, time and pause in an extension.
      */
-    private fun planTags(plan: StopPlan?): String {
-        val p = plan?.normalized() ?: return ""
+    private fun planTags(plan: StopPlan?, overnight: Boolean): String {
+        val p = plan?.normalized()
+        if (p == null) return if (overnight) "<extensions><rideplan:stop overnight=\"1\"/></extensions>" else ""
         val sb = StringBuilder()
         if (p.note.isNotBlank()) sb.append("<cmt>").append(escape(p.note)).append("</cmt>")
         val desc = listOfNotNull(
@@ -81,10 +95,11 @@ object GpxExport {
         ).joinToString(" · ")
         if (desc.isNotEmpty()) sb.append("<desc>").append(escape(desc)).append("</desc>")
         p.purpose?.let { sb.append("<type>").append(it.code).append("</type>") }
-        if (p.time != null || p.pauseMinutes > 0) {
+        if (p.time != null || p.pauseMinutes > 0 || overnight) {
             sb.append("<extensions><rideplan:stop")
             p.time?.let { sb.append(" time=\"").append(StopPlan.timeText(it)).append('"') }
             if (p.pauseMinutes > 0) sb.append(" pause=\"").append(p.pauseMinutes).append('"')
+            if (overnight) sb.append(" overnight=\"1\"")
             sb.append("/></extensions>")
         }
         return sb.toString()
