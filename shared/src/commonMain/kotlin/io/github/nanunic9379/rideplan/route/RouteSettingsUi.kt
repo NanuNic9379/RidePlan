@@ -113,6 +113,10 @@ import io.github.nanunic9379.rideplan.resources.route_preview_vs_fast
 import io.github.nanunic9379.rideplan.resources.route_reset
 import io.github.nanunic9379.rideplan.resources.save
 import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.resources.route_mode_more
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.horizontalScroll
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Touch
 import org.jetbrains.compose.resources.StringResource
@@ -164,6 +168,41 @@ fun RidingModeRow(options: RouteOptions, enabled: Boolean, onOpen: () -> Unit) {
             }
             Text(stringResource(Res.string.route_mode_change), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
+    }
+}
+
+/**
+ * The riding modes as one row of chips (#33): planning a new ride, the mode is chosen before the
+ * first tap. The last chip opens the full route settings. No chip is on when the switches were
+ * changed by hand ("Custom").
+ */
+@Composable
+fun RidingModeChips(options: RouteOptions, onPick: (RidingMode) -> Unit, onMore: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RidingMode.entries.forEach { mode ->
+            val look = mode.look()
+            val on = options.mode == mode && !options.custom
+            FilterChip(
+                selected = on,
+                onClick = { onPick(mode) },
+                label = { Text(stringResource(look.name), style = MaterialTheme.typography.labelLarge) },
+                leadingIcon = { Icon(look.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                modifier = Modifier.heightIn(min = Touch.Glove),
+            )
+        }
+        FilterChip(
+            selected = options.custom,
+            onClick = onMore,
+            label = { Text(stringResource(if (options.custom) Res.string.route_custom else Res.string.route_mode_more), style = MaterialTheme.typography.labelLarge) },
+            leadingIcon = { Icon(AppIcons.Settings, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            modifier = Modifier.heightIn(min = Touch.Glove),
+        )
     }
 }
 

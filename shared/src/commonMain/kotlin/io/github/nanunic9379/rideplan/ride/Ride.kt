@@ -84,7 +84,12 @@ data class Ride(
      */
     val maneuvers: List<Maneuver> = emptyList(),
 ) {
-    enum class Source { GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK }
+    enum class Source {
+        GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,
+
+        /** Planned from scratch by tapping the map (#33). */
+        PLANNED,
+    }
 
     /** True when there is no real track, only the stops. */
     val straightLines: Boolean get() = track.size < 2

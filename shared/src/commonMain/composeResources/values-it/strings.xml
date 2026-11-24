@@ -477,4 +477,25 @@
     <string name="route_preview_fastest">È già il percorso più rapido</string>
     <string name="route_preview_pending">Il percorso esatto si calcola con «Applica»</string>
     <string name="route_preview_none">Non ancora calcolato</string>
+
+    <!-- Plan a new ride on the map (#33) -->
+    <string name="plan_title">Pianifica un giro</string>
+    <string name="plan_on_map">Pianifica sulla mappa</string>
+    <string name="plan_leave">Esci dalla pianificazione</string>
+    <string name="plan_undo">Annulla l'ultima</string>
+    <string name="plan_hint_start">Tocca la mappa per scegliere la partenza</string>
+    <string name="plan_hint_next">Tocca la mappa per aggiungere la tappa successiva</string>
+    <string name="plan_name">Nome (facoltativo)</string>
+    <string name="plan_one_more">Tocca un altro punto sulla mappa per avere il percorso</string>
+    <string name="plan_here">Parti dalla mia posizione</string>
+    <string name="plan_locating">Cerco la tua posizione…</string>
+    <string name="plan_here_failed">Posizione non trovata. Controlla che la localizzazione sia attiva, oppure tocca la mappa.</string>
+    <string name="plan_round_trip">Ad anello</string>
+    <string name="plan_done">Fatto</string>
+    <string name="plan_leave_title">Scartare questo giro?</string>
+    <string name="plan_leave_text">I punti messi sulla mappa andranno persi.</string>
+    <string name="plan_leave_discard">Scarta</string>
+    <string name="plan_leave_keep">Continua a pianificare</string>
+    <string name="route_mode_more">Altro</string>
+    <string name="ride_source_planned">pianificato sulla mappa</string>
 </resources>
