@@ -305,7 +305,7 @@ fun RideSketch(
     grid: Dp = 0.dp,
     progress: () -> Float = { 1f },
 ) {
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     val dark = MaterialTheme.colorScheme.onSurface
     Canvas(modifier.background(background, MaterialTheme.shapes.medium)) {
         if (grid > 0.dp) {

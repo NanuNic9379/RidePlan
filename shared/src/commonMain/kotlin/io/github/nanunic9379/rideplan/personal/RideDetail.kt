@@ -290,20 +290,21 @@ private fun StopRow(index: Int, count: Int, name: String?, lat: Double, lon: Dou
         Modifier.fillMaxWidth().heightIn(min = Touch.Min).padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // The marker of the map: white with a dark ring, the finish filled.
+        // As on the map: white with a dark ring, the finish all dark.
         val ink = MaterialTheme.colorScheme.onSurface
         val finish = index == count - 1 && count > 1
         Box(Modifier.padding(top = 4.dp).size(24.dp), contentAlignment = Alignment.Center) {
             Box(
                 Modifier.size(12.dp)
                     .background(if (finish) ink else MaterialTheme.colorScheme.surface, CircleShape)
-                    .border(2.5.dp, if (finish) MaterialTheme.colorScheme.surface else ink, CircleShape),
+                    .border(2.5.dp, ink, CircleShape),
             )
         }
         Column(Modifier.weight(1f)) {
             Text(role, style = MaterialTheme.typography.titleMedium)
             if (name != null) Text(name, style = MaterialTheme.typography.bodyMedium)
-            val distance = alongKm?.let { stringResource(Res.string.detail_stop_from_start, distanceText(it)) }
+            // The start is where the distances count from: no "0 km" there.
+            val distance = alongKm?.takeIf { index > 0 }?.let { stringResource(Res.string.detail_stop_from_start, distanceText(it)) }
             Text(
                 listOfNotNull(distance, "${fmt(lat)}, ${fmt(lon)}").joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall.merge(TabularFigures),
