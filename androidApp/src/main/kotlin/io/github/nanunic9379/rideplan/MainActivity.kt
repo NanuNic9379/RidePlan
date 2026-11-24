@@ -52,6 +52,8 @@ import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.RoutingRegion
 import io.github.nanunic9379.rideplan.route.RoutingData
 import io.github.nanunic9379.rideplan.route.CellsDownload
+import io.github.nanunic9379.rideplan.route.OutsideStop
+import io.github.nanunic9379.rideplan.route.outsideStops
 import io.github.nanunic9379.rideplan.route.DataDownload
 import io.github.nanunic9379.rideplan.route.RegionDownload
 import io.github.nanunic9379.rideplan.route.routed
@@ -407,13 +409,15 @@ class MainActivity : ComponentActivity() {
                 if (local != null) {
                     compute(ride, local)
                 } else {
+                    var outside = emptyList<OutsideStop>()
                     val download: DataDownload? = withContext(Dispatchers.IO) {
                         val published = router.publishedCells()
+                        outside = outsideStops(ride.stops, published)
                         if (published != null) CellsDownload.plan(published, router.localCells(), router.installedPacks(), points)
                         else RoutingRegion.bestFor(router.published(), points)?.let(::RegionDownload)
                     }
                     when {
-                        download == null -> rides.route = RouteState.NotCovered
+                        download == null -> rides.route = RouteState.NotCovered(outside)
                         download is CellsDownload && download.packs.isEmpty() -> compute(ride, RoutingData.Cells(download.cells))
                         else -> rides.route = RouteState.NeedsData(download)
                     }

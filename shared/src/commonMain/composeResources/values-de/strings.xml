@@ -72,6 +72,9 @@
     <string name="route_downloading">Lade %1$s: %2$s von %3$s</string>
     <string name="route_computing">Route wird auf dem Telefon berechnet…</string>
     <string name="route_not_covered">Für dieses Gebiet gibt es noch keine Straßendaten: Die Stopps bleiben mit geraden Linien verbunden.</string>
+    <string name="route_not_covered_stops">Stopps außerhalb des Gebiets, für das RidePlan Straßendaten hat: %1$s. Die Route bleibt eine gerade Linie: Verschiebe diese Stopps oder warte, bis das Gebiet abgedeckt ist.</string>
+    <string name="route_outside_stop_n">Stopp %1$d</string>
+    <string name="route_needs_space">Belegt etwa %1$s auf dem Telefon.</string>
     <string name="route_done_note">Route auf dem Telefon berechnet · OpenStreetMap-Daten vom %1$s</string>
     <string name="route_retry">Erneut versuchen</string>
     <string name="route_opt_curves">Kurven</string>

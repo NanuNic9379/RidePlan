@@ -30,6 +30,23 @@ TILE_PATH = re.compile(r"^([012])/((?:\d{3}/)*\d{3})\.gph$")
 # A published pack: l<level>-<tile id>-<build>.zip
 PACK_FILE = re.compile(r"^l[01]-\d+-[\w.]+\.zip$")
 
+# GitHub Release limits (#14): each file under 2 GiB, at most 1000 files per Release. During an
+# update the new packs sit next to the old ones before these are removed, so twice the packs
+# (plus cells.json) must fit. Checked before publishing, so a too-big area fails the build
+# instead of leaving a half-uploaded Release.
+MAX_ASSET_BYTES = 2 * 1024 ** 3
+MAX_RELEASE_ASSETS = 1000
+
+
+def release_problems(packs):
+    """What would not fit in one Release; empty list if everything is fine."""
+    problems = [f"{p['file']} is {p['bytes'] / 1e9:.2f} GB, over the 2 GiB per-file limit"
+                for p in packs if p["bytes"] >= MAX_ASSET_BYTES]
+    if 2 * len(packs) + 1 > MAX_RELEASE_ASSETS:
+        problems.append(f"{len(packs)} packs: an update needs {2 * len(packs) + 1} files, "
+                        f"over the {MAX_RELEASE_ASSETS}-file limit of a Release; split the area")
+    return problems
+
 
 def load(path):
     with open(path, encoding="utf-8") as f:
@@ -116,6 +133,9 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla):
             "tileBytes": tile_bytes,  # space used on the phone after extraction
             "sha256": sha256(path),
         })
+    problems = release_problems(packs)
+    if problems:
+        sys.exit("\n".join(problems))
     data = {"format": FORMAT, "build": build, "osmDate": osm_date, "valhalla": valhalla, "packs": packs}
     with open(os.path.join(outdir, "cells.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
