@@ -79,10 +79,8 @@
     <string name="route_curves_some">Plus</string>
     <string name="route_curves_more">Beaucoup</string>
     <string name="route_curves_max">Max</string>
-    <string name="route_detour">Avec plus de virages, la balade est plus longue de %1$s% : +%2$s km, +%3$s par rapport à l’itinéraire normal.</string>
-    <string name="route_detour_long">⚠ Balade bien plus longue : +%1$s% (+%2$s km, +%3$s) par rapport à l’itinéraire normal. Choisis moins de virages si tu manques de temps ou d’essence.</string>
-    <string name="route_opt_no_highways">Sans autoroutes</string>
-    <string name="route_opt_no_tolls">Sans péages</string>
+    <string name="route_detour">La balade est plus longue de %1$s% : +%2$s km, +%3$s par rapport à l’itinéraire le plus rapide.</string>
+    <string name="route_detour_long">⚠ Balade bien plus longue : +%1$s% (+%2$s km, +%3$s) par rapport à l’itinéraire le plus rapide. Choisis Rapide ou moins de virages si tu manques de temps ou d’essence.</string>
     <string name="route_stops_title">Étapes</string>
     <string name="route_stops_hint">Touche pour choisir : arrêt (tu y vas) ou passer à côté (sans traverser le village).</string>
     <string name="route_stop_stop">Arrêt : %1$s</string>
@@ -205,7 +203,6 @@
     <!-- UX redesign -->
     <string name="nav_back">Retour</string>
     <string name="home_new_ride">Nouvelle balade</string>
-    <string name="route_prefs_title">Préférences d’itinéraire</string>
     <string name="ride_sheet_label">Détails de la balade</string>
     <!-- Personal area (#21) -->
     <string name="nav_rides">Balades</string>
@@ -430,4 +427,55 @@
     <string name="update_check_now">Rechercher des mises à jour</string>
     <string name="update_checking">Vérification…</string>
     <string name="update_latest">Tu as la dernière version</string>
+    <!-- Route settings and riding modes (#30) -->
+    <string name="route_mode_title">Comment veux-tu rouler ?</string>
+    <string name="route_mode_section">Mode de conduite</string>
+    <string name="route_mode_change">Changer</string>
+    <string name="route_mode_fast">Rapide</string>
+    <string name="route_mode_fast_line">Arriver vite</string>
+    <string name="route_mode_fast_desc">L’itinéraire le plus rapide. Pour les liaisons, quand la route sert juste à arriver.</string>
+    <string name="route_mode_fast_does">Virages : normaux · Autoroutes et péages : oui</string>
+    <string name="route_mode_balanced">Équilibré</string>
+    <string name="route_mode_balanced_line">Du plaisir sans perdre de temps</string>
+    <string name="route_mode_balanced_desc">Des routes fluides avec quelques virages. Évite l’autoroute quand elle fait gagner peu de temps.</string>
+    <string name="route_mode_balanced_does">Virages : plus que la normale · Autoroutes : seulement si elles font gagner beaucoup de temps · Péages : évités</string>
+    <string name="route_mode_curvy">Virages</string>
+    <string name="route_mode_curvy_line">Un max de virages</string>
+    <string name="route_mode_curvy_desc">Cherche les cols, les petites routes et les routes sinueuses. La balade s’allonge : c’est le but.</string>
+    <string name="route_mode_curvy_does">Virages : au maximum · Autoroutes et péages : évités · Agglomérations : évitées si possible</string>
+    <string name="route_mode_scenic">Panoramique</string>
+    <string name="route_mode_scenic_line">Lacs, côtes et cols</string>
+    <string name="route_mode_touring">Tourisme</string>
+    <string name="route_mode_touring_line">Confortable, en duo avec bagages</string>
+    <string name="route_mode_new_roads">Routes nouvelles</string>
+    <string name="route_mode_new_roads_line">Jamais faites par toi</string>
+    <string name="route_mode_dirt">Piste</string>
+    <string name="route_mode_dirt_line">Il faut connaître le revêtement de chaque route</string>
+    <string name="route_mode_soon">Bientôt</string>
+    <string name="route_custom">Personnalisé</string>
+    <string name="route_fine_title">Réglages fins</string>
+    <string name="route_avoid">Éviter</string>
+    <string name="route_avoid_motorways">Autoroutes et voies express</string>
+    <string name="route_avoid_tolls">Péages</string>
+    <string name="route_avoid_ferries">Ferries</string>
+    <string name="route_avoid_towns">Agglomérations</string>
+    <string name="route_avoid_towns_sub">Contourne les villages quand c’est possible</string>
+    <string name="route_avoid_unpaved">Routes non goudronnées</string>
+    <string name="route_avoid_unpaved_sub">Toujours évitées pour l’instant</string>
+    <string name="route_always">Toujours</string>
+    <string name="route_bike">Moto</string>
+    <string name="route_bike_none">Aucune moto au garage : ajoutes-en une dans Toi › Garage.</string>
+    <string name="route_bike_small">Sous 150 cm³, pas d’autoroutes ni de rocades autoroutières. C’est la loi : avec cette moto, elles sont toujours évitées.</string>
+    <string name="route_presets">Tes préréglages</string>
+    <string name="route_preset_save">Enregistrer</string>
+    <string name="route_preset_title">Enregistrer comme préréglage</string>
+    <string name="route_preset_name">Nom</string>
+    <string name="route_preset_hint">Appuie longuement sur un préréglage pour le supprimer.</string>
+    <string name="route_preset_delete_title">Supprimer « %1$s » ?</string>
+    <string name="route_apply">Appliquer et recalculer</string>
+    <string name="route_reset">Réinitialiser</string>
+    <string name="route_preview_vs_fast">par rapport à l’itinéraire le plus rapide</string>
+    <string name="route_preview_fastest">C’est déjà l’itinéraire le plus rapide</string>
+    <string name="route_preview_pending">L’itinéraire exact est calculé avec « Appliquer »</string>
+    <string name="route_preview_none">Pas encore calculé</string>
 </resources>

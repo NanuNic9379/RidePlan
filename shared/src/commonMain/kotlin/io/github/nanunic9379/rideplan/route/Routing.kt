@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.route
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.Stop
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -78,18 +79,27 @@ data class RoutingRegion(
 /**
  * The route character chosen by the rider (#4).
  * Unpaved roads are always avoided: it is not a toggle.
+ * [mode]: the riding mode the switches come from (#30); null = none (preferences from before
+ * #30 that match no mode, or plain defaults). See [custom].
+ * New fields need a default: these options are saved on the phone and read back with
+ * [RouteSettings.decode].
  */
+@Serializable
 data class RouteOptions(
     val curves: Curves = Curves.NORMAL,
     val avoidHighways: Boolean = false,
     val avoidTolls: Boolean = false,
     val avoidFerries: Boolean = false,
+    /** Go around towns where possible (#30): best effort, see [ValhallaRoute.request]. */
+    val avoidTowns: Boolean = false,
+    val mode: RidingMode? = null,
 )
 
 /**
  * How much to seek curves: Valhalla's `use_curvature` (above 0.5 it prefers winding roads).
  * On the San Basilio → Padula test ride (#10): 0.75 makes it about 14% longer, 1 about 24%.
  */
+@Serializable
 enum class Curves(val curvature: Double?) {
     NORMAL(null),
     SOME(0.6),
@@ -123,6 +133,9 @@ data class RouteInfo(
 object ValhallaRoute {
     /** How far from the town centre the road may pass. The engine must accept it (max_radius). */
     const val PASS_RADIUS_M = 2500
+
+    /** Seconds added for entering a service road when towns are avoided (#30). */
+    const val TOWN_SERVICE_PENALTY = 60
 
     /**
      * Motorcycle profile with default values: the closest to the ride drawn on Google.
@@ -163,8 +176,15 @@ object ValhallaRoute {
                 put("use_trails", 0.0)
                 options.curves.curvature?.let { put("use_curvature", it) }
                 if (options.avoidHighways) put("use_highways", 0.0)
+                else options.mode?.highwayBias?.let { put("use_highways", it) }
                 if (options.avoidTolls) put("use_tolls", 0.0)
                 if (options.avoidFerries) put("use_ferry", 0.0)
+                if (options.avoidTowns) {
+                    // Valhalla has no "town" penalty: residential living streets and service
+                    // roads are what a route crosses inside a town, so they are made expensive.
+                    put("use_living_streets", 0.0)
+                    put("service_penalty", TOWN_SERVICE_PENALTY)
+                }
             })
         })
         put("units", "kilometers")

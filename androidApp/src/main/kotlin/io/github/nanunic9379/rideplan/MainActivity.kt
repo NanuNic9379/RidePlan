@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.BackupNotice
+import io.github.nanunic9379.rideplan.profile.ProfileData
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.RideExport
 import io.github.nanunic9379.rideplan.profile.ThemeMode
@@ -41,8 +42,9 @@ import io.github.nanunic9379.rideplan.ride.Stop
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
-import io.github.nanunic9379.rideplan.route.Curves
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.RouteSettings
+import io.github.nanunic9379.rideplan.route.RidingMode
 import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.unrouted
 import io.github.nanunic9379.rideplan.route.RouteState
@@ -147,13 +149,15 @@ class MainActivity : ComponentActivity() {
             cancel = ::cancelRoute,
             retry = { rides.ride?.let(::planRoute) },
             changeOptions = ::changeOptions,
+            savePreset = { name, options -> saveRouteSettings(routeSettings().withPreset(name, options, ProfileData.newId())) },
+            deletePreset = { id -> saveRouteSettings(routeSettings().withoutPreset(id)) },
             toggleStop = { i -> rides.ride?.let { reroute(it.toggledStop(i)) } },
             editStops = ::editStops,
         )
         val fresh = session.store == null
         store = session.store ?: profileStore().also { session.store = it }
         if (fresh) {
-            rides.options = loadOptions()
+            routeSettings().let { rides.options = it.options; rides.presets = it.presets }
             // After the system closed the app in the background, the saved ride on screen comes back.
             savedInstanceState?.getString(STATE_RIDE)?.let { id -> store.data.rides.firstOrNull { it.id == id } }?.let { saved ->
                 openRide(saved.toRide())
@@ -281,7 +285,7 @@ class MainActivity : ComponentActivity() {
     /** A ride from "Your rides": straight onto the map, routed again if needed. */
     private fun openRide(ride: Ride) {
         routeJob?.cancel()
-        rides.options = loadOptions()
+        routeSettings().let { rides.options = it.options; rides.presets = it.presets }
         rides.show(Result.success(ride))
         if (ride.needsRoute) planRoute(ride)
     }
@@ -349,7 +353,7 @@ class MainActivity : ComponentActivity() {
         rides.goHome()
         getSharedPreferences("map", MODE_PRIVATE).edit().clear().apply()
         getSharedPreferences("route", MODE_PRIVATE).edit().clear().apply()
-        rides.options = loadOptions()
+        routeSettings().let { rides.options = it.options; rides.presets = it.presets }
         File(cacheDir, "shared").deleteRecursively()
         lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
     }
@@ -437,12 +441,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun changeOptions(options: RouteOptions) {
         rides.options = options
-        getSharedPreferences("route", MODE_PRIVATE).edit()
-            .putString("curves", options.curves.name)
-            .putBoolean("avoidHighways", options.avoidHighways)
-            .putBoolean("avoidTolls", options.avoidTolls)
-            .putBoolean("avoidFerries", options.avoidFerries)
-            .apply()
+        saveRouteSettings(routeSettings().copy(options = options))
         rides.ride?.let { reroute(it.unrouted()) }
     }
 
@@ -461,15 +460,26 @@ class MainActivity : ComponentActivity() {
         if (fresh.routable && rides.route !is RouteState.Downloading) planRoute(fresh)
     }
 
-    private fun loadOptions(): RouteOptions {
+    /**
+     * The route settings on the phone (#30): one JSON value. Preferences saved before #30 (four
+     * separate values) are read once and become the starting point.
+     */
+    private fun routeSettings(): RouteSettings {
         val p = getSharedPreferences("route", MODE_PRIVATE)
-        return RouteOptions(
-            curves = Curves.entries.firstOrNull { it.name == p.getString("curves", null) } ?: Curves.NORMAL,
+        return RouteSettings.decode(p.getString(ROUTE_SETTINGS, null)) ?: RouteSettings.legacy(
+            curves = p.getString("curves", null),
             avoidHighways = p.getBoolean("avoidHighways", false),
             avoidTolls = p.getBoolean("avoidTolls", false),
             avoidFerries = p.getBoolean("avoidFerries", false),
         )
     }
+
+    private fun saveRouteSettings(settings: RouteSettings) {
+        rides.presets = settings.presets
+        getSharedPreferences("route", MODE_PRIVATE).edit().putString(ROUTE_SETTINGS, settings.encode()).apply()
+    }
+
+    private fun loadOptions(): RouteOptions = routeSettings().options
 
     private fun cancelRoute() {
         routeJob?.cancel()
@@ -483,10 +493,12 @@ class MainActivity : ComponentActivity() {
         val options = rides.options.forBike(store.data.defaultBike)
         val (result, baseline) = withContext(Dispatchers.Default) {
             val main = router.route(ride, data, options)
-            // With curves, also compute the normal route, to tell how much longer the ride gets.
-            // If the comparison fails it does not matter: the ride stays valid.
-            val base = if (options.curves == Curves.NORMAL) null
-            else runCatching { router.route(ride, data, options.copy(curves = Curves.NORMAL), instructions = false) }.getOrNull()
+            // Unless this is already the fastest route, also compute it (#30): the ride sheet and
+            // the route settings tell how much longer the ride gets. Same data, no instructions:
+            // one more local computation. If it fails it does not matter: the ride stays valid.
+            val fast = RidingMode.FAST.options.forBike(store.data.defaultBike)
+            val base = if (options == fast) null
+            else runCatching { router.route(ride, data, fast, instructions = false) }.getOrNull()
             main to base
         }
         if (rides.ride === ride) {
@@ -533,3 +545,6 @@ class MainActivity : ComponentActivity() {
 
 private const val STATE_RIDE = "ride"
 private const val STATE_PANEL = "panel"
+
+/** Route settings and presets as JSON (#30), in the "route" preferences. */
+private const val ROUTE_SETTINGS = "settings"

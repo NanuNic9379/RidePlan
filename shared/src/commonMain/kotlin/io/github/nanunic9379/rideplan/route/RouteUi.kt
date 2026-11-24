@@ -2,8 +2,6 @@ package io.github.nanunic9379.rideplan.route
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -16,10 +14,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,9 +55,6 @@ import io.github.nanunic9379.rideplan.resources.route_curves_max
 import io.github.nanunic9379.rideplan.resources.route_curves_more
 import io.github.nanunic9379.rideplan.resources.route_curves_normal
 import io.github.nanunic9379.rideplan.resources.route_curves_some
-import io.github.nanunic9379.rideplan.resources.route_opt_curves
-import io.github.nanunic9379.rideplan.resources.route_opt_no_highways
-import io.github.nanunic9379.rideplan.resources.route_opt_no_tolls
 import io.github.nanunic9379.rideplan.resources.route_retry
 import io.github.nanunic9379.rideplan.ride.Ride
 import org.jetbrains.compose.resources.stringResource
@@ -93,6 +84,9 @@ class RouteActions(
     val retry: () -> Unit,
     /** Preferences changed: the platform remembers them and routes the ride again (#4). */
     val changeOptions: (RouteOptions) -> Unit = {},
+    /** Saves the options with a name, kept on the phone (#30). */
+    val savePreset: (name: String, options: RouteOptions) -> Unit = { _, _ -> },
+    val deletePreset: (id: String) -> Unit = {},
     /** A stop switches between "stop" and "pass near" or back: route again (#29). */
     val toggleStop: (index: Int) -> Unit = {},
     /** The stops were edited on the map (#2): show the new ride and route it again. */
@@ -100,35 +94,7 @@ class RouteActions(
 )
 
 /**
- * Route character: curve level and roads to avoid.
- * Everything is 48 dp tall: usable with gloves on.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun RouteOptionsRow(options: RouteOptions, enabled: Boolean, onChange: (RouteOptions) -> Unit) = Column(
-    verticalArrangement = Arrangement.spacedBy(4.dp),
-) {
-    Text(stringResource(Res.string.route_opt_curves), style = MaterialTheme.typography.labelLarge)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        Curves.entries.forEachIndexed { i, level ->
-            SegmentedButton(
-                selected = options.curves == level,
-                onClick = { if (options.curves != level) onChange(options.copy(curves = level)) },
-                shape = SegmentedButtonDefaults.itemShape(i, Curves.entries.size),
-                enabled = enabled,
-                icon = {},
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) { Text(curvesLabel(level), maxLines = 1) }
-        }
-    }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OptionChip(stringResource(Res.string.route_opt_no_highways), options.avoidHighways, enabled) { onChange(options.copy(avoidHighways = it)) }
-        OptionChip(stringResource(Res.string.route_opt_no_tolls), options.avoidTolls, enabled) { onChange(options.copy(avoidTolls = it)) }
-    }
-}
-
-/**
- * What the chosen curves cost, measured on the real ride against the normal route.
+ * What the chosen options cost, measured on the real ride against the fastest route (#30).
  * Below 5% nothing is said; from 20% up the warning is highlighted.
  */
 @Composable
@@ -151,23 +117,11 @@ fun DetourNote(info: RouteInfo) {
 }
 
 @Composable
-private fun curvesLabel(level: Curves): String = when (level) {
+internal fun curvesLabel(level: Curves): String = when (level) {
     Curves.NORMAL -> stringResource(Res.string.route_curves_normal)
     Curves.SOME -> stringResource(Res.string.route_curves_some)
     Curves.MORE -> stringResource(Res.string.route_curves_more)
     Curves.MAX -> stringResource(Res.string.route_curves_max)
-}
-
-@Composable
-private fun OptionChip(label: String, selected: Boolean, enabled: Boolean, onToggle: (Boolean) -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = { onToggle(!selected) },
-        enabled = enabled,
-        label = { Text(label) },
-        leadingIcon = if (selected) ({ Icon(AppIcons.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }) else null,
-        modifier = Modifier.heightIn(min = 48.dp),
-    )
 }
 
 /**
