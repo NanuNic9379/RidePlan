@@ -108,7 +108,7 @@ fun openOnMap(store: ProfileStore, rides: RideScreenState, actions: ImportAction
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportActions?, id: String, snackbar: SnackbarHostState) {
+fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportActions?, id: String, snackbar: SnackbarHostState, platform: PlatformActions? = null) {
     val saved = store.data.rides.firstOrNull { it.id == id }
     if (saved == null) {
         LaunchedEffect(Unit) { rides.back() }
@@ -250,6 +250,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
             }
         }
         if (saved.stops.size >= 2) RideSheetSection(store, saved, actions?.shareText)
+        platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrRideSection(it, store, saved, rides.options, actions?.shareText) }
         if (received == null) {
             Notes(store, saved)
             History(saved, onUndo = { store.update { it.undoRidden(id) } })

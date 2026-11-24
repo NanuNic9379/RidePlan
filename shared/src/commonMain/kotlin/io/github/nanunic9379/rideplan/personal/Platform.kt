@@ -29,6 +29,8 @@ class PlatformActions(
     val region: String? = null,
     /** The map of a ride for use without signal (#1); null = not offered. */
     val rideMap: io.github.nanunic9379.rideplan.route.RideMapActions? = null,
+    /** Public sharing on Nostr (#3, #11); null = not offered. */
+    val nostr: io.github.nanunic9379.rideplan.social.NostrService? = null,
 ) {
     /** Outcome of the last export, to show on the Data & privacy page. */
     var exportNotice by mutableStateOf<Boolean?>(null)

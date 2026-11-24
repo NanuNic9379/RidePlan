@@ -10,6 +10,9 @@ dependencies {
     implementation(libs.maplibre.compose)
     implementation(libs.valhalla.mobile)
     implementation(libs.valhalla.models.config)
+    // Nostr (#3): native Schnorr check (about 1.4 MB per processor) and relay websockets.
+    implementation(libs.secp256k1.jni.android)
+    implementation(libs.okhttp)
     runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)
 }
 

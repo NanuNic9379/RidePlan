@@ -163,6 +163,8 @@ sealed interface Dest {
     data object Language : Dest
     data object MapData : Dest
     data object Info : Dest
+    /** Public sharing on Nostr (#3, #11). */
+    data object Nostr : Dest
 }
 
 /** State of the ride on screen. The platform (file, link) changes it and [App] reads it. */

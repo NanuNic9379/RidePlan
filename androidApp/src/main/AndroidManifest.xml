@@ -11,6 +11,15 @@
     <!-- Road data only on Wi-Fi (#21): tells a metered network from Wi-Fi. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Public sharing on Nostr (#3): finds a signer app such as Amber (NIP-55). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="nostrsigner" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

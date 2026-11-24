@@ -267,6 +267,7 @@ private fun languageName(tag: String?): String? = Languages.firstOrNull { tag !=
 fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: PlatformActions?) {
     val s = store.data.settings
     SubPage(stringResource(Res.string.settings_title), onBack = { rides.back() }) {
+        platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrSettingsRow(it, rides) }
         platform?.language?.let { lang ->
             RowGroup {
                 NavRow(

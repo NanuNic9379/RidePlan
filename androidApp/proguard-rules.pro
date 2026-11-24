@@ -5,3 +5,5 @@
 # No obfuscation: the code is open source and Play Protect distrusts obfuscated apps
 # that install updates. Shrinking stays on.
 -dontobfuscate
+# secp256k1-kmp finds its native loader by reflection (Nostr signatures, #3).
+-keep class fr.acinq.secp256k1.** { *; }
