@@ -46,6 +46,8 @@ import io.github.nanunic9379.rideplan.ride.withStopReordered
 import io.github.nanunic9379.rideplan.ride.fitRide
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteState
+import io.github.nanunic9379.rideplan.nav.NavigationPlatform
+import io.github.nanunic9379.rideplan.nav.NavigationScreen
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
@@ -71,6 +73,8 @@ fun App(
     importActions: ImportActions? = null,
     routeActions: RouteActions? = null,
     backupActions: BackupActions? = null,
+    /** Turn-by-turn navigation on this platform (#5); null = no "Navigate" button. */
+    navigation: NavigationPlatform? = null,
     overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
@@ -90,7 +94,13 @@ fun App(
         Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { _ ->
             Box(Modifier.fillMaxSize()) {
                 when {
-                    store == null || rides.onMap -> MapScreen(rides, store, importActions, routeActions)
+                    rides.navigating && navigation != null && ride != null && !ride.straightLines -> NavigationScreen(
+                        ride,
+                        navigation,
+                        onExit = { rides.navigating = false },
+                        onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
+                    )
+                    store == null || rides.onMap -> MapScreen(rides, store, importActions, routeActions, navigation)
                     !store.data.profile.welcomed -> Surface(Modifier.fillMaxSize()) { WelcomeScreen(store) }
                     rides.page == Page.PROFILE -> Surface(Modifier.fillMaxSize()) { ProfileScreen(store, onBack = { rides.page = Page.HOME }, backup = backupActions) }
                     else -> Surface(Modifier.fillMaxSize()) { HomeScreen(store, rides, importActions, snackbar) }
@@ -102,7 +112,13 @@ fun App(
 }
 
 @Composable
-private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importActions: ImportActions?, routeActions: RouteActions?) {
+private fun MapScreen(
+    rides: RideScreenState,
+    store: ProfileStore?,
+    importActions: ImportActions?,
+    routeActions: RouteActions?,
+    navigation: NavigationPlatform? = null,
+) {
     val ride = rides.ride
     val state = rememberMapState(
         baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
@@ -165,6 +181,7 @@ private fun MapScreen(rides: RideScreenState, store: ProfileStore?, importAction
             rides,
             importActions,
             routeActions,
+            onNavigate = if (navigation != null) ({ rides.navigating = true }) else null,
             saved = {
                 if (store != null) {
                     SavedRow(

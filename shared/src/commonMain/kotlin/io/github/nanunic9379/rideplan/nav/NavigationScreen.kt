@@ -1,0 +1,343 @@
+package io.github.nanunic9379.rideplan.nav
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import io.github.nanunic9379.rideplan.MapDefaults
+import io.github.nanunic9379.rideplan.resources.Res
+import io.github.nanunic9379.rideplan.resources.nav_arrived_text
+import io.github.nanunic9379.rideplan.resources.nav_arrived_title
+import io.github.nanunic9379.rideplan.resources.nav_exit
+import io.github.nanunic9379.rideplan.resources.nav_follow_track
+import io.github.nanunic9379.rideplan.resources.nav_mark_done
+import io.github.nanunic9379.rideplan.resources.nav_mute
+import io.github.nanunic9379.rideplan.resources.nav_not_now
+import io.github.nanunic9379.rideplan.resources.nav_off_track
+import io.github.nanunic9379.rideplan.resources.nav_permission_allow
+import io.github.nanunic9379.rideplan.resources.nav_permission_text
+import io.github.nanunic9379.rideplan.resources.nav_reroute_failed
+import io.github.nanunic9379.rideplan.resources.nav_rerouting
+import io.github.nanunic9379.rideplan.resources.nav_say_back
+import io.github.nanunic9379.rideplan.resources.nav_say_finish
+import io.github.nanunic9379.rideplan.resources.nav_say_follow_track
+import io.github.nanunic9379.rideplan.resources.nav_say_in
+import io.github.nanunic9379.rideplan.resources.nav_say_off_route
+import io.github.nanunic9379.rideplan.resources.nav_say_off_track
+import io.github.nanunic9379.rideplan.resources.nav_say_stop
+import io.github.nanunic9379.rideplan.resources.nav_say_stop_unnamed
+import io.github.nanunic9379.rideplan.resources.nav_stop_reached
+import io.github.nanunic9379.rideplan.resources.nav_then
+import io.github.nanunic9379.rideplan.resources.nav_to_finish
+import io.github.nanunic9379.rideplan.resources.nav_unmute
+import io.github.nanunic9379.rideplan.resources.nav_waiting_gps
+import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.ride.formatKm
+import io.github.nanunic9379.rideplan.ride.lineJson
+import io.github.nanunic9379.rideplan.ride.pointsJson
+import io.github.nanunic9379.rideplan.route.TurnSign
+import io.github.nanunic9379.rideplan.route.durationText
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
+import org.maplibre.compose.camera.CameraAnimation
+import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.camera.CameraUpdate
+import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.map.rememberMapState
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.rememberGeoJsonSource
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.DpPadding
+import org.maplibre.spatialk.geojson.Position
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
+
+/** Navigation colours: kept here so the redesign can replace them in one place. */
+private object NavColors {
+    val Route = Color(0xFFFF8A1F)
+    val RouteCasing = Color(0xFF7A3300)
+    val Me = Color(0xFF1A73E8)
+    val MeStroke = Color.White
+    val Stop = Color.White
+    val StopStroke = Color(0xFF1C1B26)
+}
+
+/** Big touch targets: usable with gloves. */
+private val ButtonHeight = 56.dp
+
+/**
+ * Turn-by-turn navigation of [ride] (#5): the map follows you and turns with the road, the
+ * banner shows the next maneuver, the voice announces it. Location is used only while
+ * this screen is open. [onMarkDone]: marks the ride as done (null if it is not saved).
+ */
+@Composable
+fun NavigationScreen(
+    ride: Ride,
+    platform: NavigationPlatform,
+    onExit: () -> Unit,
+    onMarkDone: (() -> Unit)? = null,
+) {
+    val scope = rememberCoroutineScope()
+    val session = remember(ride) { NavigationSession(ride, platform, scope, ::speech) }
+    DisposableEffect(session) {
+        session.start()
+        onDispose { session.stop() }
+    }
+    val update = session.update
+    val line = session.ride.line
+    val state = rememberMapState(
+        baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
+        initialCameraPosition = CameraPosition(
+            center = Position(latitude = line.first().lat, longitude = line.first().lon),
+            zoom = 15.0,
+            pitch = 45.0,
+        ),
+    ) {
+        NavLayers(session.ride, session.update?.position)
+    }
+    LaunchedEffect(update) {
+        val u = update ?: return@LaunchedEffect
+        val kmh = (u.speedMps ?: 0.0) * 3.6
+        val zoom = when {
+            kmh < 40 -> 17.0
+            kmh < 80 -> 16.0
+            else -> 15.0
+        }
+        state.animateCamera(
+            CameraUpdate(
+                center = Position(latitude = u.position.lat, longitude = u.position.lon),
+                zoom = zoom,
+                bearing = u.bearing ?: state.cameraPosition.bearing,
+                pitch = 45.0,
+                // Position in the lower part of the screen: more road ahead is visible.
+                padding = DpPadding(top = 260.dp),
+            ),
+            CameraAnimation.Ease(CameraAnimation.Ease.Standard) { duration = 900.milliseconds },
+        )
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
+        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().padding(8.dp)) {
+            // Landscape: banner and bar on the left, the road stays visible on the right.
+            val panel = if (maxWidth > maxHeight) Modifier.width(380.dp) else Modifier.fillMaxWidth()
+            Column(Modifier.align(Alignment.TopStart).then(panel)) {
+                Banner(session, onExit)
+            }
+            BottomBar(session, onExit, Modifier.align(Alignment.BottomStart).then(panel))
+        }
+    }
+
+    if (session.arrived) {
+        AlertDialog(
+            onDismissRequest = session::dismissArrival,
+            title = { Text(stringResource(Res.string.nav_arrived_title)) },
+            text = if (onMarkDone != null) ({ Text(stringResource(Res.string.nav_arrived_text)) }) else null,
+            confirmButton = {
+                if (onMarkDone != null) {
+                    Button(onClick = { onMarkDone(); session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight)) {
+                        Text(stringResource(Res.string.nav_mark_done))
+                    }
+                } else {
+                    Button(onClick = { session.dismissArrival(); onExit() }, Modifier.heightIn(min = ButtonHeight)) {
+                        Text(stringResource(Res.string.nav_exit))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = session::dismissArrival, Modifier.heightIn(min = ButtonHeight)) {
+                    Text(stringResource(Res.string.nav_not_now))
+                }
+            },
+        )
+    }
+}
+
+/** Road, stops and your position. */
+@Composable
+private fun NavLayers(ride: Ride, me: LatLon?) {
+    val line = rememberGeoJsonSource(GeoJsonData.JsonString(lineJson(ride.line)))
+    val stops = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(ride.stops.drop(1).map { it.point })))
+    val position = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(listOfNotNull(me))))
+    LineLayer(id = "nav-casing", source = line, color = const(NavColors.RouteCasing), width = const(10.dp))
+    LineLayer(id = "nav-line", source = line, color = const(NavColors.Route), width = const(6.dp))
+    CircleLayer(
+        id = "nav-stops", source = stops, color = const(NavColors.Stop), radius = const(7.dp),
+        strokeColor = const(NavColors.StopStroke), strokeWidth = const(3.dp),
+    )
+    CircleLayer(
+        id = "nav-me", source = position, color = const(NavColors.Me), radius = const(10.dp),
+        strokeColor = const(NavColors.MeStroke), strokeWidth = const(3.dp),
+    )
+}
+
+/** Next maneuver, or what the navigation is doing (waiting for GPS, recalculating, off track). */
+@Composable
+private fun Banner(session: NavigationSession, onExit: () -> Unit) {
+    val u = session.update
+    val route = session.navigator.route
+    val scheme = MaterialTheme.colorScheme
+    when {
+        session.permission == false -> Message(stringResource(Res.string.nav_permission_text), scheme.errorContainer, scheme.onErrorContainer) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = session::start, Modifier.heightIn(min = ButtonHeight)) { Text(stringResource(Res.string.nav_permission_allow)) }
+                OutlinedButton(onClick = onExit, Modifier.heightIn(min = ButtonHeight)) { Text(stringResource(Res.string.nav_exit)) }
+            }
+        }
+        u == null -> Message(stringResource(Res.string.nav_waiting_gps), scheme.surface, scheme.onSurface)
+        session.rerouting -> Message(stringResource(Res.string.nav_rerouting), scheme.tertiaryContainer, scheme.onTertiaryContainer)
+        u.offRoute && session.rerouteFailed -> Message(stringResource(Res.string.nav_reroute_failed), scheme.errorContainer, scheme.onErrorContainer)
+        u.offRoute && !route.canReroute ->
+            Message(stringResource(Res.string.nav_off_track, distanceText(u.offsetM)), scheme.errorContainer, scheme.onErrorContainer)
+        u.finished -> TurnBanner(TurnSign.ARRIVE, distanceText(u.remainingM), stringResource(Res.string.nav_arrived_title), null)
+        u.next != null && u.distanceToNextM != null -> TurnBanner(
+            sign = u.next.maneuver.sign,
+            distance = distanceText(u.distanceToNextM),
+            text = u.next.maneuver.instruction,
+            then = u.then,
+        )
+        else -> TurnBanner(TurnSign.STRAIGHT, distanceText(u.remainingM), stringResource(Res.string.nav_follow_track), null)
+    }
+    val arrival = u?.lastArrival
+    if (u != null && arrival != null && !arrival.finish && u.alongM - arrival.along < 300) {
+        Surface(color = scheme.secondaryContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.padding(top = 6.dp)) {
+            Text(
+                stringResource(Res.string.nav_stop_reached, arrival.stop.name ?: "·"),
+                Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.titleSmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TurnBanner(sign: TurnSign, distance: String, text: String, then: PlacedManeuver?) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp) {
+        Column {
+            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                TurnArrow(sign, scheme.onPrimaryContainer, Modifier.size(76.dp))
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(distance, fontSize = 40.sp, fontWeight = FontWeight.Bold, lineHeight = 44.sp)
+                    Text(text, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            if (then != null) {
+                Surface(color = scheme.primary, contentColor = scheme.onPrimary) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(Res.string.nav_then), style = MaterialTheme.typography.titleSmall)
+                        TurnArrow(then.maneuver.sign, scheme.onPrimary, Modifier.padding(start = 8.dp).size(28.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Message(text: String, color: Color, content: Color, actions: (@Composable () -> Unit)? = null) {
+    Surface(color = color, contentColor = content, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text, style = MaterialTheme.typography.titleLarge)
+            actions?.invoke()
+        }
+    }
+}
+
+/** Speed, what is left to the finish, mute and exit. */
+@Composable
+private fun BottomBar(session: NavigationSession, onExit: () -> Unit, modifier: Modifier) {
+    val u = session.update
+    Surface(modifier, shape = MaterialTheme.shapes.large, shadowElevation = 4.dp) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (u != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text(
+                            u.speedMps?.let { "${(it * 3.6).roundToInt()}" } ?: "–",
+                            fontSize = 34.sp, fontWeight = FontWeight.Bold, lineHeight = 36.sp,
+                        )
+                        Text("km/h", style = MaterialTheme.typography.labelMedium)
+                    }
+                    Spacer(Modifier.width(20.dp))
+                    Column(Modifier.weight(1f)) {
+                        val parts = listOfNotNull(distanceText(u.remainingM), u.remainingSeconds?.let { durationText(it) })
+                        Text(parts.joinToString(" · "), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(Res.string.nav_to_finish), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = session::toggleMute, Modifier.weight(1f).heightIn(min = ButtonHeight)) {
+                    Text(stringResource(if (session.muted) Res.string.nav_unmute else Res.string.nav_mute), style = MaterialTheme.typography.titleMedium)
+                }
+                Button(
+                    onClick = onExit,
+                    modifier = Modifier.weight(1f).heightIn(min = ButtonHeight),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                ) {
+                    Text(stringResource(Res.string.nav_exit), style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+    }
+}
+
+/** Distance on screen: tens of metres below 1 km, then km. */
+internal fun distanceText(m: Double): String =
+    if (m < 1000) "${((m / 10).roundToInt() * 10).coerceAtLeast(0)} m" else "${formatKm(m / 1000)} km"
+
+/** Distance for the voice, already rounded by [Navigator.spokenDistance]. */
+internal fun spokenText(m: Int): String = if (m >= 1000) "${m / 1000} km" else "$m m"
+
+/** What the voice says for [a], in the app language. */
+internal suspend fun speech(a: Announcement): String? = when (a) {
+    is Announcement.Start -> a.maneuver?.let { it.verbalPre ?: it.instruction }
+        ?: getString(Res.string.nav_say_follow_track, spokenText(Navigator.spokenDistance(a.remainingM)))
+    is Announcement.Turn -> {
+        val m = a.maneuver
+        if (a.stage == Stage.NOW) m.verbalPre ?: m.instruction
+        else getString(Res.string.nav_say_in, spokenText(a.distanceM), m.verbalAlert ?: m.verbalPre ?: m.instruction)
+    }
+    is Announcement.Continue -> a.text
+    is Announcement.Arrived -> when {
+        a.stop.finish -> getString(Res.string.nav_say_finish)
+        a.stop.stop.name != null -> getString(Res.string.nav_say_stop, a.stop.stop.name)
+        else -> getString(Res.string.nav_say_stop_unnamed)
+    }
+    is Announcement.OffRoute -> getString(if (a.canReroute) Res.string.nav_say_off_route else Res.string.nav_say_off_track)
+    Announcement.BackOnRoute -> getString(Res.string.nav_say_back)
+}?.takeIf { it.isNotBlank() }

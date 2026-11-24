@@ -1,5 +1,6 @@
 package io.github.nanunic9379.rideplan.ride
 
+import io.github.nanunic9379.rideplan.route.Maneuver
 import io.github.nanunic9379.rideplan.route.RouteInfo
 import io.github.nanunic9379.rideplan.route.RouteOptions
 import kotlin.math.asin
@@ -77,6 +78,11 @@ data class Ride(
     val route: RouteInfo? = null,
     /** Preferences of whoever shared the ride by link (#50): the route is rebuilt with these. */
     val sharedOptions: RouteOptions? = null,
+    /**
+     * Turn instructions of a road computed on the phone (#5). Not saved: like the track they
+     * come back when the ride is routed again, in the language of the moment.
+     */
+    val maneuvers: List<Maneuver> = emptyList(),
 ) {
     enum class Source { GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK }
 

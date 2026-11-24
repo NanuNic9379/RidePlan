@@ -92,6 +92,7 @@ import io.github.nanunic9379.rideplan.resources.ride_source_kml
 import io.github.nanunic9379.rideplan.resources.ride_stops
 import io.github.nanunic9379.rideplan.resources.ride_straight_lines_note
 import io.github.nanunic9379.rideplan.resources.stop_edit_hint
+import io.github.nanunic9379.rideplan.nav.NavigateButton
 import io.github.nanunic9379.rideplan.route.DetourNote
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteOptions
@@ -136,6 +137,8 @@ class RideScreenState {
     var panelOpen by mutableStateOf(true)
     /** The stops were edited on the map (#2): the camera stops re-framing the ride at every change. */
     var stopsEdited by mutableStateOf(false)
+    /** Turn-by-turn navigation of the ride on screen (#5). */
+    var navigating by mutableStateOf(false)
 
     val onMap: Boolean get() = ride != null || page == Page.MAP
 
@@ -145,7 +148,7 @@ class RideScreenState {
     /** Shows the ride or the error. A new ride is not among the saved ones yet. */
     fun show(result: Result<Ride>) {
         busy = false
-        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false }.onFailure { error = it }
+        result.onSuccess { ride = it; error = null; route = RouteState.Idle; savedId = null; panelOpen = true; stopsEdited = false; navigating = false }.onFailure { error = it }
     }
 
     /** Back to the home screen; the ride is already saved. */
@@ -155,6 +158,7 @@ class RideScreenState {
         savedId = null
         page = Page.HOME
         stopsEdited = false
+        navigating = false
     }
 }
 
@@ -224,6 +228,8 @@ fun BoxScope.RidePanel(
     state: RideScreenState,
     actions: ImportActions?,
     routeActions: RouteActions? = null,
+    /** Starts turn-by-turn navigation (#5); null = not available on this platform. */
+    onNavigate: (() -> Unit)? = null,
     saved: @Composable () -> Unit = {},
     zones: List<PrivateZone> = emptyList(),
 ) {
@@ -244,6 +250,8 @@ fun BoxScope.RidePanel(
                 route = state.route,
                 options = state.options,
                 routeActions = routeActions,
+                // Only a ride with a road: computed on the phone or a recorded track.
+                onNavigate = onNavigate?.takeIf { !ride.straightLines && state.route == RouteState.Idle },
                 onClose = { routeActions?.cancel?.invoke(); state.goHome() },
                 actions = actions,
                 onLink = { linkDialog = true },
@@ -303,6 +311,7 @@ private fun RideCard(
     route: RouteState,
     options: RouteOptions,
     routeActions: RouteActions?,
+    onNavigate: (() -> Unit)?,
     onClose: () -> Unit,
     actions: ImportActions?,
     onLink: () -> Unit,
@@ -330,6 +339,7 @@ private fun RideCard(
                     Text(if (open) "▾ " + stringResource(Res.string.card_collapse) else "▴ " + stringResource(Res.string.card_expand))
                 }
             }
+            if (onNavigate != null) NavigateButton(onNavigate)
             if (!open) return@Column
             val names = ride.stops.mapNotNull { it.name }
             if (names.isNotEmpty()) {

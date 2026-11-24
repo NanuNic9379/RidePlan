@@ -174,12 +174,23 @@ class RouteService(context: Context) {
         }
     }
 
-    /** Real road between the ride's stops, using the grid cells or a whole region. */
+    /**
+     * Real road between the ride's stops, using the grid cells or a whole region.
+     * [instructions]: also the turn instructions (#5), in the app language.
+     * [startHeading]: direction of travel at the start, when re-routing on the move.
+     */
     @Synchronized
-    fun route(ride: Ride, data: RoutingData, options: RouteOptions): ValhallaRoute.Result {
+    fun route(
+        ride: Ride,
+        data: RoutingData,
+        options: RouteOptions,
+        instructions: Boolean = true,
+        startHeading: Double? = null,
+    ): ValhallaRoute.Result {
         val valhalla = engineFor(data)
         val response = try {
-            valhalla.routeRaw(ValhallaRoute.request(ride.stops, options))
+            val language = if (instructions) ValhallaRoute.language(app.resources.configuration.locales[0].toLanguageTag()) else null
+            valhalla.routeRaw(ValhallaRoute.request(ride.stops, options, language, startHeading))
         } catch (e: ValhallaException) {
             // 44x: no route; 17x: stop far from any road or in an unconnected area.
             val msg = e.message.orEmpty()
