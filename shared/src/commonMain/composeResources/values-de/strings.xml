@@ -633,4 +633,25 @@
     <string name="country_sk">Slowakei</string>
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
+    <string name="ridemap_title">Karte ohne Empfang</string>
+    <string name="ridemap_size">Die Karte entlang der Strecke, 5 km auf jeder Seite: %1$s Kacheln, etwa %2$s. Sie funktioniert ohne Empfang.</string>
+    <string name="ridemap_reduced">In voller Detailstufe wäre diese Karte %1$s groß, mehr als ein Download erlaubt. Mit weniger Details (beim nahen Zoomen fehlen einige kleine Straßen): %2$s Kacheln, etwa %3$s.</string>
+    <string name="ridemap_too_long">Diese Tour ist zu lang für einen Karten-Download: Auch mit weniger Details sind es etwa %1$s, die Grenze liegt bei %2$s. Teile sie in Etappen, um die Karte zu speichern.</string>
+    <string name="ridemap_download">Karte für diese Tour laden</string>
+    <string name="ridemap_download_less">Mit weniger Details laden</string>
+    <string name="ridemap_mobile_ask">Du bist im Mobilfunknetz. Die Karte trotzdem herunterladen? Das verbraucht etwa %1$s deines Datenvolumens.</string>
+    <string name="ridemap_downloading">Karte wird geladen: %1$s von %2$s Kacheln, %3$s</string>
+    <string name="ridemap_saved">Karte gespeichert, sie funktioniert ohne Empfang. %1$s auf dem Handy.</string>
+    <string name="ridemap_saved_less">Karte mit weniger Details gespeichert, sie funktioniert ohne Empfang. %1$s auf dem Handy.</string>
+    <string name="ridemap_stale">Die Kartendaten wurden seit dem Speichern aktualisiert: Ohne Empfang wird die Karte vielleicht nicht angezeigt. Lade sie sicherheitshalber neu.</string>
+    <string name="ridemap_update">Karte aktualisieren</string>
+    <string name="ridemap_interrupted">Der Karten-Download wurde vor dem Ende unterbrochen.</string>
+    <string name="ridemap_resume">Download fortsetzen</string>
+    <string name="ridemap_err_network">Die Karte konnte nicht heruntergeladen werden. Prüfe die Verbindung und versuche es erneut.</string>
+    <string name="ridemap_err_limit">Die Karte wurde größer, als ein Download erlaubt, und wurde gestoppt. Teile die Tour in Etappen.</string>
+    <string name="ridemap_err_other">Die Karte konnte nicht heruntergeladen werden: %1$s</string>
+    <string name="ridemap_busy">Eine andere Karte wird gerade geladen. Warte, bis sie fertig ist.</string>
+    <string name="ridemap_delete">Karte löschen</string>
+    <string name="ridemap_attribution">Karte © OpenStreetMap-Mitwirkende, OpenFreeMap</string>
+    <string name="mapdata_ride_map">Karte ohne Empfang: %1$s</string>
 </resources>

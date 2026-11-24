@@ -634,4 +634,25 @@
     <string name="country_sk">Eslovaquia</string>
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
+    <string name="ridemap_title">Mapa sin cobertura</string>
+    <string name="ridemap_size">El mapa a lo largo de la carretera, 5 km a cada lado: %1$s teselas, unos %2$s. Funciona sin cobertura.</string>
+    <string name="ridemap_reduced">Con todo el detalle este mapa ocuparía %1$s, más de lo que permite una descarga. Con menos detalle (al acercar mucho faltan algunas calles pequeñas): %2$s teselas, unos %3$s.</string>
+    <string name="ridemap_too_long">Esta ruta es demasiado larga para una sola descarga del mapa: incluso con menos detalle son unos %1$s y el límite es %2$s. Divídela en etapas para guardar el mapa.</string>
+    <string name="ridemap_download">Descargar el mapa de esta ruta</string>
+    <string name="ridemap_download_less">Descargar con menos detalle</string>
+    <string name="ridemap_mobile_ask">Estás con datos móviles. ¿Descargar igualmente el mapa? Usa unos %1$s de tu tarifa de datos.</string>
+    <string name="ridemap_downloading">Descargando el mapa: %1$s de %2$s teselas, %3$s</string>
+    <string name="ridemap_saved">Mapa guardado, funciona sin cobertura. %1$s en el teléfono.</string>
+    <string name="ridemap_saved_less">Mapa guardado con menos detalle, funciona sin cobertura. %1$s en el teléfono.</string>
+    <string name="ridemap_stale">Los datos del mapa se han actualizado desde que lo guardaste: sin cobertura puede que no se vea. Descárgalo de nuevo para estar seguro.</string>
+    <string name="ridemap_update">Actualizar el mapa</string>
+    <string name="ridemap_interrupted">La descarga del mapa se detuvo antes del final.</string>
+    <string name="ridemap_resume">Reanudar la descarga</string>
+    <string name="ridemap_err_network">No se pudo descargar el mapa. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="ridemap_err_limit">El mapa resultó más grande de lo que permite una descarga y se detuvo. Divide la ruta en etapas.</string>
+    <string name="ridemap_err_other">No se pudo descargar el mapa: %1$s</string>
+    <string name="ridemap_busy">Se está descargando otro mapa. Espera a que termine.</string>
+    <string name="ridemap_delete">Eliminar el mapa</string>
+    <string name="ridemap_attribution">Mapa © colaboradores de OpenStreetMap, OpenFreeMap</string>
+    <string name="mapdata_ride_map">Mapa sin cobertura: %1$s</string>
 </resources>

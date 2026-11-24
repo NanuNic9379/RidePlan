@@ -7,6 +7,7 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.foundation)
+    implementation(libs.maplibre.compose)
     implementation(libs.valhalla.mobile)
     implementation(libs.valhalla.models.config)
     runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)

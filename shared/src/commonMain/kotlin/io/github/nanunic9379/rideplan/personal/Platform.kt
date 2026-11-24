@@ -6,7 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /** A piece of road data on the phone (#21): a region, or all the cells around your rides. */
-data class MapDataItem(val id: String, val bytes: Long, val isCells: Boolean)
+/** [rideMap]: a map saved for one ride (#1), with the ride name ("" if it has none). */
+data class MapDataItem(val id: String, val bytes: Long, val isCells: Boolean, val rideMap: String? = null)
 
 /** What only the platform can do for the personal area (#21). Every action is optional. */
 @Stable
@@ -25,6 +26,8 @@ class PlatformActions(
     val updates: UpdateActions? = null,
     /** Country of the phone (ISO code, "US"), for the automatic units (#15); null = from the locale. */
     val region: String? = null,
+    /** The map of a ride for use without signal (#1); null = not offered. */
+    val rideMap: io.github.nanunic9379.rideplan.route.RideMapActions? = null,
 ) {
     /** Outcome of the last export, to show on the Data & privacy page. */
     var exportNotice by mutableStateOf<Boolean?>(null)

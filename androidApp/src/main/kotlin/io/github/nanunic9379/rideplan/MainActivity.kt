@@ -139,6 +139,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RideMapNetwork.configure(this) // before the first map
         val actions = ImportActions(
             openFile = { openDocument.launch(arrayOf("*/*")) },
             readClipboard = ::clipboardText,
@@ -181,13 +182,14 @@ class MainActivity : ComponentActivity() {
             exportAll = { exportRides.launch("rideplan-rides.zip") },
             language = if (Build.VERSION.SDK_INT >= 33) languageActions() else null,
             mapData = MapDataActions(
-                list = router::mapData,
-                delete = { item -> cancelRoute(); router.delete(item) },
+                list = { router.mapData() + session.rideMaps.items() },
+                delete = { item -> if (session.rideMaps.isRideMap(item)) session.rideMaps.delete(item) else { cancelRoute(); router.delete(item) } },
                 freeBytes = router::freeBytes,
             ),
             wipeDevice = ::wipeDevice,
             updates = updateActions(lifecycleScope),
             region = android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { null },
+            rideMap = session.rideMaps.actions.also { session.rideMaps.mustAskForMobile = ::mustAskForMobile },
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
         setContent {
@@ -390,6 +392,7 @@ class MainActivity : ComponentActivity() {
         routeSettings().let { rides.options = it.options; rides.presets = it.presets }
         File(cacheDir, "shared").deleteRecursively()
         lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
+        session.rideMaps.wipe()
     }
 
     /**

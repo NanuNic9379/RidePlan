@@ -634,4 +634,25 @@
     <string name="country_sk">Slovaquie</string>
     <string name="country_sm">Saint-Marin</string>
     <string name="country_xk">Kosovo</string>
+    <string name="ridemap_title">Carte sans réseau</string>
+    <string name="ridemap_size">La carte le long de la route, 5 km de chaque côté : %1$s tuiles, environ %2$s. Elle fonctionne sans réseau.</string>
+    <string name="ridemap_reduced">Avec tout le détail, cette carte ferait %1$s, plus qu’un téléchargement ne le permet. Avec moins de détail (quelques petites rues manquent en zoomant de près) : %2$s tuiles, environ %3$s.</string>
+    <string name="ridemap_too_long">Cette balade est trop longue pour un seul téléchargement de carte : même avec moins de détail, elle fait environ %1$s et la limite est de %2$s. Divisez-la en étapes pour enregistrer la carte.</string>
+    <string name="ridemap_download">Télécharger la carte de cette balade</string>
+    <string name="ridemap_download_less">Télécharger avec moins de détail</string>
+    <string name="ridemap_mobile_ask">Vous êtes en données mobiles. Télécharger quand même la carte ? Cela consomme environ %1$s de votre forfait.</string>
+    <string name="ridemap_downloading">Téléchargement de la carte : %1$s sur %2$s tuiles, %3$s</string>
+    <string name="ridemap_saved">Carte enregistrée, elle fonctionne sans réseau. %1$s sur le téléphone.</string>
+    <string name="ridemap_saved_less">Carte enregistrée avec moins de détail, elle fonctionne sans réseau. %1$s sur le téléphone.</string>
+    <string name="ridemap_stale">Les données de la carte ont été mises à jour depuis l’enregistrement : sans réseau, elle risque de ne pas s’afficher. Téléchargez-la à nouveau par sécurité.</string>
+    <string name="ridemap_update">Mettre à jour la carte</string>
+    <string name="ridemap_interrupted">Le téléchargement de la carte s’est arrêté avant la fin.</string>
+    <string name="ridemap_resume">Reprendre le téléchargement</string>
+    <string name="ridemap_err_network">La carte n’a pas pu être téléchargée. Vérifiez la connexion et réessayez.</string>
+    <string name="ridemap_err_limit">La carte est devenue plus grande qu’un téléchargement ne le permet et a été arrêtée. Divisez la balade en étapes.</string>
+    <string name="ridemap_err_other">La carte n’a pas pu être téléchargée : %1$s</string>
+    <string name="ridemap_busy">Une autre carte est en cours de téléchargement. Attendez la fin.</string>
+    <string name="ridemap_delete">Supprimer la carte</string>
+    <string name="ridemap_attribution">Carte © contributeurs OpenStreetMap, OpenFreeMap</string>
+    <string name="mapdata_ride_map">Carte sans réseau : %1$s</string>
 </resources>

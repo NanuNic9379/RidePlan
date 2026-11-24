@@ -633,4 +633,25 @@
     <string name="country_sk">Slovacchia</string>
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
+    <string name="ridemap_title">Mappa senza segnale</string>
+    <string name="ridemap_size">La mappa lungo la strada, 5 km per lato: %1$s riquadri, circa %2$s. Funziona senza segnale.</string>
+    <string name="ridemap_reduced">Con il massimo dettaglio questa mappa sarebbe %1$s, più di quanto permette un download. Con meno dettaglio (nello zoom più vicino mancano alcune stradine): %2$s riquadri, circa %3$s.</string>
+    <string name="ridemap_too_long">Questo giro è troppo lungo per un solo download della mappa: anche con meno dettaglio sono circa %1$s, il limite è %2$s. Dividilo in tappe per salvare la mappa.</string>
+    <string name="ridemap_download">Scarica la mappa di questo giro</string>
+    <string name="ridemap_download_less">Scarica con meno dettaglio</string>
+    <string name="ridemap_mobile_ask">Sei sulla rete mobile. Scarico lo stesso la mappa? Usa circa %1$s del tuo traffico dati.</string>
+    <string name="ridemap_downloading">Download della mappa: %1$s di %2$s riquadri, %3$s</string>
+    <string name="ridemap_saved">Mappa salvata, funziona senza segnale. %1$s sul telefono.</string>
+    <string name="ridemap_saved_less">Mappa salvata con meno dettaglio, funziona senza segnale. %1$s sul telefono.</string>
+    <string name="ridemap_stale">I dati della mappa sono stati aggiornati dopo il salvataggio: senza segnale potrebbe non comparire. Scaricala di nuovo per sicurezza.</string>
+    <string name="ridemap_update">Aggiorna la mappa</string>
+    <string name="ridemap_interrupted">Il download della mappa si è fermato prima della fine.</string>
+    <string name="ridemap_resume">Riprendi il download</string>
+    <string name="ridemap_err_network">Non è stato possibile scaricare la mappa. Controlla la connessione e riprova.</string>
+    <string name="ridemap_err_limit">La mappa è risultata più grande di quanto permette un download ed è stata fermata. Dividi il giro in tappe.</string>
+    <string name="ridemap_err_other">Non è stato possibile scaricare la mappa: %1$s</string>
+    <string name="ridemap_busy">Un\'altra mappa è in download. Aspetta che finisca.</string>
+    <string name="ridemap_delete">Elimina la mappa</string>
+    <string name="ridemap_attribution">Mappa © contributori di OpenStreetMap, OpenFreeMap</string>
+    <string name="mapdata_ride_map">Mappa senza segnale: %1$s</string>
 </resources>

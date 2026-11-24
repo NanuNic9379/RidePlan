@@ -183,7 +183,7 @@ fun App(
                         onExit = { rides.navigating = false },
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
-                    store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false)
+                    store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap)
                     !store.data.profile.welcomed -> Surface(Modifier.fillMaxSize()) { WelcomeScreen(store) }
                     rides.onMap -> Column(Modifier.fillMaxSize()) {
                         Box(Modifier.weight(1f)) { MapScreen(rides, store, importActions, routeActions, mapViews, tabs = true) }
@@ -214,6 +214,7 @@ private fun MapScreen(
     navigation: NavigationPlatform? = null,
     /** Explore with the bottom bar under the map: it already keeps clear of the system bar. */
     tabs: Boolean,
+    rideMap: io.github.nanunic9379.rideplan.route.RideMapActions? = null,
 ) {
     val ride = rides.ride
     val plan = rides.plan
@@ -331,6 +332,7 @@ private fun MapScreen(
                         bike = store?.data?.defaultBike,
                         maxBodyHeight = screen * 0.5f,
                         onHeaderHeight = { header = it },
+                        offlineMap = { r -> rideMap?.let { io.github.nanunic9379.rideplan.route.RideMapSection(r, it) } },
                         saved = {
                             if (store != null) {
                                 SavedRow(

@@ -443,6 +443,8 @@ fun RideSheet(
     onNavigate: (() -> Unit)? = null,
     /** The default bike: under 150 cc it locks "avoid motorways" in the route settings (#8). */
     bike: Bike? = null,
+    /** The map of this ride for use without signal (#1). */
+    offlineMap: @Composable (Ride) -> Unit = {},
 ) {
     val ride = state.ride ?: return
     val route = state.route
@@ -517,6 +519,7 @@ fun RideSheet(
             RideNotes(ride, route)
             FuelSection(state, routeActions, bike)
             CountryWarningsSection(ride)
+            if (route == RouteState.Idle) offlineMap(ride)
             if (routeActions != null && ride.routable && route !is RouteState.NotCovered) {
                 RidingModeRow(state.options, enabled = !busy, onOpen = { settingsOpen = true })
                 StopKindsRow(ride.stops, enabled = !busy, onToggle = routeActions.toggleStop)
