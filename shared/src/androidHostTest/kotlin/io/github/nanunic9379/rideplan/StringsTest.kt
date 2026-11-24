@@ -53,6 +53,22 @@ class StringsTest {
         }
     }
 
+    /**
+     * Compose resources (1.12) turn only \n, \t, \uXXXX and \\ into characters: any other backslash
+     * stays on screen. So apostrophes and quotes are written plainly ("l'app", not "l\'app") and
+     * no other escape may appear. Android's own res/values rules (AAPT) do not apply here.
+     */
+    @Test
+    fun onlyEscapesComposeUnderstands() {
+        val known = Regex("""\\(?:u[0-9a-fA-F]{4}|n|t|\\)""")
+        val folders = dir.listFiles { f -> f.isDirectory && f.name.startsWith("values") }!!.sortedBy { it.name }
+        for (folder in folders) {
+            for ((key, text) in load(folder)) {
+                assertTrue('\\' !in known.replace(text, ""), "Backslash shown as is in ${folder.name}/$key: $text")
+            }
+        }
+    }
+
     /** The languages offered by Android 13+ in the app settings must be the translated ones. */
     @Test
     fun androidLanguagesAligned() {

@@ -61,6 +61,42 @@ class StopEditsTest {
         assertEquals(listOf(a, c), listOf(moved.stops[0], moved.stops[2]))
     }
 
+    /** #12: dragging the hotel a bit further keeps the night there, and the days do not change shape. */
+    @Test
+    fun movedOvernightStaysAnOvernight() {
+        val hotel = b.copy(overnight = true)
+        val ride = routed(a, hotel, c).copy(dayCap = DayCap(DayCap.Unit.KM, 500.0))
+        val moved = ride.withStopMoved(1, LatLon(45.05, 10.55))
+        assertTrue(moved.stops[1].overnight)
+        assertEquals(Stop.Kind.STOP, moved.stops[1].kind)
+        assertNull(moved.stops[1].name)
+        assertEquals(LatLon(45.05, 10.55), moved.stops[1].point)
+        assertEquals(ride.dayCap, moved.dayCap)
+        assertEquals(listOf(1), Stages.overnightIndices(moved))
+        val days = Stages.split(moved)
+        assertEquals(2, days.size)
+        assertEquals(1, days[0].endStop)
+        assertTrue(days[0].overnight)
+    }
+
+    /** An overnight with a plan keeps both when it is moved. */
+    @Test
+    fun movedOvernightKeepsItsPlan() {
+        val plan = StopPlan(time = 19 * 60, note = "Check-in")
+        val ride = stopsOnly(a, b.copy(overnight = true, plan = plan, kind = Stop.Kind.STOP), c)
+        val moved = ride.withStopMoved(1, LatLon(45.2, 10.4))
+        assertEquals(Stop(null, LatLon(45.2, 10.4), Stop.Kind.STOP, overnight = true, plan = plan), moved.stops[1])
+    }
+
+    /** Reordering and moving other stops leave the overnight where it is. */
+    @Test
+    fun otherEditsKeepTheOvernight() {
+        val ride = stopsOnly(a, b.copy(overnight = true), Stop("Lake", LatLon(45.0, 10.8)), c)
+        assertTrue(ride.withStopMoved(2, LatLon(45.1, 10.8)).stops[1].overnight)
+        assertTrue(ride.withStopReordered(1, 2).stops[2].overnight)
+        assertTrue(ride.withStopAdded(LatLon(45.0, 10.2)).stops.single { it.name == "Bar" }.overnight)
+    }
+
     @Test
     fun movingToTheSamePlaceChangesNothing() {
         val ride = routed(a, b, c)

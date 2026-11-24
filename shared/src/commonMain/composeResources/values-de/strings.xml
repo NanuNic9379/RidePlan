@@ -637,7 +637,7 @@
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
     <string name="ridemap_title">Karte ohne Empfang</string>
-    <string name="ridemap_size">Die Karte entlang der Strecke, 5 km auf jeder Seite: %1$s Kacheln, etwa %2$s. Sie funktioniert ohne Empfang.</string>
+    <string name="ridemap_size">Die Karte entlang der Strecke, %3$s auf jeder Seite: %1$s Kacheln, etwa %2$s. Sie funktioniert ohne Empfang.</string>
     <string name="ridemap_reduced">In voller Detailstufe wäre diese Karte %1$s groß, mehr als ein Download erlaubt. Mit weniger Details (beim nahen Zoomen fehlen einige kleine Straßen): %2$s Kacheln, etwa %3$s.</string>
     <string name="ridemap_too_long">Diese Tour ist zu lang für einen Karten-Download: Auch mit weniger Details sind es etwa %1$s, die Grenze liegt bei %2$s. Teile sie in Etappen, um die Karte zu speichern.</string>
     <string name="ridemap_download">Karte für diese Tour laden</string>

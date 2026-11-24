@@ -542,9 +542,9 @@
     <string name="days_share_all">Condividi ogni giorno in GPX</string>
     <string name="fuel_title">Carburante</string>
     <string name="fuel_longest">Tratto più lungo senza distributori: %1$s</string>
-    <string name="fuel_over_range">Più lungo dell\'autonomia della moto (%1$s):</string>
+    <string name="fuel_over_range">Più lungo dell'autonomia della moto (%1$s):</string>
     <string name="fuel_stretch">da %1$s a %2$s dalla partenza</string>
-    <string name="fuel_within_range">Entro l\'autonomia della moto (%1$s).</string>
+    <string name="fuel_within_range">Entro l'autonomia della moto (%1$s).</string>
     <string name="fuel_no_range">Inserisci serbatoio e consumo della moto nel garage per essere avvisato quando un tratto è troppo lungo.</string>
     <string name="fuel_none">Nessun distributore lungo la strada.</string>
     <string name="fuel_unknown">Distributori non noti qui: i dati stradali sul telefono non li contengono.</string>
@@ -556,7 +556,7 @@
         <item quantity="other">Mostra %1$d distributori lungo il giro</item>
     </plurals>
     <string name="sheet_title">Scheda del giro</string>
-    <string name="sheet_hint">Tocca una tappa per indicare ritrovo, benzina o pranzo, l\'orario e quanto ci si ferma.</string>
+    <string name="sheet_hint">Tocca una tappa per indicare ritrovo, benzina o pranzo, l'orario e quanto ci si ferma.</string>
     <string name="sheet_share">Condividi la scheda</string>
     <string name="sheet_version">Versione %1$d · aggiornata il %2$s</string>
     <string name="version_note_add">Scrivi cosa è cambiato</string>
@@ -576,7 +576,7 @@
     <string name="purpose_photo">Sosta foto</string>
     <string name="plan_none">Solo tappa</string>
     <string name="plan_time">Orario (es. 08:30)</string>
-    <string name="plan_time_invalid">Scrivi l\'orario come 08:30</string>
+    <string name="plan_time_invalid">Scrivi l'orario come 08:30</string>
     <string name="plan_pause">Sosta</string>
     <string name="plan_note">Nota per il gruppo</string>
     <string name="plan_save">Salva</string>
@@ -637,7 +637,7 @@
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
     <string name="ridemap_title">Mappa senza segnale</string>
-    <string name="ridemap_size">La mappa lungo la strada, 5 km per lato: %1$s riquadri, circa %2$s. Funziona senza segnale.</string>
+    <string name="ridemap_size">La mappa lungo la strada, %3$s per lato: %1$s riquadri, circa %2$s. Funziona senza segnale.</string>
     <string name="ridemap_reduced">Con il massimo dettaglio questa mappa sarebbe %1$s, più di quanto permette un download. Con meno dettaglio (nello zoom più vicino mancano alcune stradine): %2$s riquadri, circa %3$s.</string>
     <string name="ridemap_too_long">Questo giro è troppo lungo per un solo download della mappa: anche con meno dettaglio sono circa %1$s, il limite è %2$s. Dividilo in tappe per salvare la mappa.</string>
     <string name="ridemap_download">Scarica la mappa di questo giro</string>
@@ -653,7 +653,7 @@
     <string name="ridemap_err_network">Non è stato possibile scaricare la mappa. Controlla la connessione e riprova.</string>
     <string name="ridemap_err_limit">La mappa è risultata più grande di quanto permette un download ed è stata fermata. Dividi il giro in tappe.</string>
     <string name="ridemap_err_other">Non è stato possibile scaricare la mappa: %1$s</string>
-    <string name="ridemap_busy">Un\'altra mappa è in download. Aspetta che finisca.</string>
+    <string name="ridemap_busy">Un'altra mappa è in download. Aspetta che finisca.</string>
     <string name="ridemap_delete">Elimina la mappa</string>
     <string name="ridemap_attribution">Mappa © contributori di OpenStreetMap, OpenFreeMap</string>
     <string name="mapdata_ride_map">Mappa senza segnale: %1$s</string>

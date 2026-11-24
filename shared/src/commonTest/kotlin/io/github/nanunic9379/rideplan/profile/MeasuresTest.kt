@@ -13,6 +13,15 @@ class MeasuresTest {
     private fun near(expected: Double, actual: Double, tolerance: Double = 1e-6) =
         assertTrue(abs(expected - actual) <= tolerance, "expected $expected, got $actual")
 
+    /** The width of the offline ride map, in the rider's units. */
+    @Test
+    fun roundDistance() {
+        assertEquals("5 km", Measures.roundDistance(5.0, Units.KM))
+        assertEquals("3 mi", Measures.roundDistance(5.0, Units.MILES))
+        assertEquals("10 km", Measures.roundDistance(9.6, Units.KM))
+        assertEquals("1 mi", Measures.roundDistance(1.609344, Units.MILES))
+    }
+
     @Test
     fun milesOnlyWhereRoadSignsAreInMiles() {
         listOf("US", "GB", "gb", "IM", "JE", "GG", "PR", "LR").forEach { assertEquals(Units.MILES, Regions.units(it), it) }

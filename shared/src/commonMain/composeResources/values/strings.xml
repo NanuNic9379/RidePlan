@@ -543,9 +543,9 @@
     <string name="days_share_all">Share each day as GPX</string>
     <string name="fuel_title">Fuel</string>
     <string name="fuel_longest">Longest stretch without fuel: %1$s</string>
-    <string name="fuel_over_range">Longer than your bike\'s range (%1$s):</string>
+    <string name="fuel_over_range">Longer than your bike's range (%1$s):</string>
     <string name="fuel_stretch">from %1$s to %2$s from the start</string>
-    <string name="fuel_within_range">Within your bike\'s range (%1$s).</string>
+    <string name="fuel_within_range">Within your bike's range (%1$s).</string>
     <string name="fuel_no_range">Add tank size and consumption to your bike in the garage to be warned when a stretch is too long.</string>
     <string name="fuel_none">No fuel stations along the road.</string>
     <string name="fuel_unknown">Fuel stations unknown here: the road data on the phone does not list them.</string>
@@ -638,7 +638,7 @@
     <string name="country_sm">San Marino</string>
     <string name="country_xk">Kosovo</string>
     <string name="ridemap_title">Map without signal</string>
-    <string name="ridemap_size">The map along the road, 5 km each side: %1$s tiles, about %2$s. It works with no signal.</string>
+    <string name="ridemap_size">The map along the road, %3$s each side: %1$s tiles, about %2$s. It works with no signal.</string>
     <string name="ridemap_reduced">At full detail this map would be %1$s, more than one download allows. With less detail (some small streets missing when you zoom in close): %2$s tiles, about %3$s.</string>
     <string name="ridemap_too_long">This ride is too long for one map download: even with less detail it is about %1$s, the limit is %2$s. Split it into stages to save the map.</string>
     <string name="ridemap_download">Download map for this ride</string>

@@ -50,6 +50,7 @@ import io.github.nanunic9379.rideplan.resources.days_overnights
 import io.github.nanunic9379.rideplan.resources.days_overnights_hint
 import io.github.nanunic9379.rideplan.resources.days_share_all
 import io.github.nanunic9379.rideplan.resources.days_title
+import io.github.nanunic9379.rideplan.resources.detail_stop_n
 import io.github.nanunic9379.rideplan.route.durationText
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Radius
@@ -186,11 +187,14 @@ private fun CapPicker(cap: DayCap, enabled: Boolean, onChange: (DayCap) -> Unit)
     }
 }
 
-/** The intermediate stops: a tap marks (or unmarks) where you sleep. */
+/**
+ * The intermediate stops: a tap marks (or unmarks) where you sleep. An unnamed stop shows up
+ * only while it is an overnight (a named one moved on the map), so it can still be unmarked.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OvernightChips(ride: Ride, enabled: Boolean, onChange: (Ride) -> Unit) {
-    val items = ride.stops.withIndex().filter { (i, s) -> i != 0 && i != ride.stops.lastIndex && s.name != null }
+    val items = ride.stops.withIndex().filter { (i, s) -> i != 0 && i != ride.stops.lastIndex && (s.name != null || s.overnight) }
     if (items.isEmpty()) return
     Text(stringResource(Res.string.days_overnights), style = MaterialTheme.typography.labelLarge)
     Text(stringResource(Res.string.days_overnights_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -200,7 +204,7 @@ private fun OvernightChips(ride: Ride, enabled: Boolean, onChange: (Ride) -> Uni
                 selected = s.overnight,
                 onClick = { onChange(ride.withOvernight(i, !s.overnight)) },
                 enabled = enabled,
-                label = { Text(s.name.orEmpty().substringBefore(',').take(28), maxLines = 1) },
+                label = { Text(s.name?.substringBefore(',')?.take(28) ?: stringResource(Res.string.detail_stop_n, i + 1), maxLines = 1) },
                 leadingIcon = if (s.overnight) {
                     { Icon(AppIcons.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
                 } else null,
@@ -214,8 +218,12 @@ private fun OvernightChips(ride: Ride, enabled: Boolean, onChange: (Ride) -> Uni
 @Composable
 private fun DayRow(ride: Ride, day: Stage, fallbackName: String, share: ((List<Pair<String, String>>) -> Unit)?) {
     val dayName = stringResource(Res.string.day_title, day.day)
-    val from = day.stops.first().name?.substringBefore(',') ?: stringResource(Res.string.day_on_road, distanceText(day.startKm))
-    val to = day.stops.last().name?.substringBefore(',') ?: stringResource(Res.string.day_on_road, distanceText(day.endKm))
+    val from = day.stops.first().name?.substringBefore(',')
+        ?: day.startStop?.let { stringResource(Res.string.detail_stop_n, it + 1) }
+        ?: stringResource(Res.string.day_on_road, distanceText(day.startKm))
+    val to = day.stops.last().name?.substringBefore(',')
+        ?: day.endStop?.let { stringResource(Res.string.detail_stop_n, it + 1) }
+        ?: stringResource(Res.string.day_on_road, distanceText(day.endKm))
     val figures = listOf(dayName, distanceText(day.km), stringResource(Res.string.day_time_estimate, durationText(day.seconds)))
     Row(Modifier.fillMaxWidth().heightIn(min = Touch.Min), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(2.dp)) {

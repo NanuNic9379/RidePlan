@@ -49,7 +49,10 @@ object RideLink {
             // #10 and #11: plans of the stops and the version of the ride.
             plansCode(ride.stops),
             ride.version?.let(::versionCode).orEmpty(),
-        ).map { it.replace('\n', ' ') }
+            // #12: the stops where the rider sleeps and the daily cap.
+            overnightsCode(ride.stops),
+            ride.dayCap?.let(::dayCapCode).orEmpty(),
+        ).map { it.replace('\n', ' ') }.trimOptional()
         return PREFIX + Base64.UrlSafe.withPadding(Base64.PaddingOption.ABSENT).encode(fields.joinToString("\n").encodeToByteArray())
     }
 
@@ -64,13 +67,26 @@ object RideLink {
         val names = f[4].split(SEP)
         val kinds = f.getOrNull(6).orEmpty()
         val plans = parsePlans(f.getOrNull(7).orEmpty())
-        val stops = points.mapIndexed { i, p -> Stop(names.getOrNull(i)?.ifEmpty { null }, p, kindOf(kinds.getOrNull(i)), plan = plans.getOrNull(i)) }
+        val overnights = f.getOrNull(9).orEmpty()
+        val stops = points.mapIndexed { i, p ->
+            Stop(names.getOrNull(i)?.ifEmpty { null }, p, kindOf(kinds.getOrNull(i)), overnight = i != 0 && i != points.lastIndex && overnights.getOrNull(i) == '1', plan = plans.getOrNull(i))
+        }
         val track = runCatching { Polyline.decode(f[5], 5) }.getOrElse { throw ImportException(ImportError.LINK_BROKEN) }
         if (stops.size < 2 && track.size < 2) throw ImportException(ImportError.NO_STOPS)
         val options = parseOptions(f[2])
         val version = parseVersion(f.getOrNull(8).orEmpty())
-        return Shared(Ride(f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK, sharedOptions = options, version = version), options)
+        val ride = Ride(
+            f[1].ifEmpty { null }, track, stops, Ride.Source.RIDEPLAN_LINK,
+            sharedOptions = options, dayCap = parseDayCap(f.getOrNull(10).orEmpty()), version = version,
+        )
+        return Shared(ride, options)
     }
+
+    /** The first six fields are always there (older apps and the web page need them); empty later ones are left out. */
+    private fun List<String>.trimOptional(): List<String> =
+        take(REQUIRED_FIELDS) + drop(REQUIRED_FIELDS).dropLastWhile { it.isEmpty() }
+
+    private const val REQUIRED_FIELDS = 6
 
     private const val SEP = "\u001f"
     private const val SUB = "\u001e"
@@ -105,6 +121,36 @@ object RideLink {
             ).normalized()
         }
     }
+
+    /**
+     * One digit per stop, "1" where the rider sleeps (#12), without the trailing zeros; empty when
+     * no stop is an overnight. Start and finish never count, like in [Stages.overnightIndices].
+     */
+    internal fun overnightsCode(stops: List<Stop>): String =
+        stops.indices.joinToString("") { i -> if (i != 0 && i != stops.lastIndex && stops[i].overnight) "1" else "0" }.trimEnd('0')
+
+    /** Daily cap (#12): "K300" (km a day) or "H6.5" (riding hours a day). */
+    internal fun dayCapCode(cap: DayCap): String {
+        if (!cap.valid) return ""
+        val letter = if (cap.unit == DayCap.Unit.KM) "K" else "H"
+        // At most 2 decimals, no exponent: caps are between 1 and a few thousand.
+        val v = kotlin.math.round(cap.value * 100) / 100
+        val text = if (v == kotlin.math.floor(v)) v.toLong().toString() else v.toString()
+        return letter + text
+    }
+
+    internal fun parseDayCap(code: String): DayCap? {
+        val unit = when (code.firstOrNull()) {
+            'K' -> DayCap.Unit.KM
+            'H' -> DayCap.Unit.HOURS
+            else -> return null
+        }
+        val value = code.drop(1).toDoubleOrNull() ?: return null
+        return DayCap(unit, value).takeIf { it.valid && value <= MAX_CAP }
+    }
+
+    /** Larger caps in a link are nonsense (or tampering): no day is that long. */
+    private const val MAX_CAP = 5000.0
 
     /** "rideId<SEP>number<SEP>updated (seconds)<SEP>note". */
     internal fun versionCode(v: RideVersion): String = listOf(

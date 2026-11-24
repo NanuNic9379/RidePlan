@@ -71,11 +71,11 @@ internal object Gpx {
         val xml = Xml.stripComments(raw)
         val trackPoints = Xml.elements(xml, "trkpt").mapNotNull(::point)
         val routePoints = Xml.elements(xml, "rtept").map { it to point(it) }
-        val waypoints = Xml.elements(xml, "wpt").mapNotNull { e -> point(e)?.let { Stop(Xml.text(e.body, "name"), it, plan = plan(e.body)) } }
+        val waypoints = Xml.elements(xml, "wpt").mapNotNull { e -> point(e)?.let { stop(e, it) } }
 
         // A route (rte) without a track: its points are the stops.
         val stops = waypoints.ifEmpty {
-            if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { Stop(Xml.text(e.body, "name"), it, plan = plan(e.body)) } } else emptyList()
+            if (trackPoints.isEmpty()) routePoints.mapNotNull { (e, p) -> p?.let { stop(e, it) } } else emptyList()
         }
         val track = trackPoints.ifEmpty { if (waypoints.isNotEmpty()) routePoints.mapNotNull { it.second } else emptyList() }
         if (track.size < 2 && stops.size < 2) throw ImportException(ImportError.GPX_EMPTY)
@@ -84,8 +84,25 @@ internal object Gpx {
             // Only the ride's <name>: strip the points first, they have their own <name>.
             Xml.elements(xml, tag).firstOrNull()?.body?.let { body -> Xml.text(withoutPoints(body), "name") }
         }
-        val guessed = Stop.guessKinds(stops, towns = false).map { s -> if (s.plan != null) s.copy(kind = Stop.Kind.STOP) else s }
-        return Ride(name, track, guessed, Ride.Source.GPX, version = version(xml))
+        // A planned stop (#10) or a night's stay (#12) is a real stop, even without a name.
+        val guessed = Stop.guessKinds(stops, towns = false).mapIndexed { i, s ->
+            val overnight = s.overnight && i != 0 && i != stops.lastIndex
+            if (s.plan != null || overnight) s.copy(kind = Stop.Kind.STOP, overnight = overnight) else s.copy(overnight = false)
+        }
+        return Ride(name, track, guessed, Ride.Source.GPX, dayCap = dayCap(xml), version = version(xml))
+    }
+
+    private fun stop(e: Xml.Element, p: LatLon) = Stop(
+        Xml.text(e.body, "name"),
+        p,
+        overnight = Xml.elements(e.body, "stop").firstOrNull()?.attr("overnight") == "1",
+        plan = plan(e.body),
+    )
+
+    /** The daily cap written by RidePlan (#12) in the metadata. */
+    private fun dayCap(xml: String): DayCap? {
+        val meta = Xml.elements(xml, "metadata").firstOrNull()?.body ?: return null
+        return Xml.elements(meta, "days").firstOrNull()?.attr("cap")?.let(RideLink::parseDayCap)
     }
 
     /**
