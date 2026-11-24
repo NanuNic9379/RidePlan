@@ -163,6 +163,10 @@ class MainActivity : ComponentActivity() {
             toggleStop = { i -> rides.ride?.let { reroute(it.toggledStop(i)) } },
             editStops = ::editStops,
             fuelStations = { line -> withContext(Dispatchers.IO) { router.fuelNear(line) } },
+            roadNotes = {
+                withContext(Dispatchers.IO) { router.roadNotes(fetch = !mustAskForMobile()) }
+                    ?.let { if (store.data.settings.speedCameras) it else it.copy(cameras = emptyList()) }
+            },
         )
         val fresh = session.store == null
         store = session.store ?: profileStore().also { session.store = it }

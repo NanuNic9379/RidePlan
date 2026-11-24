@@ -706,4 +706,31 @@
     <string name="nostr_err_too_big">This ride is too big for a relay.</string>
     <string name="nostr_err_no_relays">Add at least one relay.</string>
     <string name="nostr_err_nobody">No relay accepted the ride. Check the connection and try again.</string>
+    <string name="closure_title">Seasonal closures</string>
+    <string name="closure_closed">According to OpenStreetMap, %1$s is closed %2$s: check before leaving.</string>
+    <string name="closure_partly_period">According to OpenStreetMap, %1$s is closed at certain times %2$s: check before leaving.</string>
+    <string name="closure_partly">According to OpenStreetMap, %1$s is closed at certain times: check before leaving.</string>
+    <string name="closure_unknown">According to OpenStreetMap, %1$s is closed part of the year: check before leaving.</string>
+    <string name="closure_period">from %1$s to %2$s</string>
+    <string name="closure_day">%2$s %1$d</string>
+    <string name="closure_on_closed">Your ride date (%1$s) falls in the closed period.</string>
+    <string name="closure_on_partly">On your ride date (%1$s) it may be closed at certain hours.</string>
+    <string name="closure_on_outside">Your ride date (%1$s) is outside that period, but opening dates change with the snow every year.</string>
+    <string name="closure_where">%1$s to %2$s from the start</string>
+    <string name="closure_unnamed">A road on this ride</string>
+    <string name="closure_osm">OpenStreetMap: %1$s</string>
+    <string name="closure_avoid">Route avoiding it</string>
+    <string name="closure_avoiding">The route avoids %1$s.</string>
+    <string name="closure_allow">Ride over it again</string>
+    <string name="closure_date">Ride date: %1$s</string>
+    <string name="closure_date_change">Change date</string>
+    <string name="speed_cameras">Speed cameras</string>
+    <string name="speed_cameras_text">Fixed cameras from OpenStreetMap, on the ride map and while navigating. Only in Italy: in other countries these warnings may be illegal.</string>
+    <string name="nav_camera">Speed camera in %1$s</string>
+    <string name="nav_say_camera">Speed camera ahead</string>
+    <string name="nav_say_camera_limit">Speed camera ahead, limit %1$d</string>
+    <plurals name="cameras_on_ride">
+        <item quantity="one">%1$d fixed speed camera on this ride, from OpenStreetMap.</item>
+        <item quantity="other">%1$d fixed speed cameras on this ride, from OpenStreetMap.</item>
+    </plurals>
 </resources>

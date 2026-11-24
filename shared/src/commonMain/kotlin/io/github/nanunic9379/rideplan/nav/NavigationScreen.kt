@@ -145,6 +145,8 @@ fun NavigationScreen(
     platform: NavigationPlatform,
     onExit: () -> Unit,
     onMarkDone: (() -> Unit)? = null,
+    /** Speed cameras (#13); null = none known. */
+    roadNotes: (suspend () -> io.github.nanunic9379.rideplan.route.RoadNotes?)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val units = LocalUnits.current
@@ -155,6 +157,7 @@ fun NavigationScreen(
     }
     val update = session.update
     val line = session.ride.line
+    val cameras = rememberNavCameras(session, roadNotes)
     val state = rememberMapState(
         baseStyle = BaseStyle.Uri(MapDefaults.STYLE),
         initialCameraPosition = CameraPosition(
@@ -164,6 +167,7 @@ fun NavigationScreen(
         ),
     ) {
         NavLayers(session.ride, session.update?.position)
+        SpeedCameraLayer(cameras)
     }
     // Follows the rider until the map is moved by hand or "Route" is tapped (#37).
     var follow by remember { mutableStateOf(true) }
@@ -199,6 +203,7 @@ fun NavigationScreen(
             val panel = if (maxWidth > maxHeight) Modifier.width(380.dp) else Modifier.fillMaxWidth()
             Column(Modifier.align(Alignment.TopStart).then(panel)) {
                 Banner(session, onExit)
+                SpeedCameraBanner(session, cameras, platform)
             }
             Column(
                 Modifier.align(Alignment.BottomStart).then(panel),

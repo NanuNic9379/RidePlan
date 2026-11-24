@@ -72,6 +72,8 @@ data class AppSettings(
     val checkUpdates: Boolean = true,
     /** When the last backup was saved, to show it. */
     val lastBackupAt: Long? = null,
+    /** Fixed speed cameras on the ride map and in navigation (#13), only where allowed (Italy). */
+    val speedCameras: Boolean = true,
 )
 
 @Serializable

@@ -109,6 +109,8 @@ import io.github.nanunic9379.rideplan.resources.units_note
 import io.github.nanunic9379.rideplan.resources.units_title
 import io.github.nanunic9379.rideplan.resources.update_check_start
 import io.github.nanunic9379.rideplan.resources.update_check_text
+import io.github.nanunic9379.rideplan.resources.speed_cameras
+import io.github.nanunic9379.rideplan.resources.speed_cameras_text
 import io.github.nanunic9379.rideplan.resources.wifi_only
 import io.github.nanunic9379.rideplan.resources.wifi_only_text
 import io.github.nanunic9379.rideplan.resources.wipe_backup_first
@@ -306,6 +308,10 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             }
             SwitchRow(AppIcons.Wifi, stringResource(Res.string.wifi_only), stringResource(Res.string.wifi_only_text), s.wifiOnly) { v ->
                 store.update { it.copy(settings = it.settings.copy(wifiOnly = v)) }
+            }
+            GroupDivider()
+            SwitchRow(AppIcons.Warning, stringResource(Res.string.speed_cameras), stringResource(Res.string.speed_cameras_text), s.speedCameras) { v ->
+                store.update { it.copy(settings = it.settings.copy(speedCameras = v)) }
             }
         }
         SectionLabel(stringResource(Res.string.settings_app))

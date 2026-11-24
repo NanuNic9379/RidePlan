@@ -101,6 +101,11 @@ data class Ride(
     val surfaces: RoadSurfaces = RoadSurfaces.NONE,
     /** Version of the ride (#11); null until it is saved for the first time. */
     val version: RideVersion? = null,
+    /**
+     * Roads the route must keep away from (#13), e.g. a pass closed in winter. Not saved: the
+     * ride sheet offers it again when the ride is reopened.
+     */
+    val avoid: List<io.github.nanunic9379.rideplan.route.AvoidedRoad> = emptyList(),
 ) {
     enum class Source {
         GPX, KML, GOOGLE_LINK, RIDEPLAN_LINK,

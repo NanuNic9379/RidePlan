@@ -53,6 +53,7 @@ import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.ImportFab
 import io.github.nanunic9379.rideplan.ride.ImportStatus
 import io.github.nanunic9379.rideplan.ride.RideLayers
+import io.github.nanunic9379.rideplan.ride.RoadNotesLayers
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.RideSheet
@@ -181,6 +182,7 @@ fun App(
                         ride,
                         navigation,
                         onExit = { rides.navigating = false },
+                        roadNotes = routeActions?.roadNotes,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
                     store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap)
@@ -229,7 +231,7 @@ private fun MapScreen(
             zoom = start.zoom,
         ),
     ) {
-        if (ride != null) RideLayers(ride) else me?.let { MyPositionLayer(it) }
+        if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, routeActions?.roadNotes) } else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
     LaunchedEffect(state, mapViews) {

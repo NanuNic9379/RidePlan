@@ -705,4 +705,31 @@
     <string name="nostr_err_too_big">Diese Tour ist zu groß für ein Relay.</string>
     <string name="nostr_err_no_relays">Füge mindestens ein Relay hinzu.</string>
     <string name="nostr_err_nobody">Kein Relay hat die Tour angenommen. Prüfe die Verbindung und versuche es erneut.</string>
+    <string name="closure_title">Saisonale Sperrungen</string>
+    <string name="closure_closed">Laut OpenStreetMap ist %1$s %2$s gesperrt: vor der Abfahrt prüfen.</string>
+    <string name="closure_partly_period">Laut OpenStreetMap ist %1$s %2$s zeitweise gesperrt: vor der Abfahrt prüfen.</string>
+    <string name="closure_partly">Laut OpenStreetMap ist %1$s zeitweise gesperrt: vor der Abfahrt prüfen.</string>
+    <string name="closure_unknown">Laut OpenStreetMap ist %1$s einen Teil des Jahres gesperrt: vor der Abfahrt prüfen.</string>
+    <string name="closure_period">vom %1$s bis %2$s</string>
+    <string name="closure_day">%1$d. %2$s</string>
+    <string name="closure_on_closed">Dein Fahrtdatum (%1$s) liegt in der Sperrzeit.</string>
+    <string name="closure_on_partly">An deinem Fahrtdatum (%1$s) kann es zu bestimmten Zeiten gesperrt sein.</string>
+    <string name="closure_on_outside">Dein Fahrtdatum (%1$s) liegt außerhalb dieser Zeit, aber die Öffnungstermine ändern sich jedes Jahr mit dem Schnee.</string>
+    <string name="closure_where">%1$s bis %2$s ab Start</string>
+    <string name="closure_unnamed">Eine Straße dieser Tour</string>
+    <string name="closure_osm">OpenStreetMap: %1$s</string>
+    <string name="closure_avoid">Route ohne diese Straße</string>
+    <string name="closure_avoiding">Die Route meidet %1$s.</string>
+    <string name="closure_allow">Wieder darüber fahren</string>
+    <string name="closure_date">Fahrtdatum: %1$s</string>
+    <string name="closure_date_change">Datum ändern</string>
+    <string name="speed_cameras">Blitzer</string>
+    <string name="speed_cameras_text">Feste Blitzer aus OpenStreetMap, auf der Tourkarte und bei der Navigation. Nur in Italien: in anderen Ländern können diese Warnungen verboten sein.</string>
+    <string name="nav_camera">Blitzer in %1$s</string>
+    <string name="nav_say_camera">Blitzer voraus</string>
+    <string name="nav_say_camera_limit">Blitzer voraus, Limit %1$d</string>
+    <plurals name="cameras_on_ride">
+        <item quantity="one">%1$d fester Blitzer auf dieser Tour, aus OpenStreetMap.</item>
+        <item quantity="other">%1$d feste Blitzer auf dieser Tour, aus OpenStreetMap.</item>
+    </plurals>
 </resources>
