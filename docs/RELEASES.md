@@ -9,7 +9,7 @@ not promises.
 |---|---|---|
 | v0.2 Ready to ride | 2026-12-06 | All P1: data builds, background navigation, ready without signal, safe sharing and import, field test |
 | v0.3 Ride day | 2027-01-17 | P2 riding without signal: navigation extras, per-ride mode and bike, stop editing, track guidance |
-| v0.4 Plan and share | 2027-02-28 | P2 planning and sharing: France, Spain-Portugal, ride sheet details, web page, own Nostr key |
+| v0.4 Plan and share | 2027-02-28 | P2 planning and sharing: France, Spain-Portugal, ride sheet details, web page, own Nostr key, profile with photo and social links |
 | v0.5 Open project | 2027-03-31 | P2 project: accessibility, Weblate, F-Droid, App Links, supply chain, tests, licences |
 | **v1.0 Official release** | **2027-04-30** | First stable Android release (criteria below) |
 | v1.1 More Europe | 2027-05-31 | P3: DE-AT-CH, Balkans, region maps, more riding modes |
