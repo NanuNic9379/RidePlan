@@ -167,6 +167,7 @@ sealed interface Dest {
     data object Language : Dest
     data object MapData : Dest
     data object Info : Dest
+    data object Licences : Dest
     /** Public sharing on Nostr (#3, #11). */
     data object Nostr : Dest
 }
