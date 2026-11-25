@@ -614,9 +614,7 @@ class MainActivity : ComponentActivity() {
      */
     private suspend fun checkTrack(track: List<LatLon>, noMotorways: Boolean): TrackBans? =
         withContext(Dispatchers.IO) {
-            val cells = router.localCells()
-            val data = if (cells != null && CellsDownload.coveredLocally(cells, router.installedPacks(), track)) RoutingData.Cells(cells)
-            else RoutingRegion.bestFor(router.installed(), track)?.let { RoutingData.Region(it) } ?: return@withContext null
+            val data = router.localData(track, strict = false) ?: return@withContext null
             runCatching { router.checkTrack(track, data, noMotorways) }.getOrNull()
         }
 
