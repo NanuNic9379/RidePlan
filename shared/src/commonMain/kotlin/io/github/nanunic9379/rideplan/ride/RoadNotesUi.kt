@@ -146,7 +146,7 @@ internal fun RoadNotesSection(state: RideScreenState, actions: RouteActions?) {
             var dayMillis by remember(ride.stops) { mutableStateOf(today()) }
             var picking by remember { mutableStateOf(false) }
             if (picking) RideDayPicker(dayMillis, onDismiss = { picking = false }) { dayMillis = it; picking = false }
-            val (_, m, d) = civilDate(dayMillis)
+            val (d, m, _) = civilDate(dayMillis)
             val day = MonthDay(m, d)
             val date = dateText(dayMillis)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
