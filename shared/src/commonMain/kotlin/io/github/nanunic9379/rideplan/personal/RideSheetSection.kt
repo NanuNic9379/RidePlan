@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -24,6 +24,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.profile.ProfileStore
@@ -48,8 +49,10 @@ import io.github.nanunic9379.rideplan.resources.plan_none
 import io.github.nanunic9379.rideplan.resources.plan_note
 import io.github.nanunic9379.rideplan.resources.plan_pause
 import io.github.nanunic9379.rideplan.resources.plan_save
+import io.github.nanunic9379.rideplan.resources.ok
 import io.github.nanunic9379.rideplan.resources.plan_time
-import io.github.nanunic9379.rideplan.resources.plan_time_invalid
+import io.github.nanunic9379.rideplan.resources.plan_time_clear
+import io.github.nanunic9379.rideplan.resources.plan_time_set
 import io.github.nanunic9379.rideplan.resources.purpose_coffee
 import io.github.nanunic9379.rideplan.resources.purpose_fuel
 import io.github.nanunic9379.rideplan.resources.purpose_lunch
@@ -173,7 +176,7 @@ fun RideSheetSection(store: ProfileStore, saved: SavedRide, shareText: ((String)
     }
     val totals = stringResource(Res.string.sheet_totals, durationText(table.ridingSeconds), durationText(table.totalSeconds))
     Text(
-        listOfNotNull(totals, table.finish?.let { stringResource(Res.string.sheet_finish, "~" + StopPlan.timeText(it)) }).joinToString(" · "),
+        listOfNotNull(totals, table.finish?.let { stringResource(Res.string.sheet_finish, "~" + StopPlan.timeText(it, is24HourClock())) }).joinToString(" · "),
         style = MaterialTheme.typography.bodyMedium,
     )
     if (table.roughSpeed && table.hasTimes) {
@@ -199,16 +202,17 @@ fun RideSheetSection(store: ProfileStore, saved: SavedRide, shareText: ((String)
 private fun SheetRow(index: Int, count: Int, stop: Stop, row: Timetable.Row, onClick: () -> Unit) {
     val plan = stop.plan
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val h24 = is24HourClock()
     Row(
         Modifier.fillMaxWidth().heightIn(min = Touch.Min).clickable(role = Role.Button, onClick = onClick).padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Text(
-            row.arrival?.let { (if (row.estimated) "~" else "") + StopPlan.timeText(it) } ?: "--:--",
+            row.arrival?.let { (if (row.estimated) "~" else "") + StopPlan.timeText(it, h24) } ?: "--:--",
             style = MaterialTheme.typography.titleMedium,
             color = if (row.estimated) muted else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.width(64.dp),
+            modifier = Modifier.width(if (h24) 64.dp else 96.dp),
         )
         Column(Modifier.weight(1f)) {
             val head = listOfNotNull(plan?.purpose?.let { purposeText(it) }, stopRole(index, count)).joinToString(" · ")
@@ -254,6 +258,7 @@ private fun sheetLabels(): RideSheet.Labels {
     val distanceUnit = distanceUnit()
     val units = LocalUnits.current
     val km = { k: Double -> formatKm(units.of(k)) }
+    val h24 = is24HourClock()
     return RideSheet.Labels(
         title = { v -> v?.let { "v$it" }.orEmpty() },
         distance = { k -> km(k) + " " + distanceUnit },
@@ -268,6 +273,7 @@ private fun sheetLabels(): RideSheet.Labels {
         approx = "~",
         late = "(" + stringResource(Res.string.sheet_late) + ")",
         updated = { n -> updated.replace("\u0001", n) },
+        clock = { m -> StopPlan.timeText(m, h24) },
     )
 }
 
@@ -284,10 +290,11 @@ private fun durationTextPlain(seconds: Double): String {
 @Composable
 private fun StopPlanDialog(title: String, initial: StopPlan?, onDismiss: () -> Unit, onSave: (StopPlan?) -> Unit) {
     var purpose by remember { mutableStateOf(initial?.purpose) }
-    var time by remember { mutableStateOf(initial?.time?.let(StopPlan::timeText).orEmpty()) }
+    var time by remember { mutableStateOf(initial?.time) }
+    var picking by remember { mutableStateOf(false) }
+    val h24 = is24HourClock()
     var pause by remember { mutableStateOf(initial?.pauseMinutes ?: 0) }
     var note by remember { mutableStateOf(initial?.note.orEmpty()) }
-    val timeOk = time.isBlank() || StopPlan.parseTime(time) != null
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(AppIcons.Pin, contentDescription = null) },
@@ -310,16 +317,18 @@ private fun StopPlanDialog(title: String, initial: StopPlan?, onDismiss: () -> U
                         )
                     }
                 }
-                OutlinedTextField(
-                    value = time,
-                    onValueChange = { time = it.take(5) },
-                    label = { Text(stringResource(Res.string.plan_time)) },
-                    isError = !timeOk,
-                    supportingText = if (timeOk) null else ({ Text(stringResource(Res.string.plan_time_invalid)) }),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                // A tap on a clock, not typing with gloves (#82).
+                Text(stringResource(Res.string.plan_time), style = MaterialTheme.typography.labelLarge)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { picking = true }, modifier = Modifier.weight(1f).heightIn(min = Touch.Glove)) {
+                        Text(time?.let { StopPlan.timeText(it, h24) } ?: stringResource(Res.string.plan_time_set))
+                    }
+                    if (time != null) {
+                        TextButton(onClick = { time = null }, modifier = Modifier.heightIn(min = Touch.Glove)) {
+                            Text(stringResource(Res.string.plan_time_clear))
+                        }
+                    }
+                }
                 Text(stringResource(Res.string.plan_pause), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StopPlan.PAUSES.forEach { m ->
@@ -347,10 +356,34 @@ private fun StopPlanDialog(title: String, initial: StopPlan?, onDismiss: () -> U
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(StopPlan(purpose, StopPlan.parseTime(time), pause, note).normalized()) },
-                enabled = timeOk,
+                onClick = { onSave(StopPlan(purpose, time, pause, note).normalized()) },
                 modifier = Modifier.heightIn(min = Touch.Min),
             ) { Text(stringResource(Res.string.plan_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) }
+        },
+    )
+    if (picking) {
+        StopTimePicker(time ?: DEFAULT_TIME, h24, onDismiss = { picking = false }) { time = it; picking = false }
+    }
+}
+
+/** A meeting time when none is set yet: the usual Sunday start. */
+private const val DEFAULT_TIME = 8 * 60 + 30
+
+/** The clock to set a stop time (#82), 12 or 24 hours as the phone. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StopTimePicker(minutes: Int, h24: Boolean, onDismiss: () -> Unit, onPick: (Int) -> Unit) {
+    val state = rememberTimePickerState(initialHour = minutes / 60, initialMinute = minutes % 60, is24Hour = h24)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = { TimePicker(state = state) },
+        confirmButton = {
+            TextButton(onClick = { onPick(state.hour * 60 + state.minute) }, modifier = Modifier.heightIn(min = Touch.Min)) {
+                Text(stringResource(Res.string.ok))
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.route_cancel)) }

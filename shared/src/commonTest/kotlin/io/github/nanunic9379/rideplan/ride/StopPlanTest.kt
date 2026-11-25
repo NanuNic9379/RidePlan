@@ -37,6 +37,16 @@ class StopPlanTest {
         assertEquals("00:10", StopPlan.timeText(24 * 60 + 10))
     }
 
+    /** On a 12-hour phone the sheet reads AM/PM (#82). */
+    @Test
+    fun twelveHourClock() {
+        assertEquals("8:30 AM", StopPlan.timeText(510, h24 = false))
+        assertEquals("12:00 AM", StopPlan.timeText(0, h24 = false))
+        assertEquals("12:05 PM", StopPlan.timeText(12 * 60 + 5, h24 = false))
+        assertEquals("11:59 PM", StopPlan.timeText(23 * 60 + 59, h24 = false))
+        assertEquals("1:10 AM", StopPlan.timeText(25 * 60 + 10, h24 = false))
+    }
+
     @Test
     fun normalizedPlans() {
         assertNull(StopPlan().normalized())

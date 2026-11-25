@@ -571,8 +571,7 @@
     <string name="purpose_lunch">Pranzo</string>
     <string name="purpose_photo">Sosta foto</string>
     <string name="plan_none">Solo tappa</string>
-    <string name="plan_time">Orario (es. 08:30)</string>
-    <string name="plan_time_invalid">Scrivi l'orario come 08:30</string>
+    <string name="plan_time">Orario</string>
     <string name="plan_pause">Sosta</string>
     <string name="plan_note">Nota per il gruppo</string>
     <string name="plan_save">Salva</string>
@@ -780,4 +779,6 @@
     <string name="offroad_legend_zoom">Avvicina la mappa per vederle.</string>
     <string name="share_qr_deviation">Il QR semplifica questa traccia: può scostarsi fino a %1$s dall'originale.</string>
     <string name="share_qr_deviation_far">Per la traccia esatta invia il file GPX.</string>
+    <string name="plan_time_set">Imposta un orario</string>
+    <string name="plan_time_clear">Nessun orario</string>
 </resources>

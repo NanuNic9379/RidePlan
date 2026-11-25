@@ -572,8 +572,7 @@
     <string name="purpose_lunch">Déjeuner</string>
     <string name="purpose_photo">Arrêt photo</string>
     <string name="plan_none">Simple étape</string>
-    <string name="plan_time">Heure (ex. 08:30)</string>
-    <string name="plan_time_invalid">Écrivez l'heure comme 08:30</string>
+    <string name="plan_time">Heure</string>
     <string name="plan_pause">Arrêt</string>
     <string name="plan_note">Note pour le groupe</string>
     <string name="plan_save">Enregistrer</string>
@@ -781,4 +780,6 @@
     <string name="offroad_legend_zoom">Zoomez pour les voir.</string>
     <string name="share_qr_deviation">Le QR simplifie cette trace : elle peut s'écarter jusqu'à %1$s de l'originale.</string>
     <string name="share_qr_deviation_far">Pour la trace exacte, envoyez le fichier GPX.</string>
+    <string name="plan_time_set">Choisir une heure</string>
+    <string name="plan_time_clear">Pas d'heure</string>
 </resources>

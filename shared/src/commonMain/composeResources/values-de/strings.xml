@@ -571,8 +571,7 @@
     <string name="purpose_lunch">Mittagessen</string>
     <string name="purpose_photo">Fotostopp</string>
     <string name="plan_none">Nur Halt</string>
-    <string name="plan_time">Uhrzeit (z. B. 08:30)</string>
-    <string name="plan_time_invalid">Uhrzeit als 08:30 schreiben</string>
+    <string name="plan_time">Uhrzeit</string>
     <string name="plan_pause">Pause</string>
     <string name="plan_note">Notiz für die Gruppe</string>
     <string name="plan_save">Speichern</string>
@@ -780,4 +779,6 @@
     <string name="offroad_legend_zoom">Hineinzoomen, um sie zu sehen.</string>
     <string name="share_qr_deviation">Der QR-Code vereinfacht diesen Track: Er kann bis zu %1$s vom Original abweichen.</string>
     <string name="share_qr_deviation_far">Für den genauen Track sende die GPX-Datei.</string>
+    <string name="plan_time_set">Uhrzeit wählen</string>
+    <string name="plan_time_clear">Keine Uhrzeit</string>
 </resources>
