@@ -757,4 +757,27 @@
     <string name="nav_resume">Reanudar</string>
     <string name="nav_notice_channel">Navegación</string>
     <string name="nav_notice_stop">Detener navegación</string>
+    <string name="ready_title_ok">Listo sin cobertura</string>
+    <string name="ready_ok_text">Mapa, datos de carreteras para una nueva ruta, gasolineras y cierres están en el teléfono.</string>
+    <string name="ready_title_missing">No está listo sin cobertura</string>
+    <string name="ready_missing">Falta: %1$s.</string>
+    <string name="ready_part_road">datos de carreteras</string>
+    <string name="ready_part_map">mapa</string>
+    <string name="ready_part_map_update">actualización del mapa</string>
+    <string name="ready_get_all">Descargar todo para esta ruta</string>
+    <string name="ready_checking">Comprobando qué hay en el teléfono…</string>
+    <string name="ready_looking_up">Buscando qué descargar…</string>
+    <string name="ready_mobile_ask">Estás con datos móviles. ¿Descargar igualmente todo para esta ruta? Usa unos %1$s de tu tarifa de datos.</string>
+    <string name="ready_downloading_road">Descargando datos de carreteras: %1$s de %2$s</string>
+    <string name="ready_downloading_map">Descargando el mapa de esta ruta…</string>
+    <string name="ready_err_network">La descarga no ha funcionado. Comprueba la conexión e inténtalo de nuevo.</string>
+    <string name="ready_err_space">No hay espacio libre suficiente en el teléfono para los datos de carreteras.</string>
+    <string name="ready_err_other">La descarga no ha funcionado: %1$s</string>
+    <string name="ready_not_covered">Todavía no hay datos de carreteras publicados para esta zona: sin cobertura la app no puede encontrar una nueva ruta.</string>
+    <string name="ready_map_too_long">La ruta es demasiado larga para una sola descarga del mapa: divídela en etapas.</string>
+    <string name="nav_offline_title">No está listo sin cobertura</string>
+    <string name="nav_offline_text">Falta: %1$s. Sin cobertura el mapa puede quedarse en blanco y la app no encuentra una nueva ruta si te sales de esta.</string>
+    <string name="nav_offline_download">Descargar ahora</string>
+    <string name="nav_offline_download_size">Descargar ahora (%1$s)</string>
+    <string name="nav_offline_anyway">Navegar igualmente</string>
 </resources>

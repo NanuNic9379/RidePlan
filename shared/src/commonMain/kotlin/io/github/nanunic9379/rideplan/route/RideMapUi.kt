@@ -95,6 +95,9 @@ class RideMapActions(
 ) {
     var saved by mutableStateOf<List<SavedRideMap>>(emptyList())
     var status by mutableStateOf<RideMapStatus>(RideMapStatus.Idle)
+
+    /** "Ready without signal" (#67, #68): the map with the road data; null = not offered. */
+    var ready: ReadyOfflineActions? = null
 }
 
 /**
