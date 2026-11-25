@@ -45,6 +45,10 @@ import org.maplibre.compose.overlay.LocalViewportInsets
 import org.maplibre.compose.overlay.DisappearingCompassButton
 import org.maplibre.compose.overlay.DisappearingScaleBar
 import org.maplibre.compose.overlay.MapOverlay
+import org.maplibre.compose.overlay.ScaleBarMeasure
+import org.maplibre.compose.overlay.ScaleBarMeasures
+import io.github.nanunic9379.rideplan.personal.LocalUnits
+import io.github.nanunic9379.rideplan.profile.Units
 import org.maplibre.compose.overlay.MaplibreLogo
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.fadeIn
@@ -58,7 +62,14 @@ val CompactMapOverlay = MapOverlay {
     val map = LocalMapState.current ?: return@MapOverlay
     // As the library places its own controls: inside the viewport insets, one spacing in.
     Box(Modifier.fillMaxSize().padding(LocalViewportInsets.current).padding(MapOverlay.Spacing)) {
-        DisappearingScaleBar({ map.viewport?.metersPerDpAtCenter ?: 0.0 }, { map.cameraPosition.zoom }, Modifier.align(Alignment.TopStart))
+        // One unit only, the one chosen in the settings (#219), instead of km and miles together.
+        val measure = if (LocalUnits.current == Units.MILES) ScaleBarMeasure.FeetAndMiles else ScaleBarMeasure.Metric
+        DisappearingScaleBar(
+            { map.viewport?.metersPerDpAtCenter ?: 0.0 },
+            { map.cameraPosition.zoom },
+            Modifier.align(Alignment.TopStart),
+            measures = ScaleBarMeasures(primary = measure),
+        )
         DisappearingCompassButton(Modifier.align(Alignment.TopEnd))
         MaplibreLogo(Modifier.align(Alignment.BottomStart))
         CompactAttribution(Modifier.align(Alignment.BottomEnd))
