@@ -32,6 +32,19 @@ class GpxExportTest {
     }
 
     @Test
+    fun creditsOpenStreetMapForAPhoneRoad() {
+        // #130: a road computed on the phone carries the ODbL credit; an imported file does not.
+        val planned = Ride("R", listOf(a, b, c), listOf(Stop("A", a), Stop("C", c)), Ride.Source.PLANNED)
+        val gpx = GpxExport.write(planned, "ride")
+        assertTrue("<copyright author=\"OpenStreetMap contributors\"><license>https://opendatacommons.org/licenses/odbl/</license></copyright>" in gpx)
+        // GPX 1.1 order: name, desc, author, copyright, link, time, keywords, bounds, extensions.
+        assertTrue(gpx.indexOf("</name>") < gpx.indexOf("<copyright"))
+        assertEquals(planned.track, RideImport.parse(gpx).track)
+        assertFalse("<copyright" in GpxExport.write(planned.copy(source = Ride.Source.GPX), "ride"))
+        assertFalse("<copyright" in GpxExport.write(planned.copy(track = emptyList()), "ride"))
+    }
+
+    @Test
     fun stopsOnly() {
         val ride = Ride(null, emptyList(), listOf(Stop("A", a), Stop("B", c)), Ride.Source.GOOGLE_LINK)
         val gpx = GpxExport.write(ride, "A → B")

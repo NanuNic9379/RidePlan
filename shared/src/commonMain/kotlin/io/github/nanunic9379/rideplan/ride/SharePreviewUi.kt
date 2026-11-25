@@ -60,5 +60,6 @@ internal fun SharePreviewText(preview: SharePreview) {
         Text(stringResource(Res.string.share_preview_summary, distanceText(preview.km), preview.ride.stops.size), style = MaterialTheme.typography.bodyMedium)
         Text(stringResource(Res.string.share_preview_moved, distanceText(preview.startMovedKm), distanceText(preview.finishMovedKm)), style = style)
         if (preview.hiddenStops > 0) Text(stringResource(Res.string.share_preview_hidden, preview.hiddenStops), style = style)
+        if (OsmCredit.applies(preview.ride)) Text(OsmCredit.TEXT, style = style, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

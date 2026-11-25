@@ -261,6 +261,7 @@ object RideSheet {
             if (plan != null && plan.note.isNotBlank()) sb.append("        ").append(plan.note).append('\n')
         }
         if (link != null) sb.append('\n').append(link).append('\n')
+        if (OsmCredit.applies(ride)) sb.append('\n').append(OsmCredit.TEXT).append('\n')
         return sb.toString().trimEnd() + "\n"
     }
 }
