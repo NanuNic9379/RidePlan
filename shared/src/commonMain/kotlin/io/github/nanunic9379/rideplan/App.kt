@@ -501,7 +501,7 @@ private fun MapScreen(
                 } else if (showFab && importActions != null) {
                     ImportFab(importActions, Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp))
                 }
-                if (ride == null) OffroadControls(offroad, { offroad = !offroad }, roadColors, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp))
+                if (ride == null) OffroadControls(offroad, { offroad = !offroad }, roadColors, { state.cameraPosition.zoom }, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp))
                 if (ride == null && navigation != null) {
                     // Explore (#40): back to where you are, above the main action.
                     SmallFloatingActionButton(

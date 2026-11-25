@@ -741,7 +741,7 @@
     <string name="offroad_off">Masquées</string>
     <string name="offroad_legend_unpaved">Route non goudronnée</string>
     <string name="offroad_legend_no_access">Fermée à la circulation</string>
-    <string name="offroad_legend_note">Zoomez pour les voir. Données OpenStreetMap, parfois incomplètes.</string>
+    <string name="offroad_legend_note">Données OpenStreetMap, parfois incomplètes.</string>
     <string name="track_bans_title">Cette trace emprunte des routes interdites à votre moto</string>
     <string name="track_bans_motorway">%1$s sur autoroute, interdite sous 150 cm³</string>
     <string name="track_bans_no_access">%1$s sur des routes fermées aux motos</string>
@@ -778,4 +778,5 @@
     <string name="nav_offline_download">Télécharger maintenant</string>
     <string name="nav_offline_download_size">Télécharger maintenant (%1$s)</string>
     <string name="nav_offline_anyway">Naviguer quand même</string>
+    <string name="offroad_legend_zoom">Zoomez pour les voir.</string>
 </resources>

@@ -740,7 +740,7 @@
     <string name="offroad_off">Ausgeblendet</string>
     <string name="offroad_legend_unpaved">Unbefestigte Straße</string>
     <string name="offroad_legend_no_access">Für den Verkehr gesperrt</string>
-    <string name="offroad_legend_note">Hineinzoomen, um sie zu sehen. Daten von OpenStreetMap, eventuell unvollständig.</string>
+    <string name="offroad_legend_note">Daten von OpenStreetMap, eventuell unvollständig.</string>
     <string name="track_bans_title">Dieser Track nutzt Straßen, die für dein Motorrad nicht erlaubt sind</string>
     <string name="track_bans_motorway">%1$s auf Autobahnen, unter 150 cm³ nicht erlaubt</string>
     <string name="track_bans_no_access">%1$s auf Straßen, die für Motorräder gesperrt sind</string>
@@ -777,4 +777,5 @@
     <string name="nav_offline_download">Jetzt laden</string>
     <string name="nav_offline_download_size">Jetzt laden (%1$s)</string>
     <string name="nav_offline_anyway">Trotzdem navigieren</string>
+    <string name="offroad_legend_zoom">Hineinzoomen, um sie zu sehen.</string>
 </resources>

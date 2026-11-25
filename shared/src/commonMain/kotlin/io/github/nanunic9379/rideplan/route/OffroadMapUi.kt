@@ -13,6 +13,9 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -27,6 +30,7 @@ import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.offroad_legend_no_access
 import io.github.nanunic9379.rideplan.resources.offroad_legend_note
 import io.github.nanunic9379.rideplan.resources.offroad_legend_unpaved
+import io.github.nanunic9379.rideplan.resources.offroad_legend_zoom
 import io.github.nanunic9379.rideplan.resources.offroad_off
 import io.github.nanunic9379.rideplan.resources.offroad_on
 import io.github.nanunic9379.rideplan.resources.offroad_toggle
@@ -114,9 +118,13 @@ fun OffroadToggle(on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifi
     }
 }
 
-/** The small legend shown while the overlay is on. */
+/**
+ * The small legend shown while the overlay is on. "Zoom in" only while the map is zoomed out
+ * below the overlay ([zoom] read on each camera move, #222).
+ */
 @Composable
-fun OffroadLegend(colors: OffroadColors, modifier: Modifier = Modifier) {
+fun OffroadLegend(colors: OffroadColors, zoom: () -> Double, modifier: Modifier = Modifier) {
+    val hidden by remember { derivedStateOf { OffroadRules.hiddenAt(zoom()) } }
     Surface(
         modifier = modifier.width(220.dp),
         shape = Radius.Card,
@@ -125,6 +133,13 @@ fun OffroadLegend(colors: OffroadColors, modifier: Modifier = Modifier) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             LegendRow(colors.unpaved, dash = 6f, stringResource(Res.string.offroad_legend_unpaved))
             LegendRow(colors.noAccess, dash = 3f, stringResource(Res.string.offroad_legend_no_access))
+            if (hidden) {
+                Text(
+                    stringResource(Res.string.offroad_legend_zoom),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
             Text(
                 stringResource(Res.string.offroad_legend_note),
                 style = MaterialTheme.typography.bodySmall,
@@ -152,9 +167,9 @@ private fun LegendRow(color: Color, dash: Float, label: String) {
 
 /** The toggle, with the legend under it while the overlay is on (top right of Explore). */
 @Composable
-fun OffroadControls(on: Boolean, onToggle: () -> Unit, colors: OffroadColors, modifier: Modifier = Modifier) {
+fun OffroadControls(on: Boolean, onToggle: () -> Unit, colors: OffroadColors, zoom: () -> Double, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OffroadToggle(on, onToggle)
-        if (on) OffroadLegend(colors)
+        if (on) OffroadLegend(colors, zoom)
     }
 }
