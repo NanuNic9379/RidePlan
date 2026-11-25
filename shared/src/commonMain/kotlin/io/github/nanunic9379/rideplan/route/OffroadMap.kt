@@ -20,6 +20,9 @@ object OffroadRules {
     /** Below this zoom the tiles carry no surface detail and the lines would be clutter. */
     const val MIN_ZOOM = 11f
 
+    /** The overlay is hidden at [zoom] because the map is zoomed out too far (#222). */
+    fun hiddenAt(zoom: Double): Boolean = zoom < MIN_ZOOM
+
     /** Road classes a motorcycle could use: paths, footways, rail and ferries are left out. */
     val ROAD_CLASSES = listOf(
         "motorway", "trunk", "primary", "secondary", "tertiary", "minor", "service", "track", "raceway", "busway",

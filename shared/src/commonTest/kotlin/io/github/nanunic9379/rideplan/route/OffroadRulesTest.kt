@@ -9,6 +9,15 @@ import kotlin.test.assertTrue
 
 /** Which roads the off-road overlay of the Explore map marks (#9). */
 class OffroadRulesTest {
+    /** The legend says "zoom in" only while the overlay is hidden by the zoom (#222). */
+    @Test
+    fun hiddenOnlyBelowTheMinZoom() {
+        assertTrue(OffroadRules.hiddenAt(8.0))
+        assertTrue(OffroadRules.hiddenAt(10.9))
+        assertFalse(OffroadRules.hiddenAt(11.0))
+        assertFalse(OffroadRules.hiddenAt(15.0))
+    }
+
     @Test
     fun unpavedRoadsAreMarked() {
         for (c in listOf("primary", "secondary", "tertiary", "minor", "service", "track")) {

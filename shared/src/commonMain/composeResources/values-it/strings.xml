@@ -740,7 +740,7 @@
     <string name="offroad_off">Nascoste</string>
     <string name="offroad_legend_unpaved">Strada sterrata</string>
     <string name="offroad_legend_no_access">Chiusa al traffico</string>
-    <string name="offroad_legend_note">Avvicina la mappa per vederle. Dati di OpenStreetMap, possono essere incompleti.</string>
+    <string name="offroad_legend_note">Dati di OpenStreetMap, possono essere incompleti.</string>
     <string name="track_bans_title">Questa traccia usa strade non consentite alla tua moto</string>
     <string name="track_bans_motorway">%1$s in autostrada, vietata sotto i 150 cc</string>
     <string name="track_bans_no_access">%1$s su strade chiuse alle moto</string>
@@ -777,4 +777,5 @@
     <string name="nav_offline_download">Scarica ora</string>
     <string name="nav_offline_download_size">Scarica ora (%1$s)</string>
     <string name="nav_offline_anyway">Naviga comunque</string>
+    <string name="offroad_legend_zoom">Avvicina la mappa per vederle.</string>
 </resources>

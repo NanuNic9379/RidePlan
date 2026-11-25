@@ -741,7 +741,7 @@
     <string name="offroad_off">Hidden</string>
     <string name="offroad_legend_unpaved">Unpaved road</string>
     <string name="offroad_legend_no_access">Closed to traffic</string>
-    <string name="offroad_legend_note">Zoom in to see them. Data from OpenStreetMap, may be incomplete.</string>
+    <string name="offroad_legend_note">Data from OpenStreetMap, may be incomplete.</string>
     <string name="track_bans_title">This track uses roads not allowed for your bike</string>
     <string name="track_bans_motorway">%1$s on motorways, not allowed under 150 cc</string>
     <string name="track_bans_no_access">%1$s on roads closed to motorcycles</string>
@@ -778,4 +778,5 @@
     <string name="nav_offline_download">Download now</string>
     <string name="nav_offline_download_size">Download now (%1$s)</string>
     <string name="nav_offline_anyway">Navigate anyway</string>
+    <string name="offroad_legend_zoom">Zoom in to see them.</string>
 </resources>
