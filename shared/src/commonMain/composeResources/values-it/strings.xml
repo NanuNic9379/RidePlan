@@ -72,7 +72,7 @@
     <string name="route_downloading">Scarico %1$s: %2$s di %3$s</string>
     <string name="route_computing">Calcolo il percorso sul telefono…</string>
     <string name="route_not_covered">Per questa zona non ci sono ancora dati stradali: le tappe restano unite in linea retta.</string>
-    <string name="route_not_covered_stops">Tappe fuori dalla zona per cui RidePlan ha i dati stradali: %1$s. Il percorso resta in linea retta: sposta quelle tappe, o aspetta che la zona sia coperta.</string>
+    <string name="route_not_covered_stops">Tappe fuori dalla zona per cui RidePlan ha i dati stradali: %1$s. Quella parte del giro ha bisogno dei dati di un'altra zona, non ancora disponibili: il percorso resta in linea retta. Sposta quelle tappe, o aspetta che la zona sia coperta.</string>
     <string name="route_outside_stop_n">tappa %1$d</string>
     <string name="route_needs_space">Occupa circa %1$s sul telefono.</string>
     <string name="route_done_note">Percorso calcolato sul telefono · dati OpenStreetMap del %1$s</string>

@@ -72,7 +72,7 @@
     <string name="route_downloading">Descargando %1$s: %2$s de %3$s</string>
     <string name="route_computing">Calculando la ruta en el teléfono…</string>
     <string name="route_not_covered">Aún no hay datos de carreteras para esta zona: las paradas siguen unidas en línea recta.</string>
-    <string name="route_not_covered_stops">Paradas fuera de la zona con datos de carreteras de RidePlan: %1$s. La ruta sigue en línea recta: mueve esas paradas o espera a que la zona esté cubierta.</string>
+    <string name="route_not_covered_stops">Paradas fuera de la zona con datos de carreteras de RidePlan: %1$s. Esa parte de la ruta necesita los datos de otra zona, aún no disponibles: la ruta sigue en línea recta. Mueve esas paradas o espera a que la zona esté cubierta.</string>
     <string name="route_outside_stop_n">parada %1$d</string>
     <string name="route_needs_space">Ocupa unos %1$s en el teléfono.</string>
     <string name="route_done_note">Ruta calculada en el teléfono · datos de OpenStreetMap del %1$s</string>

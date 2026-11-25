@@ -11,7 +11,10 @@ import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.AreasDownload
 import io.github.nanunic9379.rideplan.route.CellsDownload
+import io.github.nanunic9379.rideplan.route.CrossArea
+import io.github.nanunic9379.rideplan.route.DataDownload
 import io.github.nanunic9379.rideplan.route.FuelData
 import io.github.nanunic9379.rideplan.route.FuelFile
 import io.github.nanunic9379.rideplan.route.FuelStation
@@ -125,10 +128,16 @@ class RouteService(context: Context) {
     /**
      * Road data already on the phone that routes the ride, with no network. [strict]: only an
      * area whose outline holds every stop (see [RoutingAreas.local]); otherwise any area whose
-     * cells cover them. Then the whole regions from before #45.
+     * cells cover them. A ride across areas uses each area's cells for its own legs
+     * ([CrossArea.local]): when re-routing on the move the first leg is the area of the current
+     * position. Then the whole regions from before #45.
      */
     fun localData(points: List<LatLon>, strict: Boolean = true): RoutingData? {
-        RoutingAreas.local(areas(), localAreas(), points, strict)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
+        val areas = areas()
+        val local = localAreas()
+        RoutingAreas.local(areas, local, points, strict = true)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
+        CrossArea.local(areas, local, points)?.let { return it }
+        if (!strict) RoutingAreas.local(areas, local, points, strict = false)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
         return RoutingRegion.bestFor(installed(), points)?.let { RoutingData.Region(it) }
     }
 
@@ -159,9 +168,21 @@ class RouteService(context: Context) {
         return found.ifEmpty { null }
     }
 
-    /** What to download for the ride among the published areas; null if none covers it. */
-    fun plan(published: List<PublishedArea>, points: List<LatLon>): CellsDownload? =
-        RoutingAreas.plan(published, localAreas(), points)
+    /** What to download for the ride among the published areas, one or several (#14); null if they do not cover it. */
+    fun plan(published: List<PublishedArea>, points: List<LatLon>): DataDownload? =
+        RoutingAreas.download(published, localAreas(), points)
+
+    /** The cells of every area a ride crosses, one area after the other; progress counts over all of them. */
+    fun download(plan: AreasDownload, isActive: () -> Boolean, progress: (Long) -> Unit) {
+        if (dir.usableSpace < plan.tileBytes + 200_000_000) throw RouteException(RouteError.NO_SPACE)
+        var done = 0L
+        for (part in plan.parts) {
+            if (part.packs.isEmpty()) continue
+            val start = done
+            download(part, isActive) { progress(start + it) }
+            done += part.bytes
+        }
+    }
 
     /**
      * Downloads the missing packs one at a time, checks the SHA-256 of each and only then moves
@@ -399,6 +420,13 @@ class RouteService(context: Context) {
         instructions: Boolean = true,
         startHeading: Double? = null,
     ): ValhallaRoute.Result {
+        if (data is RoutingData.Across) {
+            // Each leg with its own area's engine; the hidden junctions are stops only for the engine.
+            val parts = data.parts.mapIndexed { i, part ->
+                route(ride.copy(stops = part.leg.stops(ride.stops)), part.data, options, instructions, startHeading.takeIf { i == 0 })
+            }
+            return CrossArea.join(parts, data.parts.map { it.leg })
+        }
         val valhalla = engineFor(data)
         val response = try {
             val language = if (instructions) ValhallaRoute.language(app.resources.configuration.locales[0].toLanguageTag()) else null
@@ -441,6 +469,7 @@ class RouteService(context: Context) {
             // Tile directory: drop tile_extract, otherwise the engine first looks for the default tar.
             is RoutingData.Cells -> ValhallaConfigFactory.usingTilesDir(files(data.area).tiles.absolutePath)
                 .let { it.copy(mjolnir = it.mjolnir?.copy(tileExtract = null)) }
+            is RoutingData.Across -> error("Routed leg by leg")
         }
         // Towns passed near need a wide radius (#29); by default the engine rejects it.
         // Hard exclusions carry the motorway ban under 150 cc (#8): off by default in Valhalla.

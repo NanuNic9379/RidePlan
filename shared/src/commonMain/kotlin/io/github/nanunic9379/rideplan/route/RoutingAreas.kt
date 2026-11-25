@@ -14,7 +14,8 @@ import kotlin.math.abs
  * One area of road data (#14): its own build, its own Release with its own cells.json, its own
  * folder on the phone. Cells of different areas never mix (each is a separate build).
  * [bbox]: lon min, lat min, lon max, lat max. [outline]: the outline of the OpenStreetMap extract,
- * where the data is complete; empty when unknown (then only [bbox] counts).
+ * where the data is complete; empty when unknown (then only [bbox] counts). [countries]: with no
+ * outline, the countries whose roads the data holds (ISO codes, see [Countries]); empty = any.
  */
 class RoutingArea internal constructor(
     val id: String,
@@ -23,6 +24,7 @@ class RoutingArea internal constructor(
     val release: String,
     val bbox: List<Double>,
     internal val outline: List<Ring> = emptyList(),
+    internal val countries: Set<String> = emptySet(),
 ) {
     internal class Ring(val lats: DoubleArray, val lons: DoubleArray) {
         val minLat = lats.min()
@@ -47,10 +49,13 @@ class RoutingArea internal constructor(
 
     fun inBox(p: LatLon): Boolean = p.lon >= bbox[0] && p.lat >= bbox[1] && p.lon <= bbox[2] && p.lat <= bbox[3]
 
-    /** The point is where this area's data is complete: inside the outline (even-odd rule), or the box if there is none. */
+    /**
+     * The point is where this area's data is complete: inside the outline (even-odd rule), or
+     * the box if there is none, and then in one of [countries] when they are given.
+     */
     fun covers(p: LatLon): Boolean {
         if (!inBox(p)) return false
-        if (outline.isEmpty()) return true
+        if (outline.isEmpty()) return countries.isEmpty() || inCountries(p)
         var inside = false
         for (r in outline) {
             if (p.lat < r.minLat || p.lat > r.maxLat || p.lon < r.minLon || p.lon > r.maxLon) continue
@@ -68,6 +73,20 @@ class RoutingArea internal constructor(
         return inside
     }
 
+    /**
+     * The country outlines are coarse (about 500 m): a point in no country (the sea, a gap) counts,
+     * and so does one within [COUNTRY_MARGIN_DEG] of one of [countries], so that a stop right on
+     * the border is not lost.
+     */
+    private fun inCountries(p: LatLon): Boolean {
+        val at = Countries.at(p)
+        if (at == null || at in countries) return true
+        val d = COUNTRY_MARGIN_DEG
+        return listOf(p.lat + d to p.lon, p.lat - d to p.lon, p.lat to p.lon + d, p.lat to p.lon - d).any { (lat, lon) ->
+            lat in -90.0..90.0 && lon in -180.0..180.0 && Countries.at(LatLon(lat, lon)) in countries
+        }
+    }
+
     fun coversAll(points: List<LatLon>): Boolean = points.isNotEmpty() && points.all(::covers)
 
     /** Size used to prefer the smaller area: the outline's area, or the box's (square degrees). */
@@ -76,6 +95,11 @@ class RoutingArea internal constructor(
         else outline.sumOf { it.area }
 
     override fun toString(): String = "RoutingArea($id)"
+
+    private companion object {
+        /** About 2 km. */
+        const val COUNTRY_MARGIN_DEG = 0.02
+    }
 }
 
 /** The road data of one area on the phone: the copy of its build manifest and the packs already extracted. */
@@ -95,15 +119,21 @@ object RoutingAreas {
     const val ITALY = "it"
     const val ITALY_RELEASE = "routing-data"
 
+    /** What Italy's data holds when its outline is unknown: Italy and San Marino (Vatican City is in no outline). */
+    val ITALY_COUNTRIES = setOf("IT", "SM")
+
     /** No id or tag can build a path or a URL outside its place. */
     val AREA_ID = Regex("""[a-z0-9][a-z0-9-]{0,31}""")
     val RELEASE = Regex("""routing-[a-z0-9-]{1,40}""")
 
     /**
      * Before the index is published, or offline with no copy of it: only Italy, exactly as before
-     * #14 (the box is the old sanity box; the published cells decide what is covered).
+     * #14 (the box is the old sanity box). With no outline the country tells a stop abroad
+     * (Lugano, Innsbruck): Italy's border cells hold only the Italian side of their roads, so
+     * such a stop needs another area, and the app says so instead of routing half of it.
      */
-    val FALLBACK: List<RoutingArea> = listOf(RoutingArea(ITALY, "Italy", ITALY_RELEASE, listOf(6.0, 35.0, 19.0, 48.0)))
+    val FALLBACK: List<RoutingArea> =
+        listOf(RoutingArea(ITALY, "Italy", ITALY_RELEASE, listOf(6.0, 35.0, 19.0, 48.0), countries = ITALY_COUNTRIES))
 
     /**
      * Reads the index. A wrong format fails (the fields could mean something else); a single
@@ -143,7 +173,7 @@ object RoutingAreas {
             }
         }.getOrDefault(emptyList())
         val name = get("name")?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: id
-        return RoutingArea(id, name, release, bbox, outline)
+        return RoutingArea(id, name, release, bbox, outline, if (id == ITALY && outline.isEmpty()) ITALY_COUNTRIES else emptySet())
     }
 
     /**
@@ -179,33 +209,48 @@ object RoutingAreas {
     }
 
     /**
-     * What to download for the ride, among the published areas: first the areas whose outline
-     * holds every stop, then any whose cells cover them. Within each group the smallest
-     * download wins (data already on the phone costs nothing), then the smaller area.
-     * Null if no area's cells cover every stop.
+     * What to download for the ride: one area when one holds it all ([plan]), otherwise the
+     * areas the ride crosses, leg by leg ([CrossArea.plan]). Null when a stop is in no published
+     * area, or the ride cannot pass from one area to the next: [outside] names the stops.
+     */
+    fun download(published: List<PublishedArea>, local: List<LocalArea>, points: List<LatLon>): DataDownload? =
+        plan(published, local, points) ?: CrossArea.plan(published, local, points)
+
+    /**
+     * What to download for the ride in a single area, among the published areas whose outline
+     * holds every stop: the smallest download wins (data already on the phone costs nothing),
+     * then the smaller area. Null if there is none, or its cells do not cover the stops.
+     * A border cell of an area that does not hold every stop is never enough: it has only that
+     * area's side of the roads (Milan - Lugano with Italy's data), see [download].
      */
     fun plan(published: List<PublishedArea>, local: List<LocalArea>, points: List<LatLon>): CellsDownload? {
-        val plans = published.mapNotNull { p ->
+        val plans = published.filter { it.area.coversAll(points) }.mapNotNull { p ->
             val mine = local.firstOrNull { it.id == p.area.id }
             CellsDownload.plan(p.cells, mine?.cells, mine?.installed.orEmpty(), points)
                 ?.copy(area = p.area.id, release = p.area.release)
                 ?.let { p.area to it }
         }
         return plans.minWithOrNull(
-            compareBy<Pair<RoutingArea, CellsDownload>> { (a, _) -> if (a.coversAll(points)) 0 else 1 }
-                .thenBy { (_, d) -> d.bytes }
+            compareBy<Pair<RoutingArea, CellsDownload>> { (_, d) -> d.bytes }
                 .thenBy { (a, _) -> a.size },
         )?.second
     }
 
     /**
-     * The stops outside the road data, for the message (#14): those of the published area that
-     * leaves out the fewest stops (the area the ride mostly belongs to). Empty when nothing
-     * is known.
+     * The stops outside the road data, for the message (#14). First the stops in no published
+     * area. If each stop is in some area but the ride cannot pass from one to the next (the
+     * areas do not overlap), the stops outside the area that holds most of them. Last, the stops
+     * outside the cells of the area that leaves out the fewest. Empty when nothing is known.
      */
-    fun outside(published: List<PublishedArea>, points: List<LatLon>): List<Int> =
-        published.filter { p -> p.cells.packs.any { it.level == 1 } }
+    fun outside(published: List<PublishedArea>, points: List<LatLon>): List<Int> {
+        if (published.isEmpty()) return emptyList()
+        val nowhere = points.indices.filter { i -> published.none { it.area.covers(points[i]) } }
+        if (nowhere.isNotEmpty()) return nowhere
+        val byOutline = published.map { p -> points.indices.filter { !p.area.covers(points[it]) } }.minBy { it.size }
+        if (byOutline.isNotEmpty() && CrossArea.split(published.map { it.area }, points) == null) return byOutline
+        return published.filter { p -> p.cells.packs.any { it.level == 1 } }
             .map { it.cells.outside(points) }
             .minByOrNull { it.size }
             .orEmpty()
+    }
 }

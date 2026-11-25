@@ -368,6 +368,24 @@ sealed interface RoutingData {
         override val osmDate get() = cells.osmDate
         override val valhalla get() = cells.valhalla
     }
+
+    /**
+     * A ride across areas (#14): each leg routed with the cells of its own area, see [CrossArea].
+     * The id names every area's build once, in the order the ride meets them.
+     */
+    data class Across(val parts: List<Part>) : RoutingData {
+        init {
+            require(parts.isNotEmpty()) { "No legs" }
+        }
+
+        data class Part(val data: Cells, val leg: AreaLeg)
+
+        override val dataId get() = parts.map { it.data.dataId }.distinct().joinToString("+")
+
+        /** The oldest data used: what the ride's roads can be trusted up to. */
+        override val osmDate get() = parts.minOf { it.data.osmDate }
+        override val valhalla get() = parts.first().data.valhalla
+    }
 }
 
 /** The ride with the computed road instead of straight lines. */

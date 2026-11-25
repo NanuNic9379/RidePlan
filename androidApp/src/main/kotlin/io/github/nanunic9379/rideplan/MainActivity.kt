@@ -51,6 +51,7 @@ import io.github.nanunic9379.rideplan.route.unrouted
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.RoutingRegion
 import io.github.nanunic9379.rideplan.route.RoutingData
+import io.github.nanunic9379.rideplan.route.AreasDownload
 import io.github.nanunic9379.rideplan.route.CellsDownload
 import io.github.nanunic9379.rideplan.route.OutsideStop
 import io.github.nanunic9379.rideplan.route.outsideStops
@@ -471,10 +472,13 @@ class MainActivity : ComponentActivity() {
                         else RoutingRegion.bestFor(router.published(), points)?.let(::RegionDownload)
                     }
                     when {
-                        // No area covers it fully: the cells on the phone, if they cover the stops (#14).
+                        // Stops with no area's data, or areas that do not meet: say which (#14).
+                        download == null && outside.isNotEmpty() -> rides.route = RouteState.NotCovered(outside)
+                        // Nothing known online: the cells on the phone, if they cover the stops (#14).
                         download == null -> withContext(Dispatchers.IO) { router.localData(points, strict = false) }
                             ?.let { compute(ride, it) } ?: run { rides.route = RouteState.NotCovered(outside) }
                         download is CellsDownload && download.packs.isEmpty() -> compute(ride, RoutingData.Cells(download.cells, download.area))
+                        download is AreasDownload && download.ready -> compute(ride, download.data)
                         else -> rides.route = RouteState.NeedsData(download)
                     }
                 }
@@ -501,6 +505,10 @@ class MainActivity : ComponentActivity() {
                     is CellsDownload -> {
                         withContext(Dispatchers.IO) { router.download(data, isActive = { isActive }, progress) }
                         compute(ride, RoutingData.Cells(data.cells, data.area))
+                    }
+                    is AreasDownload -> {
+                        withContext(Dispatchers.IO) { router.download(data, isActive = { isActive }, progress) }
+                        compute(ride, data.data)
                     }
                 }
             }

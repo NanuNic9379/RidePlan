@@ -152,7 +152,9 @@ Balkans; GitHub Releases while Europe-only; one free runner per area.
   * prefers the area whose outline holds every stop: a 1-degree cell at the edge of an area
     exists even where only part of its roads was in the extract (Lugano in Italy's data);
   * among those, the smallest download (data already on the phone costs nothing), then the
-    smaller area; if none holds every stop, any area whose cells cover them (as before);
+    smaller area; a border cell of an area that does not hold every stop is never used (it has
+    only that area's side of the roads);
+  * a ride that no single area holds is split into legs, one area each (see below);
   * one folder per area: Italy stays in `routing/cells` (no re-download after the update),
     other areas in `routing/areas/<id>`; a new build wipes only its own area;
   * "Data on the phone" lists one item per area (named only when there are several);
@@ -160,8 +162,29 @@ Balkans; GitHub Releases while Europe-only; one free runner per area.
 * **Expected Alps build** (*estimate* from Italy): about 25-35 min on the free runner,
   about 0.75 GB of packs, about 130-150 cells, about 1.9 GB if every pack is extracted.
 
-Not done yet: a mirror URL, a ride that needs two areas (stops are named, no route), the
-monthly `cron`, the next areas (add an entry to `routing-areas.json` and run the workflow).
+### Rides across areas (`CrossArea.kt`)
+
+Each area is its own build, so the engine cannot route from one into another. When no single
+area holds every stop (Milan - Lugano: Italy holds Milan, only the Alps hold Lugano):
+
+* **Legs**: the stops are split into consecutive legs, each inside one area's outline. A leg
+  goes on as long as its area holds the stops in a row (the area holding more of them first,
+  then the smaller). If the next stop is in both areas the ride changes area there.
+* **Hidden junction**: otherwise a point inside both outlines, near the straight line between
+  the two stops: the first one at least 10 km inside both, or the deepest (at least 1 km);
+  if the line misses the overlap, up to 80 km to the side, the smallest detour. The junction is
+  a stop for the engine only: never in the stop list, the GPX or a link.
+* **Routing**: each leg with its own area's tiles; the shapes, km, times, turn instructions
+  (no arrival or departure at a junction), speed limits and unpaved stretches are joined into
+  one route. The download offer covers the cells of each area along its legs.
+* **Navigation**: re-routing on the move uses the data on the phone the same way, so the first
+  leg is the area of the current position.
+* **No way across**: a stop in no area, or two areas that do not overlap, names the stops
+  outside the data, as before. Without the index (only Italy, no outline) the country decides:
+  a stop abroad is named, its part needs another area.
+
+Not done yet: a mirror URL, the monthly `cron`, the next areas (add an entry to
+`routing-areas.json` and run the workflow).
 
 ## Owner decisions
 
