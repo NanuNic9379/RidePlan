@@ -48,6 +48,7 @@ import io.github.nanunic9379.rideplan.route.RouteSettings
 import io.github.nanunic9379.rideplan.route.RidingMode
 import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.unrouted
+import io.github.nanunic9379.rideplan.route.ownOptions
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.RoutingRegion
 import io.github.nanunic9379.rideplan.route.RoutingData
@@ -175,7 +176,7 @@ class MainActivity : ComponentActivity() {
         val fresh = session.store == null
         store = session.store ?: profileStore().also { session.store = it }
         if (fresh) {
-            routeSettings().let { rides.options = it.options; rides.presets = it.presets }
+            routeSettings().let { rides.options = it.options; rides.defaultOptions = it.options; rides.presets = it.presets }
             // After the system closed the app in the background, the saved ride on screen comes back.
             savedInstanceState?.getString(STATE_RIDE)?.let { id -> store.data.rides.firstOrNull { it.id == id } }?.let { saved ->
                 openRide(saved.toRide())
@@ -325,7 +326,8 @@ class MainActivity : ComponentActivity() {
     /** A ride from "Your rides": straight onto the map, routed again if needed. */
     private fun openRide(ride: Ride) {
         routeJob?.cancel()
-        routeSettings().let { rides.options = it.options; rides.presets = it.presets }
+        // The ride keeps the options it was routed with (#64): editing it does not switch mode.
+        routeSettings().let { rides.options = ride.ownOptions ?: it.options; rides.defaultOptions = it.options; rides.presets = it.presets }
         rides.show(Result.success(ride))
         if (ride.needsRoute) planRoute(ride)
     }
@@ -417,7 +419,7 @@ class MainActivity : ComponentActivity() {
         rides.goHome()
         getSharedPreferences("map", MODE_PRIVATE).edit().clear().apply()
         getSharedPreferences("route", MODE_PRIVATE).edit().clear().apply()
-        routeSettings().let { rides.options = it.options; rides.presets = it.presets }
+        routeSettings().let { rides.options = it.options; rides.defaultOptions = it.options; rides.presets = it.presets }
         File(cacheDir, "shared").deleteRecursively()
         lifecycleScope.launch(Dispatchers.IO) { router.wipe() }
         session.rideMaps.wipe()
@@ -522,7 +524,7 @@ class MainActivity : ComponentActivity() {
     private fun changeOptions(options: RouteOptions) {
         rides.options = options
         saveRouteSettings(routeSettings().copy(options = options))
-        rides.ride?.let { reroute(it.unrouted()) }
+        rides.ride?.let { reroute(it.unrouted().copy(sharedOptions = options)) }
     }
 
     /** Ride changed (preferences or stops): route it again, if possible already. */
@@ -560,6 +562,7 @@ class MainActivity : ComponentActivity() {
 
     private fun saveRouteSettings(settings: RouteSettings) {
         rides.presets = settings.presets
+        rides.defaultOptions = settings.options
         getSharedPreferences("route", MODE_PRIVATE).edit().putString(ROUTE_SETTINGS, settings.encode()).apply()
     }
 
@@ -574,7 +577,8 @@ class MainActivity : ComponentActivity() {
     private suspend fun compute(ride: Ride, data: RoutingData) {
         rides.route = RouteState.Computing
         // Under 150 cc the bike forbids motorways, whatever the preferences say.
-        val options = rides.options.forBike(store.data.defaultBike)
+        val asked = rides.options
+        val options = asked.forBike(store.data.defaultBike)
         val (outcome, baseline) = withContext(Dispatchers.Default) {
             // Top curves level still on dirt: one level lower, and the ride sheet says so (#9).
             val main = CurvesFallback.route(options) { router.route(ride, data, it) }
@@ -587,7 +591,8 @@ class MainActivity : ComponentActivity() {
             main to base
         }
         if (rides.ride === ride) {
-            rides.ride = ride.routed(outcome.result, data, outcome.options, baseline, outcome.loweredFrom)
+            // The options asked for stay with the ride (#64): saved, shared and reopened with it.
+            rides.ride = ride.routed(outcome.result, data, outcome.options, baseline, outcome.loweredFrom).copy(sharedOptions = asked)
             rides.route = RouteState.Idle
         } else {
             // The ride changed meanwhile (a stop tapped while planning, #33, or edited during a

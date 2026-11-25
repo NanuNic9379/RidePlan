@@ -86,7 +86,10 @@ data class Ride(
     val stops: List<Stop>,
     val source: Source,
     val route: RouteInfo? = null,
-    /** Preferences of whoever shared the ride by link (#50): the route is rebuilt with these. */
+    /**
+     * Route options of this ride: those of whoever shared it by link (#50), or those it was routed
+     * and saved with (#64). The route is rebuilt with these; null = the rider's global preferences.
+     */
     val sharedOptions: RouteOptions? = null,
     /**
      * Turn instructions of a road computed on the phone (#5). Not saved: like the track they

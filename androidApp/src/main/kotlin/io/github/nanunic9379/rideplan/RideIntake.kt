@@ -5,12 +5,11 @@ import android.net.Uri
 import io.github.nanunic9379.rideplan.ride.ImportError
 import io.github.nanunic9379.rideplan.ride.ImportException
 import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.ride.RideArchive
 import io.github.nanunic9379.rideplan.ride.RideImport
-import java.io.ByteArrayInputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLDecoder
-import java.util.zip.ZipInputStream
 
 /**
  * Reading files and links on Android (#27, #5). Call off the main thread.
@@ -18,7 +17,7 @@ import java.util.zip.ZipInputStream
  * (maps.app.goo.gl → full link): only the redirects are read, not the page.
  */
 object RideIntake {
-    private const val MAX_BYTES = 30 * 1024 * 1024
+    private const val MAX_BYTES = RideArchive.MAX_BYTES
     private const val MAX_REDIRECTS = 6
 
     fun fromUri(context: Context, uri: Uri): Ride {
@@ -29,7 +28,7 @@ object RideIntake {
         } catch (e: SecurityException) {
             throw ImportException(ImportError.FILE_UNREADABLE, e.javaClass.simpleName)
         }
-        return RideImport.parse(text(bytes))
+        return RideImport.parse(RideArchive.text(bytes))
     }
 
     private fun read(context: Context, uri: Uri): ByteArray =
@@ -51,21 +50,6 @@ object RideIntake {
             try { resolve(url) } catch (e: java.io.IOException) { throw ImportException(ImportError.NETWORK, e.javaClass.simpleName) }
         } else url
         return RideImport.parse(full)
-    }
-
-    /** KMZ = zip with a KML inside (Google My Maps export). */
-    private fun text(bytes: ByteArray): String {
-        val isZip = bytes.size > 4 && bytes[0] == 'P'.code.toByte() && bytes[1] == 'K'.code.toByte()
-        if (!isZip) return bytes.decodeToString()
-        ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
-            while (true) {
-                val entry = zip.nextEntry ?: break
-                if (entry.name.endsWith(".kml", ignoreCase = true) || entry.name.endsWith(".gpx", ignoreCase = true)) {
-                    return zip.readBytes().also { if (it.size > MAX_BYTES) throw ImportException(ImportError.FILE_TOO_BIG) }.decodeToString()
-                }
-            }
-        }
-        throw ImportException(ImportError.ZIP_WITHOUT_RIDE)
     }
 
     /** Follows the short link's redirects until it reaches the full Google Maps link. */

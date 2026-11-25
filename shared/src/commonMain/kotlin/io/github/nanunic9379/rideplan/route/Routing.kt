@@ -414,6 +414,15 @@ fun Ride.routed(
     baseline: ValhallaRoute.Result? = null,
 ): Ride = routed(result, RoutingData.Region(region), options, baseline)
 
+/**
+ * The route options that belong to this ride (#64): the ones the rider asked for when it was routed
+ * (kept in [Ride.sharedOptions], also for a saved ride), else the ones its route was computed with,
+ * with the curves level asked for before a fallback (#9). Null for a ride that never had any:
+ * callers then use the rider's global preferences.
+ */
+val Ride.ownOptions: RouteOptions?
+    get() = sharedOptions ?: route?.let { r -> r.loweredFrom?.let { r.options.copy(curves = it) } ?: r.options }
+
 /** The ride as it was before routing, to route it again with other preferences. */
 fun Ride.unrouted(): Ride = if (route != null) copy(track = emptyList(), route = null, maneuvers = emptyList(), speedLimits = SpeedLimits.NONE, surfaces = RoadSurfaces.NONE) else this
 
