@@ -60,10 +60,17 @@ data class StopPlan(
             return h * 60 + min
         }
 
-        /** "08:30": 24-hour clock, the same in every language of the app. Wraps past midnight. */
-        fun timeText(minutes: Int): String {
+        /**
+         * "08:30" on a 24-hour clock, "8:30 AM" on a 12-hour one ([h24] = false, #82), as the
+         * phone is set. Wraps past midnight.
+         */
+        fun timeText(minutes: Int, h24: Boolean = true): String {
             val m = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
-            return "${(m / 60).toString().padStart(2, '0')}:${(m % 60).toString().padStart(2, '0')}"
+            val h = m / 60
+            val mm = (m % 60).toString().padStart(2, '0')
+            if (h24) return "${h.toString().padStart(2, '0')}:$mm"
+            val h12 = if (h % 12 == 0) 12 else h % 12
+            return "$h12:$mm ${if (h < 12) "AM" else "PM"}"
         }
     }
 }
@@ -207,6 +214,8 @@ object RideSheet {
         val approx: String,
         val late: String,
         val updated: (note: String) -> String,
+        /** A clock time as the phone shows it (#82). */
+        val clock: (minutes: Int) -> String = { StopPlan.timeText(it) },
     )
 
     fun text(
@@ -242,7 +251,7 @@ object RideSheet {
                 i == ride.stops.lastIndex -> labels.finish
                 else -> labels.stop(i + 1)
             }
-            val time = row.arrival?.let { (if (row.estimated) labels.approx else "") + StopPlan.timeText(it) }
+            val time = row.arrival?.let { (if (row.estimated) labels.approx else "") + labels.clock(it) }
             sb.append(time ?: "--:--").append("  ")
             plan?.purpose?.let { sb.append(labels.purpose(it)).append(" · ") }
             sb.append(place)
