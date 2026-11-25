@@ -6,10 +6,16 @@ name: Routing data
 # the app downloads only those around the ride, when the user asks, showing the size first.
 # The old whole regions (regions.json and their .tar.gz) stay in the Release for the app
 # versions that still use them: they are neither rebuilt nor touched here.
-# Run by hand (or when the pipeline changes); it does not touch the app Releases.
+# Run by hand, when the pipeline changes, and once a month on a schedule (#70) so the data is
+# never much older than a month; it does not touch the app Releases.
+# GitHub turns a schedule off after 60 days without activity in the repository: if that happens,
+# turn it back on in Actions > Routing data (docs/WORLDWIDE-COVERAGE.md, "Monthly schedule").
 
 on:
   workflow_dispatch:
+  schedule:
+    # 1st of the month, 02:00 UTC.
+    - cron: "0 2 1 * *"
   push:
     # Only main: a push to a pull request branch must never rebuild or publish the data.
     branches: [main]
@@ -21,6 +27,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: routing-data
@@ -147,3 +154,21 @@ jobs:
           gh release view routing-data --json assets -q '.assets[].name' \
             | python3 data/routing_data.py stale out/cells.json \
             | while read -r name; do gh release delete-asset routing-data "$name" -y; done
+
+  # A scheduled run that fails opens (or comments on) one "Data build failed" issue.
+  report:
+    name: Report a failed scheduled build
+    needs: [cells]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Data build failed"
+          n=$(gh issue list --state open --search "in:title $title" --json number,title -q ".[] | select(.title == \"$title\") | .number" | head -n1)
+          body="Scheduled run of ${{ github.workflow }} failed: $RUN"
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "$title" --body "$body"; fi

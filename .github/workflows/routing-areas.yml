@@ -6,9 +6,13 @@ name: Routing data areas
 # 1-degree cells, fuel stations, road notes). Italy is NOT built here: routing-data.yml keeps
 # building it into the "routing-data" Release that older app versions read.
 #
-# Areas are built only by hand (Actions > Routing data areas > Run workflow, or
-# `gh workflow run routing-areas.yml -f areas=alps`), one free runner per area.
+# Areas are built by hand (Actions > Routing data areas > Run workflow, or
+# `gh workflow run routing-areas.yml -f areas=alps`), one free runner per area, and once a month
+# on a schedule (#70): the scheduled run rebuilds every area already published (its Release has
+# a cells.json), so the data on the phone is never much older than a month.
 # A push to main that changes the areas file only refreshes the index (about a minute).
+# GitHub turns a schedule off after 60 days without activity in the repository: if that happens,
+# turn it back on in Actions > Routing data areas (docs/WORLDWIDE-COVERAGE.md, "Monthly schedule").
 
 on:
   workflow_dispatch:
@@ -18,6 +22,9 @@ on:
         required: false
         default: alps
         type: string
+  schedule:
+    # 1st of the month, 03:00 UTC (Italy, routing-data.yml, runs at 02:00).
+    - cron: "0 3 1 * *"
   push:
     # Only main: a push to a pull request branch must never rebuild or publish the data.
     branches: [main]
@@ -28,6 +35,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: routing-areas
@@ -48,8 +56,18 @@ jobs:
       - id: areas
         name: Check the areas
         env:
+          GH_TOKEN: ${{ github.token }}
           WANTED: ${{ github.event_name == 'workflow_dispatch' && inputs.areas || '' }}
         run: |
+          # Scheduled run: every area already published, except Italy (routing-data.yml).
+          if [ "${{ github.event_name }}" = schedule ]; then
+            for row in $(python3 -c "import json; [print(a['id'] + ',' + a['release']) for a in json.load(open('data/routing-areas.json'))['areas'] if a['id'] != 'it' and a.get('source')]"); do
+              if gh release view "${row#*,}" --json assets -q '.assets[].name' 2>/dev/null | grep -qx cells.json; then
+                WANTED="$WANTED,${row%%,*}"
+              fi
+            done
+            echo "published: $WANTED"
+          fi
           if [ -z "$(echo "$WANTED" | tr -d ' ,')" ]; then
             echo "areas=[]" >> "$GITHUB_OUTPUT"
           else
@@ -224,3 +242,21 @@ jobs:
               --title "Routing data: index" --notes-file notes.md
           fi
           gh release upload routing-index index/areas.json --clobber
+
+  # A scheduled run that fails opens (or comments on) one "Data build failed" issue.
+  report:
+    name: Report a failed scheduled build
+    needs: [plan, build, index]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Data build failed"
+          n=$(gh issue list --state open --search "in:title $title" --json number,title -q ".[] | select(.title == \"$title\") | .number" | head -n1)
+          body="Scheduled run of ${{ github.workflow }} failed: $RUN"
+          if [ -n "$n" ]; then gh issue comment "$n" --body "$body"; else gh issue create --title "$title" --body "$body"; fi
