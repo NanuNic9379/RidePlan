@@ -124,6 +124,7 @@ import io.github.nanunic9379.rideplan.route.RouteSection
 import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.StopKindsRow
 import io.github.nanunic9379.rideplan.route.durationText
+import io.github.nanunic9379.rideplan.route.ownOptions
 import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.routeDoneNote
 import io.github.nanunic9379.rideplan.ui.AppIcons
@@ -179,6 +180,11 @@ class RideScreenState {
     var route by mutableStateOf<RouteState>(RouteState.Idle)
     /** Route preferences (#4); they apply to all rides. A new rider starts on the default mode (#30). */
     var options by mutableStateOf(RidingMode.DEFAULT.options)
+    /**
+     * The rider's global preferences (#64). [options] follow the ride on screen (a saved ride keeps
+     * its own); a new plan starts again from these.
+     */
+    var defaultOptions by mutableStateOf(RidingMode.DEFAULT.options)
     /** Route settings the rider saved with a name (#30). */
     var presets by mutableStateOf<List<RoutePreset>>(emptyList())
     var page by mutableStateOf(Page.HOME)
@@ -237,6 +243,7 @@ class RideScreenState {
     fun startPlan() {
         val draft = PlanDraft()
         plan = draft
+        options = defaultOptions
         planLeaving = false
         ride = draft.ride()
         error = null
@@ -498,7 +505,7 @@ fun RideSheet(
                     }
                     if (asking) ShareDialog(ride, zones, onDismiss = { asking = false }) { out, asLink ->
                         asking = false
-                        if (asLink) qr = RideLink.encode(out, state.options) else share(out, title)
+                        if (asLink) qr = RideLink.encode(out, ride.ownOptions ?: state.options) else share(out, title)
                     }
                     qr?.let { QrDialog(it, actions.shareText, onDismiss = { qr = null }) }
                 }

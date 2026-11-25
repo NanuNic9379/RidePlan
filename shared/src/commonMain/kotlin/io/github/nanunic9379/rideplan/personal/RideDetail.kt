@@ -83,6 +83,7 @@ import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.ShareDialog
 import io.github.nanunic9379.rideplan.ride.sourceText
 import io.github.nanunic9379.rideplan.route.durationText
+import io.github.nanunic9379.rideplan.route.ownOptions
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Figure
 import io.github.nanunic9379.rideplan.ui.Motion
@@ -132,7 +133,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
         val ride = saved.toRide()
         ShareDialog(ride, store.data.privateZones, onDismiss = { sharing = false }) { out, asLink ->
             sharing = false
-            if (asLink) qr = RideLink.encode(out, rides.options) else share(out, name)
+            if (asLink) qr = RideLink.encode(out, ride.ownOptions ?: rides.options) else share(out, name)
         }
     }
     qr?.let { QrDialog(it, actions?.shareText, onDismiss = { qr = null }) }
@@ -250,7 +251,7 @@ fun RideDetailPage(store: ProfileStore, rides: RideScreenState, actions: ImportA
             }
         }
         if (saved.stops.size >= 2) RideSheetSection(store, saved, actions?.shareText)
-        platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrRideSection(it, store, saved, rides.options, actions?.shareText) }
+        platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrRideSection(it, store, saved, saved.toRide().ownOptions ?: rides.options, actions?.shareText) }
         if (received == null) {
             Notes(store, saved)
             History(saved, onUndo = { store.update { it.undoRidden(id) } })

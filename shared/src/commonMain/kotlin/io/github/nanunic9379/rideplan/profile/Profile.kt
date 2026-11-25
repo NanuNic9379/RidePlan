@@ -4,10 +4,12 @@ import io.github.nanunic9379.rideplan.ride.DayCap
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.PrivateZone
 import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.ride.RideLink
 import io.github.nanunic9379.rideplan.ride.RideUpdate
 import io.github.nanunic9379.rideplan.ride.RideVersion
 import io.github.nanunic9379.rideplan.ride.Stop
 import io.github.nanunic9379.rideplan.ride.StopPlan
+import io.github.nanunic9379.rideplan.route.ownOptions
 import kotlinx.serialization.Serializable
 import kotlin.random.Random
 
@@ -96,6 +98,12 @@ data class SavedRide(
     val version: RideVersion? = null,
     /** A newer version replaced this ride (#11): shown until you dismiss it. */
     val update: RideUpdate? = null,
+    /**
+     * Route options the ride was routed with (#64), in the link format ([RideLink.optionsCode]):
+     * reopening, sharing and publishing use them instead of the current global preferences.
+     * Null for rides saved before #64 or never routed with options.
+     */
+    val options: String? = null,
 ) {
     val lastOpened: Long get() = openedAt ?: savedAt
     val lastRidden: Long? get() = ridden.maxOrNull()
@@ -112,6 +120,7 @@ data class SavedRide(
         source = Ride.Source.entries.firstOrNull { it.name == source } ?: Ride.Source.GPX,
         dayCap = dayCap?.toDayCap(),
         version = version,
+        sharedOptions = options?.let(RideLink::parseOptions),
     )
 
     companion object {
@@ -128,6 +137,7 @@ data class SavedRide(
             ridden = ridden,
             dayCap = ride.dayCap?.let(SavedDayCap::from),
             version = ride.version,
+            options = ride.ownOptions?.let(RideLink::optionsCode),
         )
     }
 
