@@ -155,6 +155,21 @@ class NavigatorTest {
         assertTrue(all.flatMap { it.announcements }.filterIsInstance<Announcement.Continue>().any { it.text == "Continue for 2 kilometers." && (it.distanceM ?: 0.0) > 1000 })
     }
 
+    /**
+     * Off the road with no bearing from the receiver (#221): the heading for the new route is the
+     * direction the rider moves in (west here), not the old route's (north).
+     */
+    @Test
+    fun offRouteBearingFollowsTheMovement() {
+        val nav = Navigator(NavRoute(routedRide()))
+        nav.ride(::onL, 0.0, 1000.0)
+        var last: NavUpdate? = null
+        for (i in 1..10) last = nav.update(fix(at(1000.0, -100.0 * i), 20L + i))
+        val off = assertNotNull(last)
+        assertTrue(off.offRoute)
+        near(270.0, assertNotNull(off.bearing), 1.0)
+    }
+
     @Test
     fun arrivalAtTheFinish() {
         val nav = Navigator(NavRoute(routedRide()))

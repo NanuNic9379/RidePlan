@@ -224,10 +224,13 @@ class Navigator(val route: NavRoute, private val config: NavConfig = NavConfig()
 
         if (onRoute) arrivals(fix, at, out)
 
+        // Off the road the bearing feeds the new route's start heading (#221): when the receiver
+        // gives none, the direction of the last movement, never the old route's, which would make
+        // the new route start with a short back-and-forth.
         val bearing = when {
             onRoute && route.line.points.size >= 2 -> route.line.bearingAt(at)
             fix.bearing != null && (speed ?: 0.0) > 1.5 -> fix.bearing
-            else -> lastBearing
+            else -> movedBearing(fix) ?: lastBearing
         }
         lastBearing = bearing
         lastFix = fix
@@ -277,6 +280,13 @@ class Navigator(val route: NavRoute, private val config: NavConfig = NavConfig()
         if (window != null && window.offset <= limit) return window
         // A shortcut or a long GPS gap: the first later stretch of road that is close enough.
         return line.firstNear(fix.point, limit, last - 150) ?: window
+    }
+
+    /** Direction from the last fix to [fix], once the two are far enough apart to trust it. */
+    private fun movedBearing(fix: Fix): Double? {
+        val prev = lastFix ?: return null
+        if (distanceKm(prev.point, fix.point) * 1000 < MOVED_M) return null
+        return RouteLine.bearing(prev.point, fix.point)
     }
 
     private fun derivedSpeed(fix: Fix): Double? {
@@ -351,6 +361,9 @@ class Navigator(val route: NavRoute, private val config: NavConfig = NavConfig()
     companion object {
         /** A maneuver this close behind is already done. */
         const val PASSED_M = 5.0
+
+        /** Fixes closer than this are GPS noise for the direction of travel. */
+        const val MOVED_M = 8.0
 
         /** Show "then" only if the second maneuver follows within this distance. */
         const val THEN_M = 600.0
