@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (#116): allowBackup="false" stops cloud backup, but not the device-to-device
+  transfer to a new phone. Private data never moves without the rider: the profile (rides,
+  private zones, garage) and its damaged copies (profile-*.json), the Nostr state (nostr.json)
+  and, from phase 2, the key directory (keys/). Rules cannot match file name patterns, so
+  nothing of the app's own storage is transferred; downloaded maps and road data are fetched
+  again. To move a profile the rider uses Settings > Export everything (the key: NIP-49 export).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>

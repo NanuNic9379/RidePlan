@@ -118,6 +118,38 @@ the chat apps already cover this.
 
 Default: **no key until the user opens a Nostr feature**. Sharing by QR/link/GPX never needs one.
 
+### Phase 2 key storage requirements (#116)
+
+When RidePlan holds its own key (phase 2), the key storage must meet all of these:
+
+- **Where**: the wrapped key goes in `filesDir/keys/` (one file per key, for example
+  `keys/nostr.key`), never in `profile.json`, `nostr.json` or SharedPreferences.
+- **Wrapping**: AES-256-GCM with a non-exportable key in the Android Keystore
+  (`setIsStrongBoxBacked` where available, otherwise TEE), random 12-byte IV per write, the key
+  file's purpose and version as associated data. The plain secret exists only in memory while
+  signing and is zeroed afterwards.
+- **Never leaves the phone by itself**: `allowBackup="false"`, `fullBackupContent` and
+  `dataExtractionRules` (`androidApp/src/main/res/xml/`) exclude all app storage from cloud backup
+  and from device-to-device transfer (Android 12+ ignores `allowBackup` for D2D). Any change to
+  those rules must keep `keys/` excluded. The Keystore key does not migrate either, so a copied file
+  would be useless anyway.
+- **Moving to a new phone**: only through the NIP-49 `ncryptsec` export the rider makes on purpose.
+- **Delete all data** removes `keys/` and the Keystore alias.
+- **iPhone**: Keychain item with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, no iCloud sync.
+- **Check**: the `adb shell bmgr` test below shows no `keys/`, `nostr.json` or `profile.json`.
+
+Backup test with the local transport (Android 12+ emulator or phone, debug build; the D2D rules
+exclude the same paths):
+
+```
+adb shell bmgr enable true
+adb shell bmgr transport com.android.localtransport/.LocalTransport
+adb shell bmgr backupnow --non-incremental io.github.nanunic9379.rideplan
+adb shell ls /data/data/com.android.localtransport/files/
+```
+
+With the rules above the transport receives no app files.
+
 ## 3. Publishing rides for strangers (#3)
 
 **Verdict: needs a server (public Nostr relays, not ours).** The author is offline most of the time
