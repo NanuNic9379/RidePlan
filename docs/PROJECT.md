@@ -44,6 +44,8 @@ the person is: anyone can republish a copy with their own key.
 - **Nostr:** there is no standard format for routes; we have to define it (replaceable event).
 
 ## Milestones
+Planned releases and the v1.0 criteria: [RELEASES.md](RELEASES.md).
+
 Status on 24 November 2026 (beta 0.1.142).
 
 1. Kotlin Multiplatform app skeleton (Android + iPhone) with a map screen. **Done.**
