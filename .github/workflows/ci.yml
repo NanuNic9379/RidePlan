@@ -3,10 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
-    # Text-only changes cannot break the build: skip the 10-minute macOS job for them.
-    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
+    # Text-only changes cannot break the build: skip the 10-minute macOS job for them. The data
+    # workflows and agent settings are not built either (#124); data/** stays: its tests run here.
+    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS", ".github/workflows/routing-*.yml", ".claude/**"]
   pull_request:
-    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS"]
+    paths-ignore: ["**.md", "docs/**", ".github/FUNDING.yml", ".github/CODEOWNERS", ".github/workflows/routing-*.yml", ".claude/**"]
   # Manual run only for the iPhone job (paused, see below).
   workflow_dispatch:
 

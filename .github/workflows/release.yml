@@ -7,8 +7,14 @@ name: Release
 on:
   push:
     branches: [main]
-    # Documentation only: no new APK to download.
-    paths-ignore: ["**.md", "docs/**"]
+    # Documentation, road data scripts and lists (built into their own Releases, not into the
+    # APK), the data workflows and the agent settings: the APK would be identical (#124).
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "data/**"
+      - ".github/workflows/routing-*.yml"
+      - ".claude/**"
   workflow_dispatch:
 
 permissions:
