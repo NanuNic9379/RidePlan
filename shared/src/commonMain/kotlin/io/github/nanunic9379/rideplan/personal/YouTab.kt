@@ -55,8 +55,6 @@ import io.github.nanunic9379.rideplan.resources.settings_sub
 import io.github.nanunic9379.rideplan.resources.settings_title
 import io.github.nanunic9379.rideplan.resources.soon_friends
 import io.github.nanunic9379.rideplan.resources.soon_friends_text
-import io.github.nanunic9379.rideplan.resources.soon_identity
-import io.github.nanunic9379.rideplan.resources.soon_identity_text
 import io.github.nanunic9379.rideplan.resources.soon_title
 import io.github.nanunic9379.rideplan.resources.stat_km
 import io.github.nanunic9379.rideplan.resources.stat_longest
@@ -176,7 +174,7 @@ fun YouTab(store: ProfileStore, rides: RideScreenState, platform: PlatformAction
     }
 }
 
-/** What will come (#3, #16): a quiet section, shown but not usable, with no card around it. */
+/** What will come (#16): a quiet section, shown but not usable, with no card around it. */
 @Composable
 private fun ComingSoon() {
     Column(Modifier.fillMaxWidth()) {
@@ -186,7 +184,6 @@ private fun ComingSoon() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp).semantics { heading() },
         )
-        NavRow(AppIcons.Lock, stringResource(Res.string.soon_identity), stringResource(Res.string.soon_identity_text), enabled = false, onClick = null)
         NavRow(AppIcons.Group, stringResource(Res.string.soon_friends), stringResource(Res.string.soon_friends_text), enabled = false, onClick = null)
     }
 }
