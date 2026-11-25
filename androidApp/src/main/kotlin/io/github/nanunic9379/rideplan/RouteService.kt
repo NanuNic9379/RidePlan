@@ -304,7 +304,7 @@ class RouteService(context: Context) {
             val bytes = get(base + (listed?.file ?: RoadNotes.FILE)).use { it.readCapped(RoadNotes.MAX_BYTES) }
             if (listed != null) {
                 val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-                if (sha != listed.sha256) return
+                if (!listed.accepts(bytes.size.toLong(), sha)) return
             }
             RoadNotes.parse(bytes.decodeToString())
             part.writeBytes(bytes)

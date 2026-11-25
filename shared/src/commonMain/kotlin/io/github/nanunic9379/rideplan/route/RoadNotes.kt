@@ -107,6 +107,9 @@ data class SpeedCamera(val id: String, val point: LatLon, val maxspeedKmh: Int? 
  * only keeps it if it parses.
  */
 data class RoadNotesFile(val file: String, val bytes: Long, val sha256: String) {
+    /** True only for the exact file of the build: same size and SHA-256 (hex) as the manifest. */
+    fun accepts(size: Long, sha256: String): Boolean = size == bytes && sha256.lowercase() == this.sha256
+
     companion object {
         val NAME = Regex("""road-notes[\w.-]*\.json""")
 

@@ -84,10 +84,10 @@ def matrix(path, wanted):
 
 
 def config(path, area_id, out_path):
-    """The config routing_data.py expects (same keys as routing-data.json)."""
+    """The config routing_data.py expects (same keys as routing-data.json; poly: outline of the extract, #60)."""
     a = find(path, area_id)
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({"source": a["source"], "bbox": a["bbox"]}, f, indent=2)
+        json.dump({"source": a["source"], "bbox": a["bbox"], "poly": a.get("poly", "")}, f, indent=2)
 
 
 def release(path, area_id):
