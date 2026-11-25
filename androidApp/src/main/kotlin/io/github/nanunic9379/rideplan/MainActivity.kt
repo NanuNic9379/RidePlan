@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
         set(value) { session.routeJob = value }
     private lateinit var store: ProfileStore
     /** Turn-by-turn navigation (#5): registered here because it asks for the location permission. */
-    private val navigation = AndroidNavigation(this, ::rerouteFromHere)
+    private val navigation = AndroidNavigation(this, ::rerouteFromHere, onStopRequested = { rides.navigating = false })
     /** Public sharing on Nostr (#3): the key stays in the signer app. */
     private val nostrSigner = AndroidNostrSigner(this)
     private lateinit var nostr: io.github.nanunic9379.rideplan.social.NostrService
@@ -271,7 +271,8 @@ class MainActivity : ComponentActivity() {
     private val backToHome = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             if (rides.navigating) {
-                rides.navigating = false
+                // Asks first (#66): an edge swipe with a glove must not end guidance.
+                rides.endNavigationAsked = true
             } else if (rides.askBeforeLeavingPlan()) {
                 // Planning with points on the map (#33): the map asks before discarding them.
                 Unit

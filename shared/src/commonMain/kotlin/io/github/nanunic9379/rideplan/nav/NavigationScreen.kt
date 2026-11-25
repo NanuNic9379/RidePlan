@@ -39,6 +39,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.ui.text.TextStyle
 import io.github.nanunic9379.rideplan.resources.nav_overview
+import io.github.nanunic9379.rideplan.resources.nav_notice_channel
+import io.github.nanunic9379.rideplan.resources.nav_notice_stop
+import io.github.nanunic9379.rideplan.resources.nav_paused_text
+import io.github.nanunic9379.rideplan.resources.nav_resume
 import io.github.nanunic9379.rideplan.resources.nav_recenter
 import io.github.nanunic9379.rideplan.ui.Figure
 import io.github.nanunic9379.rideplan.ui.Motion
@@ -137,21 +141,34 @@ private val ButtonHeight = 56.dp
 /**
  * Turn-by-turn navigation of [ride] (#5): the map follows you and turns with the road, the
  * banner shows the next maneuver, the voice announces it. Location is used only while
- * this screen is open. [onMarkDone]: marks the ride as done (null if it is not saved).
+ * navigating, also with the screen off or another app open (#65), with an ongoing notification.
+ * Exit and Back ask first (#66): [exitAsked] shows the question, [onAskExit] changes it.
+ * [onMarkDone]: marks the ride as done (null if it is not saved).
  */
 @Composable
 fun NavigationScreen(
     ride: Ride,
     platform: NavigationPlatform,
     onExit: () -> Unit,
+    exitAsked: Boolean,
+    onAskExit: (Boolean) -> Unit,
     onMarkDone: (() -> Unit)? = null,
     /** Speed cameras (#13); null = none known. */
     roadNotes: (suspend () -> io.github.nanunic9379.rideplan.route.RoadNotes?)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val units = LocalUnits.current
-    val session = remember(ride) { NavigationSession(ride, platform, scope) { speech(it, units) } }
+    val comma = decimalComma()
+    val session = remember(ride) {
+        NavigationSession(
+            ride, platform, scope,
+            say = { speech(it, units) },
+            noticeTexts = { noticeTexts() },
+            distance = { Measures.shortDistance(it, units, comma) },
+        )
+    }
     DisposableEffect(session) {
+        onAskExit(false)
         session.start()
         onDispose { session.stop() }
     }
@@ -230,10 +247,12 @@ fun NavigationScreen(
                         Text(stringResource(Res.string.nav_recenter), style = MaterialTheme.typography.titleMedium)
                     }
                 }
-                BottomBar(session, onExit, Modifier.fillMaxWidth())
+                BottomBar(session, { onAskExit(true) }, Modifier.fillMaxWidth())
             }
         }
     }
+
+    if (exitAsked) EndNavigationDialog(onEnd = { onAskExit(false); onExit() }, onKeep = { onAskExit(false) })
 
     if (session.arrived) {
         AlertDialog(
@@ -290,6 +309,9 @@ private fun Banner(session: NavigationSession, onExit: () -> Unit) {
                 Button(onClick = session::start, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) { Text(stringResource(Res.string.nav_permission_allow)) }
                 OutlinedButton(onClick = onExit, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) { Text(stringResource(Res.string.nav_exit)) }
             }
+        }
+        session.paused -> Message(stringResource(Res.string.nav_paused_text), scheme.surface, scheme.onSurface) {
+            Button(onClick = session::start, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) { Text(stringResource(Res.string.nav_resume)) }
         }
         u == null -> Message(stringResource(Res.string.nav_waiting_gps), scheme.surface, scheme.onSurface)
         session.rerouting -> Message(stringResource(Res.string.nav_rerouting), scheme.tertiaryContainer, scheme.onTertiaryContainer)
@@ -448,6 +470,17 @@ internal fun distanceText(m: Double): String = Measures.shortDistance(m, LocalUn
 
 /** Distance for the voice, [m] metres, rounded the way it is said: see [Measures.spoken]. */
 internal fun spokenText(m: Double, units: Units): String = Measures.spoken(m, units, decimalComma())
+
+/** Words of the background notification (#65), in the app language. */
+internal suspend fun noticeTexts() = NoticeTexts(
+    waiting = getString(Res.string.nav_waiting_gps),
+    rerouting = getString(Res.string.nav_rerouting),
+    followTrack = getString(Res.string.nav_follow_track),
+    arrived = getString(Res.string.nav_arrived_title),
+    toFinish = getString(Res.string.nav_to_finish),
+    stop = getString(Res.string.nav_notice_stop),
+    channel = getString(Res.string.nav_notice_channel),
+)
 
 /** What the voice says for [a], in the app language and [units]. */
 internal suspend fun speech(a: Announcement, units: Units = Units.KM): String? = when (a) {

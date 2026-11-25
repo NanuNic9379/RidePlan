@@ -193,7 +193,7 @@
     <string name="nav_recenter">Recentrer</string>
     <string name="nav_unmute">Voix active</string>
     <string name="nav_waiting_gps">En attente du GPS…</string>
-    <string name="nav_permission_text">Pour te guider, RidePlan a besoin de ta position tant que cet écran est ouvert. Elle ne quitte jamais le téléphone.</string>
+    <string name="nav_permission_text">Pour te guider, RidePlan a besoin de ta position pendant la navigation, même écran éteint, jusqu’à ce que tu la termines. Elle ne quitte jamais le téléphone.</string>
     <string name="nav_permission_allow">Autoriser la position</string>
     <string name="nav_rerouting">Recalcul…</string>
     <string name="nav_reroute_failed">Pas de données routières ici pour recalculer : reviens sur l'itinéraire.</string>
@@ -750,4 +750,11 @@
     <string name="track_bans_roads">Routes : %1$s</string>
     <string name="track_bans_partial">Seule une partie de la trace a pu être vérifiée avec les données routières.</string>
     <string name="track_bans_unchecked">Interdictions non vérifiées : aucune donnée routière pour cette trace sur le téléphone.</string>
+    <string name="nav_end_title">Terminer la navigation ?</string>
+    <string name="nav_end_confirm">Terminer</string>
+    <string name="nav_keep_going">Continuer la navigation</string>
+    <string name="nav_paused_text">Navigation en pause : tu es à l’arrêt depuis longtemps.</string>
+    <string name="nav_resume">Reprendre</string>
+    <string name="nav_notice_channel">Navigation</string>
+    <string name="nav_notice_stop">Arrêter la navigation</string>
 </resources>

@@ -3,11 +3,17 @@
 
     <!-- Only for the temporary online map style. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Turn-by-turn navigation (#5): asked when navigation starts, used only while its screen
-         is open (foreground). No background location. -->
+    <!-- Turn-by-turn navigation (#5): asked when navigation starts, used only while navigating.
+         With the screen off or another app open the navigation service below keeps it going
+         (#65), with an ongoing notification; it stops at Exit. No ACCESS_BACKGROUND_LOCATION:
+         never any position outside navigation. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <!-- The navigation service (#65): a foreground service of type location and its notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Road data only on Wi-Fi (#21): tells a metered network from Wi-Fi. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -74,6 +80,11 @@
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
+        <!-- Keeps navigation going with the screen off or another app open (#65), only while navigating. -->
+        <service
+            android:name=".NavigationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
         <!-- The GPX to share (#5): only the cache/shared folder, read-only and only for the chosen app. -->
         <provider
             android:name="androidx.core.content.FileProvider"
