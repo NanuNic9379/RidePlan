@@ -24,6 +24,11 @@ object GpxExport {
         ride.version?.let { v ->
             if (v.note.isNotBlank()) sb.append("<desc>").append(escape("v${v.number}: ${v.note}")).append("</desc>")
         }
+        // A road computed on the phone comes from OpenStreetMap data (ODbL, #130).
+        if (OsmCredit.applies(ride)) {
+            sb.append("<copyright author=\"").append(OsmCredit.AUTHOR).append("\"><license>")
+                .append(OsmCredit.LICENSE_URL).append("</license></copyright>")
+        }
         val cap = ride.dayCap?.takeIf { it.valid }
         if (ride.version != null || cap != null) {
             sb.append("<extensions>")

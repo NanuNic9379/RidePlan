@@ -176,6 +176,15 @@ class StopPlanTest {
     }
 
     @Test
+    fun sheetCreditsOpenStreetMapForAPhoneRoad() {
+        // #130: only when the road was computed on the phone, as the last line.
+        val road = Ride("R", listOf(LatLon(40.0, 16.0), LatLon(40.5, 16.5)), stops, Ride.Source.PLANNED)
+        assertEquals(OsmCredit.TEXT, RideSheet.text(road, "R", labels).trimEnd().lines().last())
+        assertFalse(OsmCredit.TEXT in RideSheet.text(road.copy(source = Ride.Source.GPX), "R", labels))
+        assertFalse(OsmCredit.TEXT in RideSheet.text(road.copy(track = emptyList()), "R", labels))
+    }
+
+    @Test
     fun sheetHidesPrivatePlaces() {
         val home = PrivateZone("z", "Home", 40.0, 16.0, 500)
         val text = RideSheet.text(ride, "R", labels, km = 100.0, seconds = 7200.0, zones = listOf(home))
