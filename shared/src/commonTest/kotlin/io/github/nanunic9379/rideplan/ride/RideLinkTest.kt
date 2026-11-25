@@ -42,6 +42,20 @@ class RideLinkTest {
         assertEquals(stops, RideImport.parse("rideplan://r?d=" + link.substringAfter("#")).stops)
     }
 
+    /** The share dialog says how far the QR track can stray (#92). */
+    @Test
+    fun trackDeviation() {
+        val wavy = (0 until 2000).map { LatLon(40.0 + it * 0.0005, 16.0 + 0.01 * sin(it / 30.0)) }
+        val ride = Ride(null, wavy, emptyList(), Ride.Source.GPX)
+        val m = RideLink.trackDeviationM(ride)
+        assertTrue(m > 1.0 && m < 200.0, "$m m")
+        val simple = RideLink.simplify(wavy)
+        assertTrue(simple.size <= RideLink.MAX_TRACK_POINTS)
+        // A short track goes in whole; a computed route goes as its stops.
+        assertEquals(0.0, RideLink.trackDeviationM(Ride(null, wavy.take(100), emptyList(), Ride.Source.GPX)))
+        assertEquals(0.0, RideLink.trackDeviationM(Ride(null, emptyList(), stops, Ride.Source.GOOGLE_LINK)))
+    }
+
     @Test
     fun simplifiedTrack() {
         // 2000 points on a wavy line: the QR must stay readable.

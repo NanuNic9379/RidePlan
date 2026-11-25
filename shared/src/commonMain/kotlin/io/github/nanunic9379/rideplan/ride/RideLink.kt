@@ -211,19 +211,40 @@ object RideLink {
     /** One letter per stop: S stop, V dragged via point, P pass-by town. */
     private fun kindOf(c: Char?): Stop.Kind = Stop.Kind.entries.firstOrNull { it.name.first() == c } ?: Stop.Kind.STOP
 
+    /** Beyond this many metres off the real track, the GPX file is the better way to share (#92). */
+    const val FAR_DEVIATION_M = 50.0
+
+    /**
+     * How far, in metres, the track in the link can stray from [ride]'s real track (#92): 0 when
+     * the link carries the stops (the route is computed again) or the whole track.
+     */
+    fun trackDeviationM(ride: Ride): Double {
+        if (ride.straightLines || ride.route != null || ride.track.size <= MAX_TRACK_POINTS) return 0.0
+        val track = ride.track
+        val kept = keptIndices(track)
+        var worst = 0.0
+        for (k in 0 until kept.lastIndex) {
+            val a = kept[k]
+            val b = kept[k + 1]
+            for (i in a + 1 until b) worst = maxOf(worst, offsetKm(track[i], track[a], track[b]))
+        }
+        return worst * 1000
+    }
+
     /** Douglas-Peucker with growing tolerance until the track fits in [MAX_TRACK_POINTS]. */
-    internal fun simplify(track: List<LatLon>): List<LatLon> {
-        if (track.size <= 2) return track
+    internal fun simplify(track: List<LatLon>): List<LatLon> = keptIndices(track).map { track[it] }
+
+    private fun keptIndices(track: List<LatLon>): List<Int> {
+        if (track.size <= 2) return track.indices.toList()
         var tolerance = 0.02 // km
-        var out = track
         while (true) {
-            out = douglasPeucker(track, tolerance)
-            if (out.size <= MAX_TRACK_POINTS) return out
+            val keep = douglasPeucker(track, tolerance)
+            if (keep.size <= MAX_TRACK_POINTS) return keep
             tolerance *= 1.5
         }
     }
 
-    private fun douglasPeucker(points: List<LatLon>, tolKm: Double): List<LatLon> {
+    private fun douglasPeucker(points: List<LatLon>, tolKm: Double): List<Int> {
         val keep = BooleanArray(points.size)
         keep[0] = true
         keep[points.lastIndex] = true
@@ -242,7 +263,7 @@ object RideLink {
                 stack += worst to b
             }
         }
-        return points.filterIndexed { i, _ -> keep[i] }
+        return points.indices.filter { keep[it] }
     }
 
     /** Distance of [p] from segment [a]-[b], on a plane: fine for a few km. */

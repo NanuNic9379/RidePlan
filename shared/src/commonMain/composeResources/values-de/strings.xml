@@ -778,4 +778,6 @@
     <string name="nav_offline_download_size">Jetzt laden (%1$s)</string>
     <string name="nav_offline_anyway">Trotzdem navigieren</string>
     <string name="offroad_legend_zoom">Hineinzoomen, um sie zu sehen.</string>
+    <string name="share_qr_deviation">Der QR-Code vereinfacht diesen Track: Er kann bis zu %1$s vom Original abweichen.</string>
+    <string name="share_qr_deviation_far">Für den genauen Track sende die GPX-Datei.</string>
 </resources>

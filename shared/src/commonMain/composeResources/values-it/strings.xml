@@ -778,4 +778,6 @@
     <string name="nav_offline_download_size">Scarica ora (%1$s)</string>
     <string name="nav_offline_anyway">Naviga comunque</string>
     <string name="offroad_legend_zoom">Avvicina la mappa per vederle.</string>
+    <string name="share_qr_deviation">Il QR semplifica questa traccia: può scostarsi fino a %1$s dall'originale.</string>
+    <string name="share_qr_deviation_far">Per la traccia esatta invia il file GPX.</string>
 </resources>

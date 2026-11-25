@@ -779,4 +779,6 @@
     <string name="nav_offline_download_size">Descargar ahora (%1$s)</string>
     <string name="nav_offline_anyway">Navegar igualmente</string>
     <string name="offroad_legend_zoom">Acerca el mapa para verlos.</string>
+    <string name="share_qr_deviation">El QR simplifica este track: puede desviarse hasta %1$s del original.</string>
+    <string name="share_qr_deviation_far">Para el track exacto, envía el archivo GPX.</string>
 </resources>
