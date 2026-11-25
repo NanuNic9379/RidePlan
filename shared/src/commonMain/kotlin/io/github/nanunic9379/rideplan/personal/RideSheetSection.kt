@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.profile.ProfileStore
 import io.github.nanunic9379.rideplan.profile.SavedRide
 import io.github.nanunic9379.rideplan.profile.of
@@ -176,7 +177,7 @@ fun RideSheetSection(store: ProfileStore, saved: SavedRide, shareText: ((String)
         style = MaterialTheme.typography.bodyMedium,
     )
     if (table.roughSpeed && table.hasTimes) {
-        Text(stringResource(Res.string.sheet_rough), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(Res.string.sheet_rough, Measures.speedText(Timetable.ROUGH_KMH, LocalUnits.current)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (shareText != null) {
         val labels = sheetLabels()

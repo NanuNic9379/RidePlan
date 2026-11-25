@@ -561,7 +561,7 @@
     <string name="version_note_hint">p. ej. desprendimiento en la SP12, pasamos por Pietrapertosa</string>
     <string name="sheet_totals">Conduciendo %1$s · con paradas %2$s</string>
     <string name="sheet_finish">llegada hacia las %1$s</string>
-    <string name="sheet_rough">Horas estimadas a 50 km/h: abre la ruta en el mapa para calcular el recorrido.</string>
+    <string name="sheet_rough">Horas estimadas a %1$s: abre la ruta en el mapa para calcular el recorrido.</string>
     <string name="sheet_late">tarde</string>
     <string name="sheet_pause">parada de %1$d min</string>
     <string name="sheet_private">Lugar privado</string>

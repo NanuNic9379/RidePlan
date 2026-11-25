@@ -561,7 +561,7 @@
     <string name="version_note_hint">e.g. landslide on the SP12, we go via Pietrapertosa</string>
     <string name="sheet_totals">Riding %1$s · with stops %2$s</string>
     <string name="sheet_finish">arrival about %1$s</string>
-    <string name="sheet_rough">Times estimated at 50 km/h: open the ride on the map to compute the route.</string>
+    <string name="sheet_rough">Times estimated at %1$s: open the ride on the map to compute the route.</string>
     <string name="sheet_late">late</string>
     <string name="sheet_pause">%1$d min stop</string>
     <string name="sheet_private">Private place</string>

@@ -22,6 +22,13 @@ class MeasuresTest {
         assertEquals("1 mi", Measures.roundDistance(1.609344, Units.MILES))
     }
 
+    /** The rough speed of the ride sheet (#81). */
+    @Test
+    fun speedText() {
+        assertEquals("50 km/h", Measures.speedText(50.0, Units.KM))
+        assertEquals("31 mph", Measures.speedText(50.0, Units.MILES))
+    }
+
     @Test
     fun milesOnlyWhereRoadSignsAreInMiles() {
         listOf("US", "GB", "gb", "IM", "JE", "GG", "PR", "LR").forEach { assertEquals(Units.MILES, Regions.units(it), it) }
