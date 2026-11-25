@@ -10,7 +10,7 @@ first real build.
 
 | Item | Value |
 |---|---|
-| Workflow | `.github/workflows/routing-data.yml`, manual (`workflow_dispatch`) or on changes to `data/routing-data.json` / `data/routing_data.py` |
+| Workflow | `.github/workflows/routing-data.yml`, manual (`workflow_dispatch`), monthly (`schedule`, #70) or on changes to `data/routing-data.json` / `data/routing_data.py` |
 | Source | `italy-latest.osm.pbf` from the openstreetmap.fr mirror (Geofabrik size: 2.1 GB) |
 | Engine | Valhalla 3.9.2 in Docker, same version as valhalla-mobile 0.6.6 in the app |
 | Build time | 21 min 34 s on the free `ubuntu-latest` runner, with 12 GB of swap added (*measured*, run 45261258357) |
@@ -185,6 +185,23 @@ area holds every stop (Milan - Lugano: Italy holds Milan, only the Alps hold Lug
 
 Not done yet: a mirror URL, the monthly `cron`, the next areas (add an entry to
 `routing-areas.json` and run the workflow).
+
+## Monthly schedule (#70)
+
+Both data workflows also run on a schedule, so the data on the phone is never much older than a
+month: `routing-data.yml` (Italy) on the 1st of the month at 02:00 UTC, `routing-areas.yml` at
+03:00 UTC. The scheduled areas run rebuilds every area whose Release already has a `cells.json`
+(never Italy), with the same matrix limits as a manual run (`fail-fast: false`, `max-parallel: 3`),
+and the index job still runs. What is published does not change.
+
+* **Failures**: a failed scheduled run opens a single open issue titled "Data build failed", or
+  adds a comment with the run link if one is already open. Close it once the data is rebuilt.
+* **60-day auto-disable**: GitHub turns scheduled workflows off after 60 days without activity in
+  the repository and sends a mail. To turn them back on: Actions > Routing data (or Routing data
+  areas) > "Enable workflow", or `gh workflow enable routing-data.yml` and
+  `gh workflow enable routing-areas.yml`. No keep-alive commit is added on purpose.
+* **Check after two runs**: the build id of every `cells.json` changes and the app marks the
+  downloaded cells as outdated; this is verified on the first real monthly runs.
 
 ## Owner decisions
 
