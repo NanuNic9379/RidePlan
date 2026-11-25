@@ -757,4 +757,27 @@
     <string name="nav_resume">Reprendre</string>
     <string name="nav_notice_channel">Navigation</string>
     <string name="nav_notice_stop">Arrêter la navigation</string>
+    <string name="ready_title_ok">Prêt sans réseau</string>
+    <string name="ready_ok_text">Carte, données routières pour un nouvel itinéraire, stations-service et fermetures sont sur le téléphone.</string>
+    <string name="ready_title_missing">Pas prêt sans réseau</string>
+    <string name="ready_missing">Il manque : %1$s.</string>
+    <string name="ready_part_road">données routières</string>
+    <string name="ready_part_map">carte</string>
+    <string name="ready_part_map_update">mise à jour de la carte</string>
+    <string name="ready_get_all">Tout télécharger pour cette balade</string>
+    <string name="ready_checking">Vérification de ce qui est sur le téléphone…</string>
+    <string name="ready_looking_up">Recherche de ce qu'il faut télécharger…</string>
+    <string name="ready_mobile_ask">Vous êtes en données mobiles. Tout télécharger quand même pour cette balade ? Cela utilise environ %1$s de votre forfait.</string>
+    <string name="ready_downloading_road">Téléchargement des données routières : %1$s sur %2$s</string>
+    <string name="ready_downloading_map">Téléchargement de la carte de cette balade…</string>
+    <string name="ready_err_network">Le téléchargement a échoué. Vérifiez la connexion et réessayez.</string>
+    <string name="ready_err_space">Pas assez d'espace libre sur le téléphone pour les données routières.</string>
+    <string name="ready_err_other">Le téléchargement a échoué : %1$s</string>
+    <string name="ready_not_covered">Aucune donnée routière n'est encore publiée pour cette zone : sans réseau, l'app ne peut pas trouver de nouvel itinéraire.</string>
+    <string name="ready_map_too_long">La balade est trop longue pour un seul téléchargement de carte : découpez-la en étapes.</string>
+    <string name="nav_offline_title">Pas prêt sans réseau</string>
+    <string name="nav_offline_text">Il manque : %1$s. Sans réseau, la carte peut rester vide et l'app ne trouve pas de nouvel itinéraire si vous quittez celui-ci.</string>
+    <string name="nav_offline_download">Télécharger maintenant</string>
+    <string name="nav_offline_download_size">Télécharger maintenant (%1$s)</string>
+    <string name="nav_offline_anyway">Naviguer quand même</string>
 </resources>

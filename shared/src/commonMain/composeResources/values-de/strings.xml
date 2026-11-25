@@ -756,4 +756,27 @@
     <string name="nav_resume">Fortsetzen</string>
     <string name="nav_notice_channel">Navigation</string>
     <string name="nav_notice_stop">Navigation beenden</string>
+    <string name="ready_title_ok">Bereit ohne Empfang</string>
+    <string name="ready_ok_text">Karte, Straßendaten für eine neue Route, Tankstellen und Sperrungen sind auf dem Handy.</string>
+    <string name="ready_title_missing">Nicht bereit ohne Empfang</string>
+    <string name="ready_missing">Es fehlt: %1$s.</string>
+    <string name="ready_part_road">Straßendaten</string>
+    <string name="ready_part_map">Karte</string>
+    <string name="ready_part_map_update">Kartenaktualisierung</string>
+    <string name="ready_get_all">Alles für diese Tour laden</string>
+    <string name="ready_checking">Prüfe, was auf dem Handy ist…</string>
+    <string name="ready_looking_up">Suche, was geladen werden muss…</string>
+    <string name="ready_mobile_ask">Du bist im Mobilfunknetz. Trotzdem alles für diese Tour laden? Das verbraucht etwa %1$s deines Datenvolumens.</string>
+    <string name="ready_downloading_road">Lade Straßendaten: %1$s von %2$s</string>
+    <string name="ready_downloading_map">Lade die Karte dieser Tour…</string>
+    <string name="ready_err_network">Der Download hat nicht geklappt. Prüfe die Verbindung und versuche es erneut.</string>
+    <string name="ready_err_space">Nicht genug freier Speicher auf dem Handy für die Straßendaten.</string>
+    <string name="ready_err_other">Der Download hat nicht geklappt: %1$s</string>
+    <string name="ready_not_covered">Für dieses Gebiet gibt es noch keine Straßendaten: ohne Empfang findet die App keine neue Route.</string>
+    <string name="ready_map_too_long">Die Tour ist zu lang für einen Kartendownload: teile sie in Etappen.</string>
+    <string name="nav_offline_title">Nicht bereit ohne Empfang</string>
+    <string name="nav_offline_text">Es fehlt: %1$s. Ohne Empfang kann die Karte leer bleiben, und die App findet keine neue Route, wenn du diese verlässt.</string>
+    <string name="nav_offline_download">Jetzt laden</string>
+    <string name="nav_offline_download_size">Jetzt laden (%1$s)</string>
+    <string name="nav_offline_anyway">Trotzdem navigieren</string>
 </resources>

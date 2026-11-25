@@ -757,4 +757,27 @@
     <string name="nav_resume">Resume</string>
     <string name="nav_notice_channel">Navigation</string>
     <string name="nav_notice_stop">Stop navigation</string>
+    <string name="ready_title_ok">Ready without signal</string>
+    <string name="ready_ok_text">Map, road data for a new route, fuel stations and closures are on the phone.</string>
+    <string name="ready_title_missing">Not ready without signal</string>
+    <string name="ready_missing">Missing: %1$s.</string>
+    <string name="ready_part_road">road data</string>
+    <string name="ready_part_map">map</string>
+    <string name="ready_part_map_update">map update</string>
+    <string name="ready_get_all">Get everything for this ride</string>
+    <string name="ready_checking">Checking what is on the phone…</string>
+    <string name="ready_looking_up">Looking up what to download…</string>
+    <string name="ready_mobile_ask">You are on mobile data. Download everything for this ride anyway? It uses about %1$s of your data plan.</string>
+    <string name="ready_downloading_road">Downloading road data: %1$s of %2$s</string>
+    <string name="ready_downloading_map">Downloading the map for this ride…</string>
+    <string name="ready_err_network">The download did not work. Check the connection and try again.</string>
+    <string name="ready_err_space">Not enough free space on the phone for the road data.</string>
+    <string name="ready_err_other">The download did not work: %1$s</string>
+    <string name="ready_not_covered">No road data is published for this area yet: without signal the app cannot find a new route.</string>
+    <string name="ready_map_too_long">The ride is too long for one map download: split it into stages.</string>
+    <string name="nav_offline_title">Not ready without signal</string>
+    <string name="nav_offline_text">Missing: %1$s. Without signal the map may stay blank and the app cannot find a new route if you leave this one.</string>
+    <string name="nav_offline_download">Download now</string>
+    <string name="nav_offline_download_size">Download now (%1$s)</string>
+    <string name="nav_offline_anyway">Navigate anyway</string>
 </resources>

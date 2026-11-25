@@ -756,4 +756,27 @@
     <string name="nav_resume">Riprendi</string>
     <string name="nav_notice_channel">Navigazione</string>
     <string name="nav_notice_stop">Ferma navigazione</string>
+    <string name="ready_title_ok">Pronto senza campo</string>
+    <string name="ready_ok_text">Mappa, dati stradali per ricalcolare il percorso, distributori e chiusure sono sul telefono.</string>
+    <string name="ready_title_missing">Non pronto senza campo</string>
+    <string name="ready_missing">Manca: %1$s.</string>
+    <string name="ready_part_road">dati stradali</string>
+    <string name="ready_part_map">mappa</string>
+    <string name="ready_part_map_update">aggiornamento mappa</string>
+    <string name="ready_get_all">Scarica tutto per questo giro</string>
+    <string name="ready_checking">Controllo cosa c'è sul telefono…</string>
+    <string name="ready_looking_up">Cerco cosa scaricare…</string>
+    <string name="ready_mobile_ask">Sei su rete mobile. Scaricare comunque tutto per questo giro? Usa circa %1$s del tuo piano dati.</string>
+    <string name="ready_downloading_road">Scarico i dati stradali: %1$s di %2$s</string>
+    <string name="ready_downloading_map">Scarico la mappa di questo giro…</string>
+    <string name="ready_err_network">Il download non è riuscito. Controlla la connessione e riprova.</string>
+    <string name="ready_err_space">Spazio libero insufficiente sul telefono per i dati stradali.</string>
+    <string name="ready_err_other">Il download non è riuscito: %1$s</string>
+    <string name="ready_not_covered">Per questa zona non ci sono ancora dati stradali: senza campo l'app non può trovare un nuovo percorso.</string>
+    <string name="ready_map_too_long">Il giro è troppo lungo per un solo download della mappa: dividilo in tappe.</string>
+    <string name="nav_offline_title">Non pronto senza campo</string>
+    <string name="nav_offline_text">Manca: %1$s. Senza campo la mappa può restare vuota e l'app non trova un nuovo percorso se esci da questo.</string>
+    <string name="nav_offline_download">Scarica ora</string>
+    <string name="nav_offline_download_size">Scarica ora (%1$s)</string>
+    <string name="nav_offline_anyway">Naviga comunque</string>
 </resources>

@@ -315,6 +315,9 @@ private fun MapScreen(
         snapshotFlow { sheet.currentValue }.collect { if (rides.ride != null && rides.plan == null) rides.panelOpen = it == SheetValue.Expanded }
     }
 
+    // Navigate checks first that the ride works without signal (#68).
+    val navigate = io.github.nanunic9379.rideplan.route.rememberNavigateCheck(ride, rideMap?.ready, onDownload = { rides.panelOpen = true }) { rides.navigating = true }
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val screen = maxHeight
         // Frame the ride in the part of the map left visible by the sheet, once the sheet has settled.
@@ -340,11 +343,14 @@ private fun MapScreen(
                         rides,
                         importActions,
                         routeActions,
-                        onNavigate = if (navigation != null) ({ rides.navigating = true }) else null,
+                        onNavigate = if (navigation != null) navigate else null,
                         bike = store?.data?.defaultBike,
                         maxBodyHeight = screen * 0.5f,
                         onHeaderHeight = { header = it },
-                        offlineMap = { r -> rideMap?.let { io.github.nanunic9379.rideplan.route.RideMapSection(r, it) } },
+                        offlineMap = { r ->
+                            rideMap?.ready?.let { io.github.nanunic9379.rideplan.route.ReadyOfflineSection(r, it) }
+                            rideMap?.let { io.github.nanunic9379.rideplan.route.RideMapSection(r, it) }
+                        },
                         saved = {
                             if (store != null) {
                                 SavedRow(
