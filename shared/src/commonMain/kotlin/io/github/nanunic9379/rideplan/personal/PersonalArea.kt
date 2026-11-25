@@ -43,6 +43,7 @@ fun PersonalArea(
                 Dest.Language -> LanguagePage(rides, platform)
                 Dest.MapData -> MapDataPage(rides, platform)
                 Dest.Info -> InfoPage(store, rides, platform)
+                Dest.Licences -> LicencesPage(rides, platform)
                 Dest.Nostr -> platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrSettingsPage(it, rides, platform.openUrl) }
             }
         }

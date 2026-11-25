@@ -460,7 +460,7 @@ fun InfoPage(store: ProfileStore, rides: RideScreenState, platform: PlatformActi
         RowGroup {
             NavRow(AppIcons.Code, stringResource(Res.string.info_source), stringResource(Res.string.info_source_text), onClick = open?.let { { it(Links.SOURCE) } })
             GroupDivider()
-            NavRow(AppIcons.Document, stringResource(Res.string.info_licences), stringResource(Res.string.info_licences_text), onClick = open?.let { { it(Links.LICENCES) } })
+            NavRow(AppIcons.Document, stringResource(Res.string.info_licences), stringResource(Res.string.info_licences_text), onClick = { rides.open(Dest.Licences) })
             GroupDivider()
             NavRow(AppIcons.Shield, stringResource(Res.string.info_privacy), onClick = open?.let { { it(Links.PRIVACY) } })
             GroupDivider()

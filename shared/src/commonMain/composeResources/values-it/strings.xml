@@ -781,4 +781,8 @@
     <string name="share_qr_deviation_far">Per la traccia esatta invia il file GPX.</string>
     <string name="plan_time_set">Imposta un orario</string>
     <string name="plan_time_clear">Nessun orario</string>
+    <string name="licences_app">RidePlan</string>
+    <string name="licences_app_text">GPL-3.0, il testo completo su GitHub</string>
+    <string name="licences_libraries">Librerie</string>
+    <string name="licences_data">Dati</string>
 </resources>
