@@ -1,0 +1,56 @@
+name: Bug
+description: Something in the app does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. The details below let us reproduce the problem quickly.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings > About and updates.
+      placeholder: "0.4.0"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android (or iOS) version
+      placeholder: "Android 14"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone
+      placeholder: "Pixel 7"
+    validations:
+      required: true
+  - type: input
+    id: data
+    attributes:
+      label: Area and road data date
+      description: The area you were riding or planning in and the data date the app shows (osmDate), if it is about routes or road data.
+      placeholder: "Alps, 2026-11-01"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Plan a ride from ... to ...
+        2. Tap ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true
+  - type: textarea
+    id: gpx
+    attributes:
+      label: GPX or screenshots
+      description: Attach the ride GPX only if you are fine with sharing it publicly (it shows where you ride).

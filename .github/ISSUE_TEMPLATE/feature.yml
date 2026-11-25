@@ -1,0 +1,21 @@
+name: Feature
+description: An idea that makes riding or planning better.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: rider
+    attributes:
+      label: For the rider
+      description: What changes for the person on the bike, in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What it could look like, if you have an idea.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How we know it works.

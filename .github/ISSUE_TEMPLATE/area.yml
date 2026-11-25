@@ -1,0 +1,24 @@
+name: Area or data request
+description: Road data for a new area, or a problem with the data of an area.
+labels: [data]
+body:
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      description: Country or region, and a Geofabrik extract link if you know it.
+      placeholder: "Slovenia, https://download.geofabrik.de/europe/slovenia.html"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: For the rider
+      description: Why this area or fix matters to you (a trip, a closure the app missed, ...).
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Data date in the app
+      description: For a problem with existing data, the osmDate the app shows.
