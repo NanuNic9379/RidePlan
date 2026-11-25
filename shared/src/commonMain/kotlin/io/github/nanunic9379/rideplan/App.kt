@@ -186,6 +186,8 @@ fun App(
                         ride,
                         navigation,
                         onExit = { rides.navigating = false },
+                        exitAsked = rides.endNavigationAsked,
+                        onAskExit = { rides.endNavigationAsked = it },
                         roadNotes = routeActions?.roadNotes,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )

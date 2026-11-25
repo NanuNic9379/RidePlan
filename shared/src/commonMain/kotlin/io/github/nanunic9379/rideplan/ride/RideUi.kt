@@ -196,6 +196,8 @@ class RideScreenState {
     var stopsEdited by mutableStateOf(false)
     /** Turn-by-turn navigation of the ride on screen (#5). */
     var navigating by mutableStateOf(false)
+    /** "End navigation?" is on screen (#66): Exit and Back ask before ending. */
+    var endNavigationAsked by mutableStateOf(false)
     /**
      * A new ride being planned on the map (#33). [ride] is then the draft's ride, routed after
      * every change, and is not saved until "Done".

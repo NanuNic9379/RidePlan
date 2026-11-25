@@ -25,9 +25,15 @@ navigation: your position is used only on the phone.
 
 - `INTERNET`, for the uses in the table above.
 - `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION`, only for turn-by-turn navigation. The app asks
-  for it when you tap **Navigate** and reads your position **only while the navigation screen is open**
-  (foreground; no background location). The position is used on the phone to follow the route and to
-  recompute it when you leave it: it is not stored and never leaves the phone.
+  for it when you tap **Navigate** and reads your position **only while navigating**, from Navigate to
+  Exit. With the screen off or another app open, navigation goes on through a foreground service with a
+  visible notification ("Stop navigation" ends it); it also stops at the finish, when the app is swiped
+  away, or after 45 minutes without moving. There is no background location outside navigation (no
+  `ACCESS_BACKGROUND_LOCATION`). The position is used on the phone to follow the route and to recompute
+  it when you leave it: it is not stored and never leaves the phone.
+- `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` and, on Android 13+, `POST_NOTIFICATIONS`: only
+  for that navigation service and its notification (next turn and distance). Refusing notifications
+  does not stop guidance, the notification is just hidden.
 
 Voice instructions are spoken by the phone's text-to-speech engine. The app does not read contacts or
 photos. You open files (GPX, KML) yourself from the system picker and the app sees only those.

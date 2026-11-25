@@ -19,6 +19,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import io.github.nanunic9379.rideplan.nav.Fix
+import io.github.nanunic9379.rideplan.nav.NavNotice
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
@@ -29,18 +30,20 @@ import kotlinx.coroutines.CompletableDeferred
 /**
  * Navigation on Android (#5): GPS from LocationManager (no Google services, so the F-Droid
  * build works the same), the phone's TextToSpeech with navigation audio (it goes to a
- * Bluetooth intercom and lowers the music), screen kept on.
- * Foreground only: location stops when the navigation screen closes.
+ * Bluetooth intercom and lowers the music), screen kept on. With the screen off or another app
+ * open, [NavigationService] keeps it going (#65); location stops at Exit.
  *
  * Create it in the activity's onCreate: the permission request must be registered there.
  */
 class AndroidNavigation(
     private val activity: ComponentActivity,
     private val reroute: suspend (ride: Ride, from: LatLon, heading: Double?, stops: List<Stop>, options: RouteOptions) -> Ride?,
+    /** The Stop action of the notification, or the app swiped away (#65). */
+    private val onStopRequested: () -> Unit = {},
 ) : NavigationPlatform {
     private var pending: CompletableDeferred<Boolean>? = null
     private val permissionRequest = activity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        pending?.complete(result.values.any { it })
+        pending?.complete(granted())
         pending = null
     }
     // Lazy: system services are not available before the activity's onCreate.
@@ -63,16 +66,30 @@ class AndroidNavigation(
     private fun granted(): Boolean = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         .any { ContextCompat.checkSelfPermission(activity, it) == PackageManager.PERMISSION_GRANTED }
 
+    /** Asked once per screen: on Android 13+ the navigation notification (#65) needs it. */
+    private var askedNotifications = false
+
+    private fun mustAskNotifications(): Boolean = Build.VERSION.SDK_INT >= 33 && !askedNotifications &&
+        ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+
     override suspend fun requestLocation(): Boolean {
-        if (granted()) return true
+        val notifications = mustAskNotifications()
+        if (granted() && !notifications) return true
+        askedNotifications = true
+        val asked = buildList {
+            if (!granted()) addAll(listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            // Without it guidance still works in the background, only the notification is hidden.
+            if (notifications) add(Manifest.permission.POST_NOTIFICATIONS)
+        }
         val wait = CompletableDeferred<Boolean>().also { pending = it }
-        permissionRequest.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        permissionRequest.launch(asked.toTypedArray())
         return wait.await()
     }
 
     @SuppressLint("MissingPermission")
     override fun startLocation(onFix: (Fix) -> Unit) {
         stopLocation()
+        stoppedOutside = false
         if (!granted() || locations == null) return
         val l = LocationListener { loc -> onFix(loc.toFix()) }
         listener = l
@@ -92,6 +109,7 @@ class AndroidNavigation(
     }
 
     override fun speak(text: String) {
+        if (stoppedOutside) return
         if (tts == null) tts = createVoice()
         if (ttsReady) say(text) else queued = text
     }
@@ -134,12 +152,38 @@ class AndroidNavigation(
         else activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
+    /** Stopped from the notification: no new notification until navigation starts again. */
+    private var stoppedOutside = false
+
+    override fun background(notice: NavNotice?) {
+        if (notice == null || stoppedOutside) {
+            NavigationService.hide(activity)
+        } else {
+            NavigationService.onStopRequested = ::stopFromOutside
+            NavigationService.show(activity, notice)
+        }
+    }
+
+    /**
+     * Stop in the notification: GPS and voice stop at once, as the screen may be in the
+     * background, where Compose does not run until the app is opened again.
+     */
+    private fun stopFromOutside() {
+        stoppedOutside = true
+        stopLocation()
+        stopSpeaking()
+        NavigationService.hide(activity)
+        onStopRequested()
+    }
+
     override suspend fun reroute(ride: Ride, from: LatLon, heading: Double?, stops: List<Stop>, options: RouteOptions): Ride? =
         reroute.invoke(ride, from, heading, stops, options)
 
     /** Frees the voice engine; call it when the activity is destroyed. */
     fun close() {
         stopLocation()
+        NavigationService.hide(activity)
+        NavigationService.onStopRequested = null
         tts?.shutdown()
         tts = null
         ttsReady = false
