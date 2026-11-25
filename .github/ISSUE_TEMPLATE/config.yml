@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and ideas to discuss
+    url: https://github.com/NanuNic9379/RidePlan/discussions
+    about: Ask, share rides or discuss an idea before it becomes an issue.
+  - name: Security problem
+    url: https://github.com/NanuNic9379/RidePlan/security/advisories/new
+    about: Report a vulnerability privately (see SECURITY.md), never in a public issue.
