@@ -483,8 +483,6 @@
     <string name="route_avoid_towns">Agglomérations</string>
     <string name="route_avoid_towns_sub">Contourne les villages quand c’est possible</string>
     <string name="route_avoid_unpaved">Routes non goudronnées</string>
-    <string name="route_avoid_unpaved_sub">Toujours évitées pour l’instant</string>
-    <string name="route_always">Toujours</string>
     <string name="route_bike">Moto</string>
     <string name="route_bike_none">Aucune moto au garage : ajoutes-en une dans Toi › Garage.</string>
     <string name="route_bike_small">Sous 150 cm³, pas d’autoroutes ni de rocades autoroutières. C’est la loi : avec cette moto, elles sont toujours évitées.</string>
@@ -733,4 +731,23 @@
         <item quantity="one">%1$d radar fixe sur cette balade, d'OpenStreetMap.</item>
         <item quantity="other">%1$d radars fixes sur cette balade, d'OpenStreetMap.</item>
     </plurals>
+    <string name="route_unpaved_avoid">Éviter</string>
+    <string name="route_unpaved_allow">Autoriser</string>
+    <string name="route_unpaved_prefer">Préférer</string>
+    <string name="route_unpaved_avoid_desc">Routes goudronnées dès que possible. Piste seulement s'il n'y a pas d'autre chemin.</string>
+    <string name="route_unpaved_allow_desc">Les pistes et chemins de terre comptent comme les autres routes : bien pour un trail par beau temps.</string>
+    <string name="route_unpaved_prefer_desc">Aventure : les pistes et chemins de terre sont recherchés là où ils existent. Vérifiez qu'ils conviennent à votre moto et à la météo.</string>
+    <string name="route_curves_lowered">L'itinéraire le plus sinueux passait encore par des routes non goudronnées, celui-ci utilise donc un niveau de virages en moins.</string>
+    <string name="offroad_toggle">Routes non goudronnées et fermées</string>
+    <string name="offroad_on">Affichées</string>
+    <string name="offroad_off">Masquées</string>
+    <string name="offroad_legend_unpaved">Route non goudronnée</string>
+    <string name="offroad_legend_no_access">Fermée à la circulation</string>
+    <string name="offroad_legend_note">Zoomez pour les voir. Données OpenStreetMap, parfois incomplètes.</string>
+    <string name="track_bans_title">Cette trace emprunte des routes interdites à votre moto</string>
+    <string name="track_bans_motorway">%1$s sur autoroute, interdite sous 150 cm³</string>
+    <string name="track_bans_no_access">%1$s sur des routes fermées aux motos</string>
+    <string name="track_bans_roads">Routes : %1$s</string>
+    <string name="track_bans_partial">Seule une partie de la trace a pu être vérifiée avec les données routières.</string>
+    <string name="track_bans_unchecked">Interdictions non vérifiées : aucune donnée routière pour cette trace sur le téléphone.</string>
 </resources>

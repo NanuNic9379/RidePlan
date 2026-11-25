@@ -483,8 +483,6 @@
     <string name="route_avoid_towns">Pueblos</string>
     <string name="route_avoid_towns_sub">Rodea los pueblos cuando puede</string>
     <string name="route_avoid_unpaved">Caminos sin asfaltar</string>
-    <string name="route_avoid_unpaved_sub">Por ahora siempre evitados</string>
-    <string name="route_always">Siempre</string>
     <string name="route_bike">Moto</string>
     <string name="route_bike_none">No hay motos en el garaje: añade una en Tú › Garaje.</string>
     <string name="route_bike_small">Por debajo de 150 cc nada de autopistas ni circunvalaciones de autopista. Es la ley: con esta moto se evitan siempre.</string>
@@ -733,4 +731,23 @@
         <item quantity="one">%1$d radar fijo en esta ruta, de OpenStreetMap.</item>
         <item quantity="other">%1$d radares fijos en esta ruta, de OpenStreetMap.</item>
     </plurals>
+    <string name="route_unpaved_avoid">Evitar</string>
+    <string name="route_unpaved_allow">Permitir</string>
+    <string name="route_unpaved_prefer">Preferir</string>
+    <string name="route_unpaved_avoid_desc">Carreteras asfaltadas siempre que sea posible. Tierra solo si no hay otro camino.</string>
+    <string name="route_unpaved_allow_desc">Las pistas de grava y tierra cuentan como cualquier otra carretera: bien para una trail con buen tiempo.</string>
+    <string name="route_unpaved_prefer_desc">Aventura: se buscan pistas de grava y tierra donde las haya. Comprueba que sean aptas para tu moto y el tiempo.</string>
+    <string name="route_curves_lowered">La ruta más curvada seguía pasando por caminos sin asfaltar, así que esta usa un nivel de curvas menos.</string>
+    <string name="offroad_toggle">Caminos sin asfaltar y cerrados</string>
+    <string name="offroad_on">Visibles</string>
+    <string name="offroad_off">Ocultos</string>
+    <string name="offroad_legend_unpaved">Camino sin asfaltar</string>
+    <string name="offroad_legend_no_access">Cerrado al tráfico</string>
+    <string name="offroad_legend_note">Acerca el mapa para verlos. Datos de OpenStreetMap, pueden estar incompletos.</string>
+    <string name="track_bans_title">Este track usa carreteras no permitidas para tu moto</string>
+    <string name="track_bans_motorway">%1$s por autopista, prohibida por debajo de 150 cc</string>
+    <string name="track_bans_no_access">%1$s por carreteras cerradas a las motos</string>
+    <string name="track_bans_roads">Carreteras: %1$s</string>
+    <string name="track_bans_partial">Solo se ha podido comprobar una parte del track con los datos de carreteras.</string>
+    <string name="track_bans_unchecked">Prohibiciones sin comprobar: no hay datos de carreteras para este track en el teléfono.</string>
 </resources>

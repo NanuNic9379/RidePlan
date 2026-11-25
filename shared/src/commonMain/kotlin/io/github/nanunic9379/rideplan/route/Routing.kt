@@ -79,7 +79,7 @@ data class RoutingRegion(
 
 /**
  * The route character chosen by the rider (#4).
- * Unpaved roads are always avoided: it is not a toggle.
+ * [unpaved]: avoid (default), allow or prefer unpaved roads (#9), see [Unpaved].
  * [mode]: the riding mode the switches come from (#30); null = none (preferences from before
  * #30 that match no mode, or plain defaults). See [custom].
  * New fields need a default: these options are saved on the phone and read back with
@@ -100,6 +100,8 @@ data class RouteOptions(
      * road; stops are never placed on one.
      */
     val noMotorways: Boolean = false,
+    /** Unpaved roads (#9): avoided unless the rider allows or prefers them. */
+    val unpaved: Unpaved = Unpaved.DEFAULT,
 )
 
 /**
@@ -125,6 +127,11 @@ data class RouteInfo(
     val options: RouteOptions = RouteOptions(),
     /** The route without curve preference, to tell how much longer the ride gets. */
     val baseline: Baseline? = null,
+    /**
+     * The curves level the rider asked for, when the route was computed one level lower because
+     * it went over unpaved road (#9, [CurvesFallback]); [options] then hold the level used.
+     */
+    val loweredFrom: Curves? = null,
 ) {
     data class Baseline(val km: Double, val seconds: Double)
 
@@ -194,14 +201,15 @@ object ValhallaRoute {
         put("costing", "motorcycle")
         put("costing_options", buildJsonObject {
             put("motorcycle", buildJsonObject {
-                // Safety settings sent with every route, whatever the curves (#4, docs/ROUTING.md).
-                // Bad surfaces (dirt, gravel, paths) cost the most the engine allows.
-                put("use_trails", 0.0)
-                // Tracks (farm and forest roads) cost 4 times as much plus 5 minutes to enter.
-                put("use_tracks", 0.0)
-                // A ban on unpaved roads in the middle of the route. Valhalla 3.9.2 reads it but
-                // its motorcycle profile does not apply it yet: sent so a newer engine does.
-                put("exclude_unpaved", true)
+                // Unpaved roads (#9). Avoid (the default) keeps the safety settings of #4/#49:
+                // bad surfaces (dirt, gravel) cost the most the engine allows, tracks (farm and
+                // forest roads) 4 times as much plus 5 minutes to enter, and a ban on unpaved
+                // roads that Valhalla 3.9.2 reads but its motorcycle profile does not apply yet
+                // (sent so a newer engine does). Allow is neutral, Prefer a small bonus.
+                val unpaved = options.unpaved
+                put("use_trails", unpaved.useTrails)
+                put("use_tracks", unpaved.useTracks)
+                if (unpaved.excludeUnpaved) put("exclude_unpaved", true)
                 put("destination_only_penalty", DESTINATION_ONLY_PENALTY)
                 options.curves.curvature?.let { put("use_curvature", it) }
                 if (options.avoidHighways || options.noMotorways) put("use_highways", 0.0)
@@ -368,6 +376,7 @@ fun Ride.routed(
     data: RoutingData,
     options: RouteOptions = RouteOptions(),
     baseline: ValhallaRoute.Result? = null,
+    loweredFrom: Curves? = null,
 ): Ride = copy(
     track = result.shape,
     maneuvers = result.maneuvers,
@@ -376,6 +385,7 @@ fun Ride.routed(
     route = RouteInfo(
         result.km, result.seconds, data.dataId, data.osmDate, "valhalla ${data.valhalla}", options,
         baseline?.let { RouteInfo.Baseline(it.km, it.seconds) },
+        loweredFrom,
     ),
 )
 

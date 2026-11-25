@@ -482,8 +482,6 @@
     <string name="route_avoid_towns">Centri abitati</string>
     <string name="route_avoid_towns_sub">Gira attorno ai paesi quando si può</string>
     <string name="route_avoid_unpaved">Strade sterrate</string>
-    <string name="route_avoid_unpaved_sub">Per ora sempre evitate</string>
-    <string name="route_always">Sempre</string>
     <string name="route_bike">Moto</string>
     <string name="route_bike_none">Nessuna moto in garage: aggiungila in Tu › Garage.</string>
     <string name="route_bike_small">Sotto i 150 cc niente autostrade e tangenziali autostradali. È la legge: le evito sempre con questa moto.</string>
@@ -732,4 +730,23 @@
         <item quantity="one">%1$d autovelox fisso su questo giro, da OpenStreetMap.</item>
         <item quantity="other">%1$d autovelox fissi su questo giro, da OpenStreetMap.</item>
     </plurals>
+    <string name="route_unpaved_avoid">Evita</string>
+    <string name="route_unpaved_allow">Consenti</string>
+    <string name="route_unpaved_prefer">Preferisci</string>
+    <string name="route_unpaved_avoid_desc">Strade asfaltate ovunque possibile. Sterrato solo se non c'è altra strada.</string>
+    <string name="route_unpaved_allow_desc">Sterrati e strade bianche valgono come le altre strade: va bene per una enduro con il bel tempo.</string>
+    <string name="route_unpaved_prefer_desc">Avventura: sterrati e strade bianche vengono cercati dove ci sono. Controlla che siano adatti alla tua moto e al meteo.</string>
+    <string name="route_curves_lowered">Il percorso più curvoso passava ancora su sterrato, quindi questo usa un livello di curve in meno.</string>
+    <string name="offroad_toggle">Strade sterrate e chiuse</string>
+    <string name="offroad_on">Visibili</string>
+    <string name="offroad_off">Nascoste</string>
+    <string name="offroad_legend_unpaved">Strada sterrata</string>
+    <string name="offroad_legend_no_access">Chiusa al traffico</string>
+    <string name="offroad_legend_note">Avvicina la mappa per vederle. Dati di OpenStreetMap, possono essere incompleti.</string>
+    <string name="track_bans_title">Questa traccia usa strade non consentite alla tua moto</string>
+    <string name="track_bans_motorway">%1$s in autostrada, vietata sotto i 150 cc</string>
+    <string name="track_bans_no_access">%1$s su strade chiuse alle moto</string>
+    <string name="track_bans_roads">Strade: %1$s</string>
+    <string name="track_bans_partial">Solo una parte della traccia è stata controllata sui dati stradali.</string>
+    <string name="track_bans_unchecked">Divieti non controllati: sul telefono non ci sono dati stradali per questa traccia.</string>
 </resources>

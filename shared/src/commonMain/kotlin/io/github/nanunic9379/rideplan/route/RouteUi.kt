@@ -110,6 +110,8 @@ class RouteActions(
      * known (no file): then nothing is said. Cameras are left out when the rider turned them off.
      */
     val roadNotes: (suspend () -> RoadNotes?)? = null,
+    /** Ban check of a track drawn as it is (#9), on the road data on the phone; null = not checked. */
+    val checkTrack: (suspend (track: List<io.github.nanunic9379.rideplan.ride.LatLon>, noMotorways: Boolean) -> TrackBans?)? = null,
 )
 
 /**

@@ -52,8 +52,11 @@ enum class RidingMode {
  */
 enum class ComingMode { SCENIC, TOURING, NEW_ROADS, DIRT }
 
-/** True when the switches no longer match the chosen mode (or no mode was ever chosen). */
-val RouteOptions.custom: Boolean get() = mode == null || this != mode.options
+/**
+ * True when the switches no longer match the chosen mode (or no mode was ever chosen). The unpaved
+ * choice (#9) belongs to the rider, not to the mode: it never makes a mode "Custom".
+ */
+val RouteOptions.custom: Boolean get() = mode == null || copy(unpaved = Unpaved.DEFAULT) != mode.options
 
 /**
  * Picks the mode whose switches are exactly these, so preferences saved before #30 (or received
@@ -61,7 +64,7 @@ val RouteOptions.custom: Boolean get() = mode == null || this != mode.options
  */
 fun RouteOptions.withInferredMode(): RouteOptions {
     if (mode != null) return this
-    val match = RidingMode.entries.firstOrNull { it.options == copy(mode = it) } ?: return this
+    val match = RidingMode.entries.firstOrNull { it.options == copy(mode = it, unpaved = Unpaved.DEFAULT) } ?: return this
     return copy(mode = match)
 }
 

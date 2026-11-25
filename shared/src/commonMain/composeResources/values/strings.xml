@@ -483,8 +483,6 @@
     <string name="route_avoid_towns">Towns</string>
     <string name="route_avoid_towns_sub">Goes around towns where it can</string>
     <string name="route_avoid_unpaved">Unpaved roads</string>
-    <string name="route_avoid_unpaved_sub">Always avoided for now</string>
-    <string name="route_always">Always</string>
     <string name="route_bike">Bike</string>
     <string name="route_bike_none">No bike in the garage: add one in You › Garage.</string>
     <string name="route_bike_small">Under 150 cc no motorways or motorway ring roads. It is the law: they are always avoided with this bike.</string>
@@ -733,4 +731,23 @@
         <item quantity="one">%1$d fixed speed camera on this ride, from OpenStreetMap.</item>
         <item quantity="other">%1$d fixed speed cameras on this ride, from OpenStreetMap.</item>
     </plurals>
+    <string name="route_unpaved_avoid">Avoid</string>
+    <string name="route_unpaved_allow">Allow</string>
+    <string name="route_unpaved_prefer">Prefer</string>
+    <string name="route_unpaved_avoid_desc">Paved roads wherever possible. Gravel only when there is no other way.</string>
+    <string name="route_unpaved_allow_desc">Gravel and dirt roads count like any other road: fine for a dual-sport bike in good weather.</string>
+    <string name="route_unpaved_prefer_desc">Adventure: gravel and dirt roads are sought out where they exist. Check they suit your bike and the weather.</string>
+    <string name="route_curves_lowered">The most curvy route kept using unpaved roads, so this one uses one curves level lower.</string>
+    <string name="offroad_toggle">Unpaved and closed roads</string>
+    <string name="offroad_on">Shown</string>
+    <string name="offroad_off">Hidden</string>
+    <string name="offroad_legend_unpaved">Unpaved road</string>
+    <string name="offroad_legend_no_access">Closed to traffic</string>
+    <string name="offroad_legend_note">Zoom in to see them. Data from OpenStreetMap, may be incomplete.</string>
+    <string name="track_bans_title">This track uses roads not allowed for your bike</string>
+    <string name="track_bans_motorway">%1$s on motorways, not allowed under 150 cc</string>
+    <string name="track_bans_no_access">%1$s on roads closed to motorcycles</string>
+    <string name="track_bans_roads">Roads: %1$s</string>
+    <string name="track_bans_partial">Only part of the track could be checked against the road data.</string>
+    <string name="track_bans_unchecked">Road rules not checked: there is no road data for this track on the phone.</string>
 </resources>

@@ -58,6 +58,8 @@ import io.github.nanunic9379.rideplan.route.DataDownload
 import io.github.nanunic9379.rideplan.route.RegionDownload
 import io.github.nanunic9379.rideplan.route.routed
 import io.github.nanunic9379.rideplan.route.toggledStop
+import io.github.nanunic9379.rideplan.route.CurvesFallback
+import io.github.nanunic9379.rideplan.route.TrackBans
 import io.github.nanunic9379.rideplan.update.UpdateOverlay
 import io.github.nanunic9379.rideplan.update.updateActions
 import kotlinx.coroutines.CancellationException
@@ -167,6 +169,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.IO) { router.roadNotes(fetch = !mustAskForMobile()) }
                     ?.let { if (store.data.settings.speedCameras) it else it.copy(cameras = emptyList()) }
             },
+            checkTrack = ::checkTrack,
         )
         val fresh = session.store == null
         store = session.store ?: profileStore().also { session.store = it }
@@ -564,8 +567,9 @@ class MainActivity : ComponentActivity() {
         rides.route = RouteState.Computing
         // Under 150 cc the bike forbids motorways, whatever the preferences say.
         val options = rides.options.forBike(store.data.defaultBike)
-        val (result, baseline) = withContext(Dispatchers.Default) {
-            val main = router.route(ride, data, options)
+        val (outcome, baseline) = withContext(Dispatchers.Default) {
+            // Top curves level still on dirt: one level lower, and the ride sheet says so (#9).
+            val main = CurvesFallback.route(options) { router.route(ride, data, it) }
             // Unless this is already the fastest route, also compute it (#30): the ride sheet and
             // the route settings tell how much longer the ride gets. Same data, no instructions:
             // one more local computation. If it fails it does not matter: the ride stays valid.
@@ -575,7 +579,7 @@ class MainActivity : ComponentActivity() {
             main to base
         }
         if (rides.ride === ride) {
-            rides.ride = ride.routed(result, data, options, baseline)
+            rides.ride = ride.routed(outcome.result, data, outcome.options, baseline, outcome.loweredFrom)
             rides.route = RouteState.Idle
         } else {
             // The ride changed meanwhile (a stop tapped while planning, #33, or edited during a
@@ -603,6 +607,16 @@ class MainActivity : ComponentActivity() {
         navigation.close()
         super.onDestroy()
     }
+
+    /**
+     * Ban check of an imported track (#9), only on the road data already on the phone: nothing is
+     * downloaded for a warning. Null when there is no data for the track.
+     */
+    private suspend fun checkTrack(track: List<LatLon>, noMotorways: Boolean): TrackBans? =
+        withContext(Dispatchers.IO) {
+            val data = router.localData(track, strict = false) ?: return@withContext null
+            runCatching { router.checkTrack(track, data, noMotorways) }.getOrNull()
+        }
 
     /**
      * Off-route during navigation (#5): a new route from where the rider is to the stops still

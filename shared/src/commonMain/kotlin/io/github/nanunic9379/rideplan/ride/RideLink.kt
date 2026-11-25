@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.ride
 import io.github.nanunic9379.rideplan.route.Curves
 import io.github.nanunic9379.rideplan.route.Polyline
 import io.github.nanunic9379.rideplan.route.RouteOptions
+import io.github.nanunic9379.rideplan.route.Unpaved
 import io.github.nanunic9379.rideplan.route.withInferredMode
 import kotlin.io.encoding.Base64
 import kotlin.math.cos
@@ -174,7 +175,8 @@ object RideLink {
 
     /**
      * "MAX,h,t,f,n": curves, then h = no motorways, t = no tolls, f = no ferries, n = around
-     * towns (#30; older apps ignore the letter). The riding mode is not sent: the receiver finds
+     * towns (#30), u = unpaved roads allowed, d = unpaved roads preferred (#9); older apps ignore
+     * the letters. The riding mode is not sent: the receiver finds
      * it again from the switches.
      */
     internal fun optionsCode(o: RouteOptions): String =
@@ -184,6 +186,8 @@ object RideLink {
                 "t".takeIf { o.avoidTolls },
                 "f".takeIf { o.avoidFerries },
                 "n".takeIf { o.avoidTowns },
+                "u".takeIf { o.unpaved == Unpaved.ALLOW },
+                "d".takeIf { o.unpaved == Unpaved.PREFER },
             )
         ).joinToString(",")
 
@@ -196,6 +200,11 @@ object RideLink {
             avoidTolls = "t" in parts,
             avoidFerries = "f" in parts,
             avoidTowns = "n" in parts,
+            unpaved = when {
+                "d" in parts -> Unpaved.PREFER
+                "u" in parts -> Unpaved.ALLOW
+                else -> Unpaved.AVOID
+            },
         ).withInferredMode()
     }
 
