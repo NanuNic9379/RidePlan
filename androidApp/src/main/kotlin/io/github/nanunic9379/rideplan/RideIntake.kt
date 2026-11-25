@@ -7,9 +7,9 @@ import io.github.nanunic9379.rideplan.ride.ImportException
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideArchive
 import io.github.nanunic9379.rideplan.ride.RideImport
+import io.github.nanunic9379.rideplan.ride.ShortLink
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLDecoder
 
 /**
  * Reading files and links on Android (#27, #5). Call off the main thread.
@@ -18,7 +18,6 @@ import java.net.URLDecoder
  */
 object RideIntake {
     private const val MAX_BYTES = RideArchive.MAX_BYTES
-    private const val MAX_REDIRECTS = 6
 
     fun fromUri(context: Context, uri: Uri): Ride {
         val bytes = try {
@@ -52,35 +51,18 @@ object RideIntake {
         return RideImport.parse(full)
     }
 
-    /** Follows the short link's redirects until it reaches the full Google Maps link. */
-    private fun resolve(shortUrl: String): String {
-        var url = shortUrl
-        repeat(MAX_REDIRECTS) {
-            if (!RideImport.isShortLink(url) && url.contains("/maps")) return url
-            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-                instanceFollowRedirects = false
-                connectTimeout = 15_000
-                readTimeout = 15_000
-                setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) RidePlan")
-            }
-            try {
-                val location = conn.getHeaderField("Location")
-                if (conn.responseCode !in 300..399 || location == null) {
-                    throw ImportException(ImportError.LINK_NO_ROUTE, "HTTP ${conn.responseCode}")
-                }
-                url = consentTarget(URL(URL(url), location).toString())
-            } finally {
-                conn.disconnect()
-            }
+    /** Follows the short link's redirects, on Google hosts only (#113). */
+    private fun resolve(shortUrl: String): String = ShortLink.resolve(shortUrl) { url ->
+        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+            instanceFollowRedirects = false
+            connectTimeout = 15_000
+            readTimeout = 15_000
+            setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) RidePlan")
         }
-        if (url.contains("/maps")) return url
-        throw ImportException(ImportError.LINK_TOO_MANY_REDIRECTS)
-    }
-
-    /** In Europe Google may go through the cookie page: the real link is in the "continue" parameter. */
-    private fun consentTarget(url: String): String {
-        if (!url.contains("consent.google.")) return url
-        val cont = url.substringAfter("continue=", "").substringBefore('&')
-        return if (cont.isEmpty()) url else URLDecoder.decode(cont, "UTF-8")
+        try {
+            conn.responseCode to conn.getHeaderField("Location")
+        } finally {
+            conn.disconnect()
+        }
     }
 }
