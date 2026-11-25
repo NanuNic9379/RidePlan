@@ -560,7 +560,7 @@
     <string name="version_note_hint">es. frana sulla SP12, passiamo da Pietrapertosa</string>
     <string name="sheet_totals">In sella %1$s · con le soste %2$s</string>
     <string name="sheet_finish">arrivo verso le %1$s</string>
-    <string name="sheet_rough">Orari stimati a 50 km/h: apri il giro sulla mappa per calcolare il percorso.</string>
+    <string name="sheet_rough">Orari stimati a %1$s: apri il giro sulla mappa per calcolare il percorso.</string>
     <string name="sheet_late">in ritardo</string>
     <string name="sheet_pause">sosta di %1$d min</string>
     <string name="sheet_private">Luogo privato</string>

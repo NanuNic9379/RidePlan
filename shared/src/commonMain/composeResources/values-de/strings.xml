@@ -560,7 +560,7 @@
     <string name="version_note_hint">z. B. Erdrutsch auf der SP12, wir fahren über Pietrapertosa</string>
     <string name="sheet_totals">Fahrzeit %1$s · mit Pausen %2$s</string>
     <string name="sheet_finish">Ankunft gegen %1$s</string>
-    <string name="sheet_rough">Zeiten bei 50 km/h geschätzt: öffne die Tour auf der Karte, um die Route zu berechnen.</string>
+    <string name="sheet_rough">Zeiten bei %1$s geschätzt: öffne die Tour auf der Karte, um die Route zu berechnen.</string>
     <string name="sheet_late">zu spät</string>
     <string name="sheet_pause">%1$d Min. Pause</string>
     <string name="sheet_private">Privater Ort</string>

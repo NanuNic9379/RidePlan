@@ -561,7 +561,7 @@
     <string name="version_note_hint">ex. éboulement sur la SP12, on passe par Pietrapertosa</string>
     <string name="sheet_totals">Conduite %1$s · avec arrêts %2$s</string>
     <string name="sheet_finish">arrivée vers %1$s</string>
-    <string name="sheet_rough">Horaires estimés à 50 km/h : ouvrez la balade sur la carte pour calculer l'itinéraire.</string>
+    <string name="sheet_rough">Horaires estimés à %1$s : ouvrez la balade sur la carte pour calculer l'itinéraire.</string>
     <string name="sheet_late">en retard</string>
     <string name="sheet_pause">arrêt de %1$d min</string>
     <string name="sheet_private">Lieu privé</string>

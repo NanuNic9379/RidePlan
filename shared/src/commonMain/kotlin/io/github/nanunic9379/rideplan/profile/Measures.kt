@@ -139,6 +139,10 @@ object Measures {
 
     /** A speed in km/h as shown in the chosen unit (km/h or mph), whole. */
     fun speed(kmh: Double, units: Units): Int = units.of(kmh).roundToLong().toInt()
+
+    /** A speed with its unit: "50 km/h" or "31 mph". */
+    fun speedText(kmh: Double, units: Units): String =
+        "${speed(kmh, units)} ${if (units == Units.MILES) "mph" else "km/h"}"
 }
 
 /** Back to km from a length typed in the chosen unit. */
