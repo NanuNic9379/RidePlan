@@ -27,7 +27,13 @@ Both must work offline, like routing.
    "cameras":[{"id":"n456","lat":45.1,"lon":9.12,"maxspeed":"50","direction":"90"}]}
   ```
 
-  A final "Publish road notes" step uploads it to the `routing-data` Release.
+  A final "Publish road notes" step uploads it to the `routing-data` Release (and every area
+  build to its own Release); `cells.json` lists it as `"roadNotes": {"file", "bytes", "sha256"}`
+  so the app keeps only the exact file of that build (#61).
+  Cameras are written only for Italy (#62, owner decision), for every build: kept when inside
+  Italy's outline from `CountryBorders.kt` (the one the app uses), or within 1 km of it and inside
+  no other country's outline (shore roads cut off by the coarse outline). So the Alps file holds no
+  camera in CH, FR, DE, AT or SI. Closures are kept for every country.
   Expected size for Italy: a few thousand cameras and a few hundred closed roads, well under 1 MB
   (to be measured on the first run).
 - Tested locally on a hand-made sample (camera kept; Stelvio-like `no @ (Nov-May)` kept;

@@ -111,9 +111,15 @@ jobs:
           du -sh data-build/tiles data-build/tiles/*
       - name: Grid cells
         run: |
+          # Outline of the extract (#60): packs that do not meet it (ferry ends) are not published.
+          # Without it (download failed) the bbox of routing-data.json is used instead.
+          outline=""
+          poly="$(python3 data/routing_data.py poly data/routing-data.json)"
+          if [ -n "$poly" ] && curl -sSfL --retry 3 -o area.poly "$poly"; then outline="--outline=area.poly"; fi
+          # cells.json lists road-notes.json with its size and SHA-256 (#61).
           python3 data/routing_data.py cells data/routing-data.json data-build/tiles out \
             "${{ github.run_id }}" "${{ steps.osm.outputs.date }}" "$VALHALLA_VERSION" \
-            data-build/fuel.geojsonseq
+            data-build/fuel.geojsonseq $outline --notes=notes/road-notes.json
           ls -la out | head -20
       - name: Publish
         env:
@@ -133,10 +139,10 @@ jobs:
           # manifest changes, so a download in progress still finds the files it expects.
           gh release upload routing-data out/*.zip --clobber
           gh release upload routing-data out/*.tsv --clobber
-          gh release upload routing-data out/cells.json --clobber
           # Road notes (#13): one file with a fixed name, replaced in place, so never stale.
-          # Read by the app only once #13 is built on the phone; until then it is just published.
+          # Uploaded before cells.json, which carries its size and checksum (#61).
           gh release upload routing-data notes/road-notes.json --clobber
+          gh release upload routing-data out/cells.json --clobber
           # Then remove the packs and fuel lists of earlier builds (a Release holds at most 1000 files).
           gh release view routing-data --json assets -q '.assets[].name' \
             | python3 data/routing_data.py stale out/cells.json \

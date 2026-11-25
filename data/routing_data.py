@@ -1,7 +1,9 @@
 """Helpers for the routing data pipeline (#3, #45). Standard library only.
 
   python routing_data.py source CONFIG.json                     -> URL of the OpenStreetMap data
+  python routing_data.py poly   CONFIG.json                     -> URL of the outline of the extract (.poly), or nothing
   python routing_data.py cells  CONFIG.json TILES_DIR OUTDIR BUILD OSM_DATE VALHALLA [FUEL.geojsonseq]
+                                [--outline=AREA.poly] [--notes=road-notes.json]
                                                                -> one .zip pack per grid cell, plus cells.json
                                                                   (and one fuel station list per cell, #7)
   python routing_data.py stale  CELLS.json < NAMES             -> old packs to remove from the Release
@@ -17,6 +19,17 @@ Fuel stations (#7): Valhalla keeps no points of interest, so the stations (ameni
 `osmium export ... -f geojsonseq`) go into a small text file per 1-degree cell, listed in the
 cell's manifest entry under "fuel". Every cell gets one, even an empty one: on the phone a missing
 file means "unknown", never "no stations". App versions without #7 ignore the extra field.
+
+Only packs that meet the area are published (#60): ferry lines leave the extract and Valhalla
+builds small packs where they go (Balearics, Tunisia, Sardinia...). Those "ferry ends" are dropped,
+measured on the outline of the extract (--outline, grown by OUTLINE_MARGIN) or, without one, on the
+config bbox. The tile numbering check then compares bytes, not pack counts. (Clipping roads.osm.pbf
+with `osmium extract -p` before the build was the alternative: it would also cut the ferry lines
+that start inside the area, and costs one more pass over the data. Dropping packs keeps the build
+as it is and only changes what is published.)
+
+Road notes (#61): with --notes, cells.json lists road-notes.json with its size and SHA-256, so the
+app keeps only the exact file of this build.
 """
 import hashlib
 import json
@@ -24,6 +37,9 @@ import os
 import re
 import sys
 import zipfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # also under `python -I`
+from routing_areas import parse_poly  # noqa: E402
 
 FORMAT = 1  # change only if the app can no longer read the manifest
 
@@ -52,6 +68,13 @@ FUEL_SAME = 0.0003
 MAX_ASSET_BYTES = 2 * 1024 ** 3
 MAX_RELEASE_ASSETS = 1000
 
+# Same limit as the app (RoadNotes.MAX_BYTES): a bigger file would be refused on the phone.
+MAX_NOTES_BYTES = 16_000_000
+
+# A pack is kept when its square meets the outline grown by this much (degrees, about 10 km):
+# cells along the edge hold part of the area's roads.
+OUTLINE_MARGIN = 0.1
+
 
 def release_problems(packs):
     """What would not fit in one Release; empty list if everything is fine."""
@@ -75,6 +98,10 @@ def source(config_path):
     print(load(config_path)["source"])
 
 
+def poly(config_path):
+    print(load(config_path).get("poly", ""))
+
+
 def tile_bbox(level, tile_id):
     """lon min, lat min, lon max, lat max of the tile."""
     size = TILE_SIZE[level]
@@ -92,6 +119,69 @@ def tile_id_at(level, lon, lat):
 
 def intersects(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def inside(rings, lon, lat):
+    """Even-odd rule over every ring (holes included), like the app."""
+    hit = False
+    for ring in rings:
+        j = len(ring) - 1
+        for i in range(len(ring)):
+            (xi, yi), (xj, yj) = ring[i], ring[j]
+            if (yi > lat) != (yj > lat) and lon < xi + (lat - yi) / (yj - yi) * (xj - xi):
+                hit = not hit
+            j = i
+    return hit
+
+
+def _crosses(p1, p2, q1, q2):
+    def side(a, b, c):
+        v = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+        return (v > 0) - (v < 0)
+    a, b, c, d = side(p1, p2, q1), side(p1, p2, q2), side(q1, q2, p1), side(q1, q2, p2)
+    if a == b == c == d == 0:  # on one line: they meet only if they overlap
+        return (min(p1[0], p2[0]) <= max(q1[0], q2[0]) and min(q1[0], q2[0]) <= max(p1[0], p2[0])
+                and min(p1[1], p2[1]) <= max(q1[1], q2[1]) and min(q1[1], q2[1]) <= max(p1[1], p2[1]))
+    return a * b <= 0 and c * d <= 0
+
+
+def meets(box, rings, margin=OUTLINE_MARGIN):
+    """True if the square `box` grown by `margin` degrees touches the outline `rings` ([[(lon, lat)]])."""
+    b = [box[0] - margin, box[1] - margin, box[2] + margin, box[3] + margin]
+    corners = [(b[0], b[1]), (b[2], b[1]), (b[2], b[3]), (b[0], b[3])]
+    if any(inside(rings, x, y) for x, y in corners):
+        return True
+    for ring in rings:
+        if any(b[0] <= x <= b[2] and b[1] <= y <= b[3] for x, y in ring):
+            return True
+        for i in range(len(ring)):
+            if any(_crosses(ring[i - 1], ring[i], corners[k - 1], corners[k]) for k in range(4)):
+                return True
+    return False
+
+
+def split_area(sizes, area_bbox, rings=None):
+    """The packs ({(level, id): tile bytes}) that meet the area, and the sorted ones outside it
+    (ferry ends). Exits when most bytes fall outside: then the tile numbering is wrong, not the ferries."""
+    if rings:
+        kept = {k for k in sizes if meets(tile_bbox(*k), rings)}
+    else:
+        kept = {k for k in sizes if intersects(tile_bbox(*k), area_bbox)}
+    dropped = sorted(set(sizes) - kept)
+    kept_bytes = sum(sizes[k] for k in kept)
+    total = sum(sizes.values())
+    if not any(level == 1 for level, _ in kept) or kept_bytes * 2 < total:
+        sys.exit(f"{len(dropped)} of {len(sizes)} packs ({(total - kept_bytes) / 1e6:.1f} of {total / 1e6:.1f} MB) "
+                 "outside the covered area: wrong tile numbering?")
+    return kept, dropped
+
+
+def notes_entry(path):
+    """The cells.json entry of road-notes.json (#61): name in the Release, size, SHA-256."""
+    size = os.path.getsize(path)
+    if not 0 < size <= MAX_NOTES_BYTES:
+        sys.exit(f"{path} is {size} bytes: the app reads only 1 to {MAX_NOTES_BYTES}")
+    return {"file": os.path.basename(path), "bytes": size, "sha256": sha256(path)}
 
 
 def sha256(path):
@@ -180,9 +270,10 @@ def write_fuel(outdir, build, cell_ids, stations):
     return entries
 
 
-def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla, fuel_path=None):
+def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla, fuel_path=None, outline=None, notes=None):
     area = load(config_path)["bbox"]
     groups = {}  # (pack level, id) -> [relative paths]
+    sizes = {}  # (pack level, id) -> tile bytes
     for root, _, files in os.walk(tiles_dir):
         for name in files:
             rel = os.path.relpath(os.path.join(root, name), tiles_dir).replace(os.sep, "/")
@@ -197,16 +288,22 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla, fuel_path=N
                 b = tile_bbox(level, tile_id)
                 key = (1, tile_id_at(1, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2))
             groups.setdefault(key, []).append(rel)
+            sizes[key] = sizes.get(key, 0) + os.path.getsize(os.path.join(root, name))
     if not any(level == 1 for level, _ in groups):
         sys.exit("no cell built")
 
-    # Numbering check: a mistake here would send the cells to the other side of the world.
-    # A few packs outside the area are normal: ferry lines end in Tunisia, Albania, Greece...
-    outside = [k for k in groups if not intersects(tile_bbox(*k), area)]
-    for level, tile_id in outside:
-        print(f"note: pack l{level}-{tile_id} outside the covered area: {tile_bbox(level, tile_id)}")
-    if len(outside) * 2 > len(groups):
-        sys.exit(f"{len(outside)} of {len(groups)} packs outside the covered area: wrong tile numbering?")
+    # Ferry ends (Tunisia, Balearics, Corsica...) are not published; a numbering mistake, which
+    # would send the cells to the other side of the world, still stops the build.
+    rings = None
+    if outline:
+        with open(outline, encoding="utf-8") as f:
+            rings = [ring for _, ring in parse_poly(f.read())]
+    kept, dropped = split_area(sizes, area, rings)
+    for level, tile_id in dropped:
+        print(f"note: ferry end dropped, pack l{level}-{tile_id} outside the area: {tile_bbox(level, tile_id)}")
+    print(f"{len(dropped)} ferry-end packs dropped ({sum(sizes[k] for k in dropped) / 1e6:.2f} MB), "
+          f"{len(kept)} kept, measured on the {'outline' if rings else 'bbox'}")
+    groups = {k: v for k, v in groups.items() if k in kept}
 
     os.makedirs(outdir, exist_ok=True)
     fuel = {}
@@ -241,6 +338,8 @@ def cells(config_path, tiles_dir, outdir, build, osm_date, valhalla, fuel_path=N
     if problems:
         sys.exit("\n".join(problems))
     data = {"format": FORMAT, "build": build, "osmDate": osm_date, "valhalla": valhalla, "packs": packs}
+    if notes:
+        data["roadNotes"] = notes_entry(notes)
     with open(os.path.join(outdir, "cells.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     cell_sizes = sorted(p["bytes"] for p in packs if p["level"] == 1)
@@ -264,4 +363,7 @@ def stale(manifest_path):
 
 if __name__ == "__main__":
     cmd, args = sys.argv[1], sys.argv[2:]
-    {"source": source, "cells": cells, "stale": stale}[cmd](*args)
+    # Options --name=value (only cells has any); the rest are positional.
+    options = dict(a[2:].split("=", 1) for a in args if a.startswith("--"))
+    args = [a for a in args if not a.startswith("--")]
+    {"source": source, "poly": poly, "cells": cells, "stale": stale}[cmd](*args, **options)

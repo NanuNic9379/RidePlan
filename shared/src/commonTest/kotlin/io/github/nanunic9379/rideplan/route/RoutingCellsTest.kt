@@ -137,6 +137,47 @@ class RoutingCellsTest {
         assertFailsWith<IllegalArgumentException> { RoutingCells.parse(json.replace("l1-47352\",", "../x\",")) }
     }
 
+    /** cells.json exactly as data/routing_data.py writes it with --notes (#61): json.dump, indent 2. */
+    @Test
+    fun roadNotesEntryFromThePipeline() {
+        val sha = "3f".repeat(32)
+        val json = """
+            {
+              "format": 1,
+              "build": "45444361349",
+              "osmDate": "2026-11-24T20:21:02Z",
+              "valhalla": "3.9.2",
+              "packs": [
+                {
+                  "id": "l1-49150",
+                  "level": 1,
+                  "bbox": [
+                    10.0,
+                    46.0,
+                    11.0,
+                    47.0
+                  ],
+                  "file": "l1-49150-45444361349.zip",
+                  "bytes": 4000,
+                  "tileBytes": 12000,
+                  "sha256": "bb"
+                }
+              ],
+              "roadNotes": {
+                "file": "road-notes.json",
+                "bytes": 52311,
+                "sha256": "$sha"
+              }
+            }
+        """.trimIndent()
+        val notes = assertNotNull(RoutingCells.parse(json).roadNotes)
+        assertEquals(RoadNotesFile("road-notes.json", 52311, sha), notes)
+        assertTrue(notes.accepts(52311, sha.uppercase()))
+        // A modified, truncated or swapped file is refused.
+        assertFalse(notes.accepts(52311, "3e" + sha.drop(2)))
+        assertFalse(notes.accepts(52310, sha))
+    }
+
     @Test
     fun routingDataId() {
         assertEquals("cells-100", RoutingData.Cells(cells).dataId)

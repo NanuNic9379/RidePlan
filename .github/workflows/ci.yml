@@ -24,6 +24,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # Routing data scripts (#60, #61, #62): a few seconds, standard library only.
+      - name: Data scripts
+        run: python3 -m unittest discover -s data
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
