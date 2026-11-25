@@ -106,6 +106,8 @@ import io.github.nanunic9379.rideplan.resources.share_confirm
 import io.github.nanunic9379.rideplan.resources.share_gpx
 import io.github.nanunic9379.rideplan.resources.share_privacy_note
 import io.github.nanunic9379.rideplan.resources.share_qr
+import io.github.nanunic9379.rideplan.resources.share_qr_deviation
+import io.github.nanunic9379.rideplan.resources.share_qr_deviation_far
 import io.github.nanunic9379.rideplan.resources.share_title
 import io.github.nanunic9379.rideplan.resources.share_trim_ends
 import io.github.nanunic9379.rideplan.resources.stop_edit_hint
@@ -588,6 +590,10 @@ internal fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> 
     var trim by remember { mutableStateOf(true) }
     var hideZones by remember { mutableStateOf(true) }
     val preview = remember(ride, zones, trim, hideZones) { SharePreview.of(ride, zones, trim, hideZones) }
+    // A long GPX track is squeezed into the QR (#92): say how far it can stray, and when it is
+    // far, the GPX file becomes the main action.
+    val deviation = remember(preview.ride) { RideLink.trackDeviationM(preview.ride) }
+    val gpxFirst = deviation > RideLink.FAR_DEVIATION_M
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(AppIcons.Share, contentDescription = null) },
@@ -598,32 +604,46 @@ internal fun ShareDialog(ride: Ride, zones: List<PrivateZone>, onDismiss: () -> 
                 HideZonesOption(zones, hideZones) { hideZones = it }
                 ShareOption(stringResource(Res.string.share_trim_ends), trim) { trim = it }
                 SharePreviewText(preview)
+                if (deviation >= SHOWN_DEVIATION_M && !preview.empty) {
+                    Text(
+                        stringResource(Res.string.share_qr_deviation, io.github.nanunic9379.rideplan.nav.distanceText(deviation)) +
+                            if (gpxFirst) " " + stringResource(Res.string.share_qr_deviation_far) else "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (gpxFirst) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 // The QR and link for those who have RidePlan (#6); the GPX file for navigators and other apps.
-                Button(
-                    onClick = { onShare(preview.ride, true) },
-                    enabled = !preview.empty,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
-                    shape = Radius.Control,
-                ) {
-                    Icon(AppIcons.Qr, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(Res.string.share_qr))
+                val qr: @Composable () -> Unit = {
+                    ShareButton(primary = !gpxFirst, enabled = !preview.empty, onClick = { onShare(preview.ride, true) }) {
+                        Icon(AppIcons.Qr, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(Res.string.share_qr))
+                    }
                 }
-                OutlinedButton(
-                    onClick = { onShare(preview.ride, false) },
-                    enabled = !preview.empty,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
-                    shape = Radius.Control,
-                ) {
-                    Icon(AppIcons.File, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(Res.string.share_confirm))
+                val gpx: @Composable () -> Unit = {
+                    ShareButton(primary = gpxFirst, enabled = !preview.empty, onClick = { onShare(preview.ride, false) }) {
+                        Icon(AppIcons.File, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(Res.string.share_confirm))
+                    }
                 }
+                if (gpxFirst) { gpx(); qr() } else { qr(); gpx() }
             }
         },
         confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.route_cancel)) } },
     )
+}
+
+/** Below this the simplified QR track is as good as the real one: nothing to say. */
+private const val SHOWN_DEVIATION_M = 10.0
+
+/** A full-width share action: filled when it is the main one, outlined otherwise. */
+@Composable
+private fun ShareButton(primary: Boolean, enabled: Boolean, onClick: () -> Unit, content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+    val modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove)
+    if (primary) Button(onClick = onClick, enabled = enabled, modifier = modifier, shape = Radius.Control, content = content)
+    else OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier, shape = Radius.Control, content = content)
 }
 
 /** The ride in a QR to scan at the bar, plus the link to send in a chat (#6). */
