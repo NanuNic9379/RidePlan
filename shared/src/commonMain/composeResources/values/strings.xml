@@ -386,8 +386,6 @@
     <string name="info_coffee">Buy me a coffee</string>
     <string name="info_coffee_text">If RidePlan is useful to you: it opens in the browser</string>
     <string name="soon_title">Coming soon</string>
-    <string name="soon_identity">Identity and publishing</string>
-    <string name="soon_identity_text">Publish rides without an account</string>
     <string name="soon_friends">Friends and groups</string>
     <string name="soon_friends_text">Where the others are during the ride</string>
     <plurals name="filter_show">

@@ -386,8 +386,6 @@
     <string name="info_coffee">Offre-moi un café</string>
     <string name="info_coffee_text">Si RidePlan t'est utile : s'ouvre dans le navigateur</string>
     <string name="soon_title">Bientôt</string>
-    <string name="soon_identity">Identité et publication</string>
-    <string name="soon_identity_text">Publier des balades sans compte</string>
     <string name="soon_friends">Amis et groupes</string>
     <string name="soon_friends_text">Où sont les autres pendant la balade</string>
     <plurals name="filter_show">
