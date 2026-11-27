@@ -56,6 +56,12 @@ import io.github.nanunic9379.rideplan.resources.backup_save
 import io.github.nanunic9379.rideplan.resources.backup_saved
 import io.github.nanunic9379.rideplan.resources.backup_text
 import io.github.nanunic9379.rideplan.resources.backup_title
+import io.github.nanunic9379.rideplan.resources.break_reminder_title
+import io.github.nanunic9379.rideplan.resources.break_reminder_off
+import io.github.nanunic9379.rideplan.resources.break_reminder_90
+import io.github.nanunic9379.rideplan.resources.break_reminder_120
+import io.github.nanunic9379.rideplan.resources.break_reminder_180
+import io.github.nanunic9379.rideplan.resources.break_reminder_note
 import io.github.nanunic9379.rideplan.resources.danger_title
 import io.github.nanunic9379.rideplan.resources.export_all
 import io.github.nanunic9379.rideplan.resources.export_done
@@ -109,6 +115,8 @@ import io.github.nanunic9379.rideplan.resources.units_note
 import io.github.nanunic9379.rideplan.resources.units_title
 import io.github.nanunic9379.rideplan.resources.update_check_start
 import io.github.nanunic9379.rideplan.resources.update_check_text
+import io.github.nanunic9379.rideplan.resources.update_background_title
+import io.github.nanunic9379.rideplan.resources.update_background_text
 import io.github.nanunic9379.rideplan.resources.speed_cameras
 import io.github.nanunic9379.rideplan.resources.speed_cameras_text
 import io.github.nanunic9379.rideplan.resources.wifi_only
