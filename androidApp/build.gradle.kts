@@ -14,7 +14,6 @@ dependencies {
     implementation(libs.secp256k1.jni.android)
     implementation(libs.okhttp)
     runtimeOnly(libs.maplibre.compose.runtime.vulkan.android)
-    githubImplementation(libs.androidx.work.runtime)
 }
 
 /**
@@ -119,4 +118,8 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+}
+
+dependencies {
+    add("githubImplementation", libs.androidx.work.runtime)
 }
