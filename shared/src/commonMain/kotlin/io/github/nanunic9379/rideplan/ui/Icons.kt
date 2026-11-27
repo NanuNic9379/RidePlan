@@ -222,6 +222,28 @@ object AppIcons {
             "M12,18c-3.31,0 -6,-2.69 -6,-6 0,-1.01 0.25,-1.97 0.7,-2.8L5.24,7.74C4.46,8.97 4,10.43 4,12c0,4.42 3.58,8 8,8v3l4,-4 -4,-4v3z",
     )
 
+    /** Vector paths avoid Android Compose's unsupported SVG resource decoder. */
+    val PhotoSpotMarker: ImageVector = ImageVector.Builder(
+        name = "PhotoSpotMarker",
+        defaultWidth = 48.dp,
+        defaultHeight = 56.dp,
+        viewportWidth = 48f,
+        viewportHeight = 56f,
+    )
+        .addPath(
+            pathData = addPathNodes("M24,2 C12.4,2 3,11.4 3,23 C3,36.2 24,55 24,55 C24,55 45,36.2 45,23 C45,11.4 35.6,2 24,2 Z"),
+            fill = SolidColor(Color(0xFFB84D91)),
+        )
+        .addPath(
+            pathData = addPathNodes("M16,18 H18.5 L20.5,15.5 H27.5 L29.5,18 H32 C33.66,18 35,19.34 35,21 V29 C35,30.66 33.66,32 32,32 H16 C14.34,32 13,30.66 13,29 V21 C13,19.34 14.34,18 16,18 Z"),
+            fill = SolidColor(Color.White),
+        )
+        .addPath(
+            pathData = addPathNodes("M24,20 C21.24,20 19,22.24 19,25 C19,27.76 21.24,30 24,30 C26.76,30 29,27.76 29,25 C29,22.24 26.76,20 24,20 Z"),
+            fill = SolidColor(Color(0xFF8C2E68)),
+        )
+        .build()
+
     private fun icon(name: String, path: String): ImageVector =
         ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
             .addPath(pathData = addPathNodes(path), fill = SolidColor(Color.Black))

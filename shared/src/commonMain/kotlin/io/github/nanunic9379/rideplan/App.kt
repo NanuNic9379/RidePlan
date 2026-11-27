@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -97,7 +98,6 @@ import io.github.nanunic9379.rideplan.resources.explore_locate_failed
 import io.github.nanunic9379.rideplan.resources.photo_spots_tap_map
 import io.github.nanunic9379.rideplan.resources.photo_spots_no_details
 import io.github.nanunic9379.rideplan.resources.photo_spots_open_link
-import io.github.nanunic9379.rideplan.resources.photo_spot_marker
 import io.github.nanunic9379.rideplan.resources.stop_edit_done
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.distanceKm
@@ -130,7 +130,6 @@ import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.camera.CameraUpdate
 import org.maplibre.compose.camera.CameraPosition
@@ -647,7 +646,7 @@ private fun PhotoSpotLayers(spots: List<PhotoSpot>) {
     SymbolLayer(
         id = "photo-spots",
         source = source,
-        iconImage = image(painterResource(Res.drawable.photo_spot_marker), size = DpSize(48.dp, 56.dp)),
+        iconImage = image(rememberVectorPainter(AppIcons.PhotoSpotMarker), size = DpSize(48.dp, 56.dp)),
         iconAnchor = const(SymbolAnchor.Bottom),
         iconAllowOverlap = const(true),
         iconIgnorePlacement = const(true),
