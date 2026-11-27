@@ -11,7 +11,7 @@
     <string name="break_reminder_180">3 h</string>
     <string name="break_reminder_note">Zählt die Fahrzeit. Pausen über 15 Minuten setzen den Zähler zurück.</string>
     <string name="update_background_title">Im Hintergrund nach Updates suchen</string>
-    <string name="update_background_text">Optional: Falls noch nicht erteilt, fragt Android nach der Berechtigung für Mitteilungen. Prüft GitHub bei Verbindung etwa alle 12 Stunden und meldet nur neue Versionen. GitHub erhält deine IP-Adresse; RidePlan sendet niemals deinen Standort.</string>
+    <string name="update_background_text">Optional: Ab Android 13 fragt die App nach der Berechtigung für Mitteilungen, falls sie noch nicht erteilt wurde. Prüft GitHub bei Verbindung etwa alle 12 Stunden und meldet nur neue Versionen. GitHub erhält deine IP-Adresse; RidePlan sendet niemals deinen Standort.</string>
     <string name="import_button">Tour importieren</string>
     <string name="import_open_file">GPX- oder KML-Datei öffnen</string>
     <string name="import_paste_link">Google-Maps-Link einfügen</string>
