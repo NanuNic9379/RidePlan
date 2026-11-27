@@ -25,6 +25,8 @@ class PlatformActions(
     val wipeDevice: () -> Unit = {},
     /** The update card of Info & updates; null where the store handles updates (F-Droid). */
     val updates: UpdateActions? = null,
+    /** Background update worker exists only in signed GitHub Android builds. */
+    val backgroundUpdateChecksAvailable: Boolean = false,
     /** Country of the phone (ISO code, "US"), for the automatic units (#15); null = from the locale. */
     val region: String? = null,
     /** The map of a ride for use without signal (#1); null = not offered. */

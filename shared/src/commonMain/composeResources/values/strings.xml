@@ -11,6 +11,8 @@
     <string name="break_reminder_120">2 h</string>
     <string name="break_reminder_180">3 h</string>
     <string name="break_reminder_note">Counts riding time. Stops over 15 minutes reset it.</string>
+    <string name="update_background_title">Check for updates in the background</string>
+    <string name="update_background_text">Optional: Android asks for notification permission if it has not already been granted. Checks GitHub about every 12 hours when online and notifies only when a new version is available. GitHub receives your IP address; RidePlan never sends your location.</string>
     <string name="import_button">Import a ride</string>
     <string name="import_open_file">Open GPX or KML file</string>
     <string name="import_paste_link">Paste Google Maps link</string>

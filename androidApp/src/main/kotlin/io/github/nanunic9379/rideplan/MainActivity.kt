@@ -201,6 +201,7 @@ class MainActivity : ComponentActivity() {
             ),
             wipeDevice = ::wipeDevice,
             updates = updateActions(lifecycleScope),
+            backgroundUpdateChecksAvailable = BuildConfig.FLAVOR == "github" && !BuildConfig.DEBUG,
             region = android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { null },
             rideMap = session.rideMaps.actions.also { session.rideMaps.mustAskForMobile = ::mustAskForMobile },
             nostr = nostr,
@@ -228,7 +229,15 @@ class MainActivity : ComponentActivity() {
                 mapViews = MapViewPrefs(this),
                 platform = platform,
                 navigation = navigation,
-                overlay = { UpdateOverlay(checkAtStart = store.data.settings.checkUpdates) },
+                overlay = {
+                    UpdateOverlay(
+                        checkAtStart = store.data.settings.checkUpdates,
+                        backgroundChecksEnabled = store.data.settings.backgroundUpdateChecks,
+                        onBackgroundCheckPermissionDenied = {
+                            store.update { it.copy(settings = it.settings.copy(backgroundUpdateChecks = false)) }
+                        },
+                    )
+                },
             )
         }
         if (savedInstanceState == null) handle(intent)

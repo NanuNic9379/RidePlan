@@ -76,6 +76,8 @@ data class AppSettings(
     val speedCameras: Boolean = true,
     /** Riding time before a break reminder, in minutes; zero turns it off. */
     val breakReminderMinutes: Int = 120,
+    /** Periodic GitHub update notifications; requires explicit opt-in and Android notification permission. */
+    val backgroundUpdateChecks: Boolean = false,
 )
 
 @Serializable

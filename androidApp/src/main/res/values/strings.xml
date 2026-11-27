@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">RidePlan</string>
+    <string name="update_notification_channel">Updates</string>
+    <string name="update_notification_title">RidePlan update available</string>
+    <string name="update_notification_text">Open RidePlan to install version %1$s.</string>
 </resources>

@@ -328,6 +328,15 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
         }
         SectionLabel(stringResource(Res.string.settings_app))
         RowGroup {
+            if (platform?.backgroundUpdateChecksAvailable == true) {
+                SwitchRow(
+                    AppIcons.Refresh,
+                    stringResource(Res.string.update_background_title),
+                    stringResource(Res.string.update_background_text),
+                    s.backgroundUpdateChecks,
+                ) { enabled -> store.update { it.copy(settings = it.settings.copy(backgroundUpdateChecks = enabled)) } }
+                GroupDivider()
+            }
             NavRow(
                 AppIcons.Info,
                 stringResource(Res.string.info_title),
