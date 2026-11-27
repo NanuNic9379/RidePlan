@@ -38,14 +38,14 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : Worker(con
 
         if (UpdateStore.lastBackgroundNotification(applicationContext) == release.tag || UpdateStore.wasDismissed(applicationContext, release.versionName)) return Result.success()
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            UpdateScheduler.cancel(applicationContext)
+            UpdateCheckWorker.cancel(applicationContext)
             return Result.success()
         }
         UpdateStore.savePending(applicationContext, release)
         try {
             showNotification(release)
         } catch (_: SecurityException) {
-            UpdateScheduler.cancel(applicationContext)
+            UpdateCheckWorker.cancel(applicationContext)
             return Result.success()
         }
         UpdateStore.markBackgroundNotification(applicationContext, release.tag)
