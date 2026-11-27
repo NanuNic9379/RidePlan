@@ -66,7 +66,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: >-
-            set -eu; apk="$(find . -type f -name '*x86_64*.apk' -print -quit)"; test -n "$apk"; echo "Installing emulator APK: $apk"; adb install "$apk"; adb logcat -c; adb shell monkey -p io.github.nanunic9379.rideplan -c android.intent.category.LAUNCHER 1; sleep 15; adb shell pidof io.github.nanunic9379.rideplan >/dev/null; ! adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'
+            set -eu; apk="$(find . -type f -name '*x86_64*.apk' -print -quit)"; test -n "$apk"; adb install "$apk"; printf '%s' '{"version":1,"profile":{"id":"emulator-test","name":"Test","bike":"","welcomed":true,"createdAt":0},"photoSpots":[{"id":"spot-1","name":"Test spot","lat":45.825,"lon":9.1,"enabled":true}],"settings":{"photoSpots":true}}' > /tmp/rideplan-profile.json; adb push /tmp/rideplan-profile.json /data/local/tmp/rideplan-profile.json; adb shell run-as io.github.nanunic9379.rideplan mkdir files; adb shell run-as io.github.nanunic9379.rideplan cp /data/local/tmp/rideplan-profile.json files/profile.json; adb logcat -c; adb shell am start -W -a android.intent.action.VIEW -d 'rideplan://r/?d=MQoKCnN7cXZHb21tdkB7ckVveEUKHwo' -p io.github.nanunic9379.rideplan; sleep 25; adb shell pidof io.github.nanunic9379.rideplan >/dev/null; ! adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'
 
   ios:
     name: iPhone (simulator, unsigned)
