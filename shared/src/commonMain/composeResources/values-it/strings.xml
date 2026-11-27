@@ -739,6 +739,10 @@
     <string name="nav_camera">Autovelox tra %1$s</string>
     <string name="nav_say_camera">Autovelox più avanti</string>
     <string name="nav_say_camera_limit">Autovelox più avanti, limite %1$d</string>
+    <string name="speed_camera_marker_title">Autovelox fisso</string>
+    <string name="speed_camera_marker_details">Autovelox fisso mappato in OpenStreetMap. I dati potrebbero essere incompleti o non aggiornati.</string>
+    <string name="speed_camera_limit">Limite di velocità indicato: %1$d km/h</string>
+    <string name="speed_camera_direction">Tag della direzione da OpenStreetMap: %1$s</string>
     <plurals name="cameras_on_ride">
         <item quantity="one">%1$d autovelox fisso su questo giro, da OpenStreetMap.</item>
         <item quantity="other">%1$d autovelox fissi su questo giro, da OpenStreetMap.</item>

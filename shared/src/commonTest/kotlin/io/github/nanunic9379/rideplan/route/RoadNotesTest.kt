@@ -41,7 +41,7 @@ class RoadNotesTest {
         assertEquals("secondary", c.highway)
         assertEquals(listOf(LatLon(46.52, 10.45), LatLon(46.53, 10.46)), c.line)
         assertIs<ClosureRule.Seasonal>(c.rule)
-        assertEquals(listOf(SpeedCamera("n456", LatLon(45.1, 9.12), 50), SpeedCamera("n457", LatLon(45.2, 9.13), null)), notes.cameras)
+        assertEquals(listOf(SpeedCamera("n456", LatLon(45.1, 9.12), 50, "90"), SpeedCamera("n457", LatLon(45.2, 9.13), null)), notes.cameras)
     }
 
     @Test

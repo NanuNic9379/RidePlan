@@ -62,6 +62,7 @@ data class RoadNotes(val osmDate: String, val closures: List<Closure>, val camer
             id = getValue("id").jsonPrimitive.content,
             point = LatLon(getValue("lat").jsonPrimitive.double, getValue("lon").jsonPrimitive.double),
             maxspeedKmh = (get("maxspeed") as? JsonPrimitive)?.content?.let(SpeedCamera::parseMaxspeed),
+            direction = (get("direction") as? JsonPrimitive)?.content?.takeIf { it.isNotBlank() },
         )
 
         private fun JsonObject?.strings(): Map<String, String> =
@@ -89,7 +90,7 @@ data class Closure(
 }
 
 /** A fixed speed camera (OSM `highway=speed_camera`). [maxspeedKmh]: null when not tagged or not readable. */
-data class SpeedCamera(val id: String, val point: LatLon, val maxspeedKmh: Int? = null) {
+data class SpeedCamera(val id: String, val point: LatLon, val maxspeedKmh: Int? = null, val direction: String? = null) {
     companion object {
         /** "50" → 50, "30 mph" → 48; "IT:urban", "signals", "none" → null: never a guess. */
         fun parseMaxspeed(value: String): Int? {

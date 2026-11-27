@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.HomeButton
@@ -55,6 +56,8 @@ import io.github.nanunic9379.rideplan.ride.ImportFab
 import io.github.nanunic9379.rideplan.ride.ImportStatus
 import io.github.nanunic9379.rideplan.ride.RideLayers
 import io.github.nanunic9379.rideplan.ride.RoadNotesLayers
+import io.github.nanunic9379.rideplan.ride.rememberNotesOnRide
+import io.github.nanunic9379.rideplan.ride.SpeedCameraInfoDialog
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.RideSheet
@@ -74,6 +77,7 @@ import io.github.nanunic9379.rideplan.route.offroadColors
 import io.github.nanunic9379.rideplan.route.optionsKeeping
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteState
+import io.github.nanunic9379.rideplan.route.SpeedCamera
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
 import io.github.nanunic9379.rideplan.nav.NavigationScreen
 import io.github.nanunic9379.rideplan.ui.RidePlanTheme
@@ -93,6 +97,7 @@ import io.github.nanunic9379.rideplan.resources.explore_locate_failed
 import io.github.nanunic9379.rideplan.resources.photo_spots_tap_map
 import io.github.nanunic9379.rideplan.resources.photo_spots_no_details
 import io.github.nanunic9379.rideplan.resources.photo_spots_open_link
+import io.github.nanunic9379.rideplan.resources.photo_spot_marker
 import io.github.nanunic9379.rideplan.resources.stop_edit_done
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.distanceKm
@@ -106,7 +111,10 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 import org.maplibre.compose.map.MapState
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.expressions.value.SymbolAnchor
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import io.github.nanunic9379.rideplan.ride.PlanDraft
@@ -122,6 +130,7 @@ import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.camera.CameraUpdate
 import org.maplibre.compose.camera.CameraPosition
@@ -236,6 +245,10 @@ private fun MapScreen(
 ) {
     val ride = rides.ride
     val plan = rides.plan
+    val roadNotes = if (ride != null && !ride.straightLines) {
+        rememberNotesOnRide(ride.line, ride.lengthKm, routeActions?.roadNotes)
+    } else null
+    var selectedCamera by remember { mutableStateOf<SpeedCamera?>(null) }
     // Explore opens where you looked last, or around your rides: not on a whole continent.
     // Explore (#40): your position, shown as a dot once you ask for it.
     var me by remember { mutableStateOf<LatLon?>(null) }
@@ -251,8 +264,8 @@ private fun MapScreen(
         ),
     ) {
         if (ride == null && offroad) OffroadLayers(roadColors)
+        if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, roadNotes) } else me?.let { MyPositionLayer(it) }
         store?.takeIf { it.data.settings.photoSpots }?.data?.photoSpots?.filter { it.enabled }?.takeIf { it.isNotEmpty() }?.let { PhotoSpotLayers(it) }
-        if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, routeActions?.roadNotes) } else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
     LaunchedEffect(state, mapViews) {
@@ -268,6 +281,16 @@ private fun MapScreen(
     var selected by remember { mutableStateOf<Int?>(null) }
     var selectedPhotoSpot by remember { mutableStateOf<PhotoSpot?>(null) }
     val selectedStop = selected?.takeIf { editable && ride != null && it in ride.stops.indices }
+    fun cameraAtTap(point: LatLon?): SpeedCamera? {
+        val tapped = point?.let { state.screenLocationFromPosition(Position(longitude = it.lon, latitude = it.lat)) } ?: return null
+        return roadNotes?.cameras.orEmpty().mapNotNull { camera ->
+            val screen = state.screenLocationFromPosition(Position(longitude = camera.camera.point.lon, latitude = camera.camera.point.lat)) ?: return@mapNotNull null
+            val dx = tapped.x.value - screen.x.value
+            val dy = tapped.y.value - screen.y.value
+            val distanceSquared = dx * dx + dy * dy
+            if (distanceSquared <= 24f * 24f) distanceSquared to camera.camera else null
+        }.minByOrNull { it.first }?.second
+    }
     fun edit(change: (Ride) -> Ride) {
         val current = rides.ride ?: return
         val fresh = change(current)
@@ -291,8 +314,10 @@ private fun MapScreen(
             else -> ({ point -> selected = null; edit { it.withStopAdded(point) } })
         },
         onTapMap = { point ->
+            val tappedCamera = cameraAtTap(point)
             when {
                 rides.choosingPhotoSpot && point != null -> { rides.photoSpotCoordinate = point; rides.choosingPhotoSpot = false; true }
+                tappedCamera != null -> { selectedCamera = tappedCamera; selected = null; true }
                 selected != null -> { selected = null; true }
                 point != null && rides.plan == null && store?.data?.settings?.photoSpots == true -> {
                     selectedPhotoSpot = store.data.photoSpots.filter { it.enabled }.firstOrNull { distanceKm(it.point, point) <= 0.05 }
@@ -455,6 +480,7 @@ private fun MapScreen(
                         canRemove = if (plan != null) true else ride.canRemoveStop,
                     )
                 }
+                selectedCamera?.let { camera -> SpeedCameraInfoDialog(camera) { selectedCamera = null } }
                 if (plan != null && ride != null) {
                     PlanSheet(
                         plan,
@@ -618,9 +644,13 @@ private fun MyPositionLayer(me: LatLon) {
 @Composable
 private fun PhotoSpotLayers(spots: List<PhotoSpot>) {
     val source = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(spots.map { it.point })))
-    CircleLayer(
-        id = "photo-spots", source = source, color = const(Color(0xFFB84D91)), radius = const(8.dp),
-        strokeColor = const(Color.White), strokeWidth = const(2.5.dp),
+    SymbolLayer(
+        id = "photo-spots",
+        source = source,
+        iconImage = image(painterResource(Res.drawable.photo_spot_marker), size = DpSize(48.dp, 56.dp)),
+        iconAnchor = const(SymbolAnchor.Bottom),
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
     )
 }
 

@@ -41,6 +41,33 @@ jobs:
           path: androidApp/build/outputs/apk/github/debug/*.apk
           retention-days: 14
 
+  android-emulator:
+    name: Android emulator (launch smoke)
+    runs-on: ubuntu-latest
+    needs: android
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rideplan-android-debug
+          path: android-apks
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and launch the GitHub build
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: >-
+            set -eu; apk="$(find . -type f -name '*x86_64*.apk' -print -quit)"; test -n "$apk"; echo "Installing emulator APK: $apk"; adb install "$apk"; adb logcat -c; adb shell monkey -p io.github.nanunic9379.rideplan -c android.intent.category.LAUNCHER 1; sleep 15; adb shell pidof io.github.nanunic9379.rideplan >/dev/null; ! adb logcat -d -s AndroidRuntime:E | grep -q 'FATAL EXCEPTION'
+
   ios:
     name: iPhone (simulator, unsigned)
     # Paused: the iPhone app is not being built for now and macOS runners queue for long.

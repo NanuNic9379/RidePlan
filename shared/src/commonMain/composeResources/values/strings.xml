@@ -740,6 +740,10 @@
     <string name="nav_camera">Speed camera in %1$s</string>
     <string name="nav_say_camera">Speed camera ahead</string>
     <string name="nav_say_camera_limit">Speed camera ahead, limit %1$d</string>
+    <string name="speed_camera_marker_title">Fixed speed camera</string>
+    <string name="speed_camera_marker_details">This fixed camera is mapped in OpenStreetMap. Map data may be incomplete or out of date.</string>
+    <string name="speed_camera_limit">Tagged speed limit: %1$d km/h</string>
+    <string name="speed_camera_direction">Direction tag from OpenStreetMap: %1$s</string>
     <plurals name="cameras_on_ride">
         <item quantity="one">%1$d fixed speed camera on this ride, from OpenStreetMap.</item>
         <item quantity="other">%1$d fixed speed cameras on this ride, from OpenStreetMap.</item>
