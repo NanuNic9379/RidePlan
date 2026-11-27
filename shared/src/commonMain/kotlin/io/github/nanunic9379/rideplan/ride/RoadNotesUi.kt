@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +54,10 @@ import io.github.nanunic9379.rideplan.resources.closure_unknown
 import io.github.nanunic9379.rideplan.resources.closure_unnamed
 import io.github.nanunic9379.rideplan.resources.closure_where
 import io.github.nanunic9379.rideplan.resources.menu_done
+import io.github.nanunic9379.rideplan.resources.speed_camera_marker_title
+import io.github.nanunic9379.rideplan.resources.speed_camera_marker_details
+import io.github.nanunic9379.rideplan.resources.speed_camera_limit
+import io.github.nanunic9379.rideplan.resources.speed_camera_direction
 import io.github.nanunic9379.rideplan.resources.route_cancel
 import io.github.nanunic9379.rideplan.route.AvoidedRoad
 import io.github.nanunic9379.rideplan.route.CameraOnRide
@@ -65,6 +70,7 @@ import io.github.nanunic9379.rideplan.route.RoadNotes
 import io.github.nanunic9379.rideplan.route.RoadNotesAlong
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteState
+import io.github.nanunic9379.rideplan.route.SpeedCamera
 import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.unrouted
 import io.github.nanunic9379.rideplan.ui.AppIcons
@@ -255,8 +261,7 @@ private fun RideDayPicker(selected: Long, onDismiss: () -> Unit, onPick: (Long) 
 
 /** Closed stretches drawn over the ride's line and the fixed cameras as dots (#13). */
 @Composable
-fun RoadNotesLayers(ride: Ride, load: (suspend () -> RoadNotes?)?) {
-    val notes = if (ride.straightLines) null else rememberNotesOnRide(ride.line, ride.lengthKm, load)
+internal fun RoadNotesLayers(ride: Ride, notes: NotesOnRide?) {
     val closed = remember(notes) {
         notes?.closures.orEmpty().filter { it.stretch.size >= 2 }.joinToString(",", """{"type":"FeatureCollection","features":[""", "]}") { lineJson(it.stretch) }
     }
@@ -268,5 +273,22 @@ fun RoadNotesLayers(ride: Ride, load: (suspend () -> RoadNotes?)?) {
     CircleLayer(
         id = "ride-cameras", source = camSource, color = const(scheme.error), radius = const(5.dp),
         strokeColor = const(scheme.surface), strokeWidth = const(2.dp),
+    )
+}
+
+/** Details for a fixed speed camera selected on the ride map (#252). */
+@Composable
+internal fun SpeedCameraInfoDialog(camera: SpeedCamera, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.speed_camera_marker_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(Res.string.speed_camera_marker_details))
+                camera.maxspeedKmh?.let { Text(stringResource(Res.string.speed_camera_limit, it)) }
+                camera.direction?.let { Text(stringResource(Res.string.speed_camera_direction, it)) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.menu_done)) } },
     )
 }

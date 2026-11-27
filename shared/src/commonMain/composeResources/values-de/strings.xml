@@ -739,6 +739,10 @@
     <string name="nav_camera">Blitzer in %1$s</string>
     <string name="nav_say_camera">Blitzer voraus</string>
     <string name="nav_say_camera_limit">Blitzer voraus, Limit %1$d</string>
+    <string name="speed_camera_marker_title">Fester Blitzer</string>
+    <string name="speed_camera_marker_details">In OpenStreetMap erfasster fester Blitzer. Die Kartendaten können unvollständig oder veraltet sein.</string>
+    <string name="speed_camera_limit">Erfasstes Tempolimit: %1$d km/h</string>
+    <string name="speed_camera_direction">Richtungs-Tag aus OpenStreetMap: %1$s</string>
     <plurals name="cameras_on_ride">
         <item quantity="one">%1$d fester Blitzer auf dieser Tour, aus OpenStreetMap.</item>
         <item quantity="other">%1$d feste Blitzer auf dieser Tour, aus OpenStreetMap.</item>

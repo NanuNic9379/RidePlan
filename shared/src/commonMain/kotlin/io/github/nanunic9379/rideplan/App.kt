@@ -54,6 +54,8 @@ import io.github.nanunic9379.rideplan.ride.ImportFab
 import io.github.nanunic9379.rideplan.ride.ImportStatus
 import io.github.nanunic9379.rideplan.ride.RideLayers
 import io.github.nanunic9379.rideplan.ride.RoadNotesLayers
+import io.github.nanunic9379.rideplan.ride.rememberNotesOnRide
+import io.github.nanunic9379.rideplan.ride.SpeedCameraInfoDialog
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.RideScreenState
 import io.github.nanunic9379.rideplan.ride.RideSheet
@@ -73,6 +75,7 @@ import io.github.nanunic9379.rideplan.route.offroadColors
 import io.github.nanunic9379.rideplan.route.optionsKeeping
 import io.github.nanunic9379.rideplan.route.RouteActions
 import io.github.nanunic9379.rideplan.route.RouteState
+import io.github.nanunic9379.rideplan.route.SpeedCamera
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
 import io.github.nanunic9379.rideplan.nav.NavigationScreen
 import io.github.nanunic9379.rideplan.ui.RidePlanTheme
@@ -228,6 +231,10 @@ private fun MapScreen(
 ) {
     val ride = rides.ride
     val plan = rides.plan
+    val roadNotes = if (ride != null && !ride.straightLines) {
+        rememberNotesOnRide(ride.line, ride.lengthKm, routeActions?.roadNotes)
+    } else null
+    var selectedCamera by remember { mutableStateOf<SpeedCamera?>(null) }
     // Explore opens where you looked last, or around your rides: not on a whole continent.
     // Explore (#40): your position, shown as a dot once you ask for it.
     var me by remember { mutableStateOf<LatLon?>(null) }
@@ -243,7 +250,7 @@ private fun MapScreen(
         ),
     ) {
         if (ride == null && offroad) OffroadLayers(roadColors)
-        if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, routeActions?.roadNotes) } else me?.let { MyPositionLayer(it) }
+        if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, roadNotes) } else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
     LaunchedEffect(state, mapViews) {
@@ -258,6 +265,16 @@ private fun MapScreen(
         (plan != null || (ride.stopsEditable && rides.route !is RouteState.Downloading))
     var selected by remember { mutableStateOf<Int?>(null) }
     val selectedStop = selected?.takeIf { editable && ride != null && it in ride.stops.indices }
+    fun cameraAtTap(point: LatLon?): SpeedCamera? {
+        val tapped = point?.let { state.screenLocationFromPosition(Position(longitude = it.lon, latitude = it.lat)) } ?: return null
+        return roadNotes?.cameras.orEmpty().mapNotNull { camera ->
+            val screen = state.screenLocationFromPosition(Position(longitude = camera.camera.point.lon, latitude = camera.camera.point.lat)) ?: return@mapNotNull null
+            val dx = tapped.x.value - screen.x.value
+            val dy = tapped.y.value - screen.y.value
+            val distanceSquared = dx * dx + dy * dy
+            if (distanceSquared <= 24f * 24f) distanceSquared to camera.camera else null
+        }.minByOrNull { it.first }?.second
+    }
     fun edit(change: (Ride) -> Ride) {
         val current = rides.ride ?: return
         val fresh = change(current)
@@ -280,7 +297,9 @@ private fun MapScreen(
             else -> ({ point -> selected = null; edit { it.withStopAdded(point) } })
         },
         onTapMap = { point ->
+            val tappedCamera = cameraAtTap(point)
             when {
+                tappedCamera != null -> { selectedCamera = tappedCamera; selected = null; true }
                 selected != null -> { selected = null; true }
                 rides.plan != null && point != null && routeActions != null -> { replan { it.withTap(point) }; true }
                 else -> false
@@ -439,6 +458,7 @@ private fun MapScreen(
                         canRemove = if (plan != null) true else ride.canRemoveStop,
                     )
                 }
+                selectedCamera?.let { camera -> SpeedCameraInfoDialog(camera) { selectedCamera = null } }
                 if (plan != null && ride != null) {
                     PlanSheet(
                         plan,

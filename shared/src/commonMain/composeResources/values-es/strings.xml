@@ -740,6 +740,10 @@
     <string name="nav_camera">Radar a %1$s</string>
     <string name="nav_say_camera">Radar más adelante</string>
     <string name="nav_say_camera_limit">Radar más adelante, límite %1$d</string>
+    <string name="speed_camera_marker_title">Radar fijo</string>
+    <string name="speed_camera_marker_details">Radar fijo registrado en OpenStreetMap. Los datos pueden estar incompletos o desactualizados.</string>
+    <string name="speed_camera_limit">Límite indicado: %1$d km/h</string>
+    <string name="speed_camera_direction">Etiqueta de dirección de OpenStreetMap: %1$s</string>
     <plurals name="cameras_on_ride">
         <item quantity="one">%1$d radar fijo en esta ruta, de OpenStreetMap.</item>
         <item quantity="other">%1$d radares fijos en esta ruta, de OpenStreetMap.</item>
