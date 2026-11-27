@@ -187,6 +187,10 @@
     <string name="zones_name_default">Casa</string>
     <string name="zones_save">Guardar</string>
     <string name="nav_start">Navegar</string>
+    <string name="nav_battery_title">Mantener activa la navegación</string>
+    <string name="nav_battery_text">Algunos móviles cierran aplicaciones para ahorrar batería. Permite que RidePlan use la batería sin restricciones para que el GPS siga guiándote con la pantalla apagada. También puedes continuar sin cambiar este ajuste.</string>
+    <string name="nav_battery_settings">Abrir ajustes de batería</string>
+    <string name="nav_battery_help">Consejos para tu móvil</string>
     <string name="nav_exit">Salir</string>
     <string name="nav_mute">Silenciar</string>
     <string name="nav_overview">Ruta</string>

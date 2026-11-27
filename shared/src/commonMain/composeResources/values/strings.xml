@@ -187,6 +187,10 @@
     <string name="zones_name_default">Home</string>
     <string name="zones_save">Save</string>
     <string name="nav_start">Navigate</string>
+    <string name="nav_battery_title">Keep navigation running</string>
+    <string name="nav_battery_text">Some phones stop apps to save battery. Allow unrestricted battery use so RidePlan can keep GPS guidance going with the screen off. You can also continue without changing this.</string>
+    <string name="nav_battery_settings">Open battery settings</string>
+    <string name="nav_battery_help">Tips for your phone</string>
     <string name="nav_exit">Exit</string>
     <string name="nav_mute">Mute</string>
     <string name="nav_overview">Route</string>

@@ -110,6 +110,10 @@ class NavBackgroundTest {
         val notices = mutableListOf<NavNotice?>()
         var onFix: ((Fix) -> Unit)? = null
         var granted = true
+        var batteryPromptNeeded = false
+        var batterySettingsOpened = false
+        override fun shouldExplainBatteryOptimization() = batteryPromptNeeded
+        override fun openBatteryOptimizationSettings() { batterySettingsOpened = true }
         override suspend fun requestLocation() = granted
         override fun startLocation(onFix: (Fix) -> Unit) { this.onFix = onFix }
         override fun stopLocation() { onFix = null }
@@ -159,6 +163,42 @@ class NavBackgroundTest {
         assertTrue(p.notices.isEmpty())
         s.stop()
         assertTrue(p.notices.isEmpty())
+    }
+
+    @Test
+    fun batteryPromptPausesNavigationUntilRiderChooses() {
+        val p = FakePlatform().apply { batteryPromptNeeded = true }
+        val s = session(p)
+
+        s.start()
+
+        assertTrue(s.batteryPrompt)
+        assertFalse(s.inBackground)
+        assertNull(p.onFix)
+        assertTrue(p.notices.isEmpty())
+
+        s.continueAfterBatteryPrompt(openSettings = true)
+
+        assertFalse(s.batteryPrompt)
+        assertTrue(p.batterySettingsOpened)
+        assertTrue(s.inBackground)
+        assertNotNull(p.onFix)
+        s.stop()
+    }
+
+    @Test
+    fun riderCanContinueWithoutOpeningBatterySettings() {
+        val p = FakePlatform().apply { batteryPromptNeeded = true }
+        val s = session(p)
+
+        s.start()
+        s.continueAfterBatteryPrompt(openSettings = false)
+
+        assertFalse(s.batteryPrompt)
+        assertFalse(p.batterySettingsOpened)
+        assertTrue(s.inBackground)
+        assertNotNull(p.onFix)
+        s.stop()
     }
 
     @Test

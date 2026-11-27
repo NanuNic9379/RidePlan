@@ -95,6 +95,10 @@ import io.github.nanunic9379.rideplan.personal.decimalComma
 import io.github.nanunic9379.rideplan.profile.Measures
 import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.of
+import io.github.nanunic9379.rideplan.resources.nav_battery_help
+import io.github.nanunic9379.rideplan.resources.nav_battery_settings
+import io.github.nanunic9379.rideplan.resources.nav_battery_text
+import io.github.nanunic9379.rideplan.resources.nav_battery_title
 import io.github.nanunic9379.rideplan.resources.nav_waiting_gps
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
@@ -253,6 +257,31 @@ fun NavigationScreen(
     }
 
     if (exitAsked) EndNavigationDialog(onEnd = { onAskExit(false); onExit() }, onKeep = { onAskExit(false) })
+
+    if (session.batteryPrompt) {
+        AlertDialog(
+            onDismissRequest = { session.continueAfterBatteryPrompt(openSettings = false) },
+            title = { Text(stringResource(Res.string.nav_battery_title)) },
+            text = {
+                Column {
+                    Text(stringResource(Res.string.nav_battery_text))
+                    TextButton(onClick = session::openBatteryHelp, Modifier.heightIn(min = ButtonHeight)) {
+                        Text(stringResource(Res.string.nav_battery_help))
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { session.continueAfterBatteryPrompt(openSettings = true) }, Modifier.heightIn(min = ButtonHeight), shape = Radius.Control) {
+                    Text(stringResource(Res.string.nav_battery_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { session.continueAfterBatteryPrompt(openSettings = false) }, Modifier.heightIn(min = ButtonHeight)) {
+                    Text(stringResource(Res.string.nav_not_now))
+                }
+            },
+        )
+    }
 
     if (session.arrived) {
         AlertDialog(

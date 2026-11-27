@@ -34,6 +34,9 @@ navigation: your position is used only on the phone.
 - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` and, on Android 13+, `POST_NOTIFICATIONS`: only
   for that navigation service and its notification (next turn and distance). Refusing notifications
   does not stop guidance, the notification is just hidden.
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`: lets you ask Android to exempt RidePlan from battery
+  restrictions that can stop turn-by-turn navigation with the screen off. RidePlan explains this
+  the first time you navigate; opening the Android prompt is optional, and navigation works if you skip it.
 
 Voice instructions are spoken by the phone's text-to-speech engine. The app does not read contacts or
 photos. You open files (GPX, KML) yourself from the system picker and the app sees only those.

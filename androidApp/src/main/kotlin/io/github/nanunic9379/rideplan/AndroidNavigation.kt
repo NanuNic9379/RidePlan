@@ -2,6 +2,8 @@ package io.github.nanunic9379.rideplan
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -9,9 +11,12 @@ import android.location.LocationManager
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.WindowManager
@@ -49,10 +54,34 @@ class AndroidNavigation(
     // Lazy: system services are not available before the activity's onCreate.
     private val locations by lazy { activity.getSystemService(LocationManager::class.java) }
     private val audio by lazy { activity.getSystemService(AudioManager::class.java) }
+    private val power by lazy { activity.getSystemService(PowerManager::class.java) }
     private var listener: LocationListener? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var queued: String? = null
+
+    override fun shouldExplainBatteryOptimization(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || power?.isIgnoringBatteryOptimizations(activity.packageName) == true) return false
+        val preferences = activity.getSharedPreferences("navigation", Context.MODE_PRIVATE)
+        if (preferences.getBoolean("battery_prompt_shown", false)) return false
+        // Remember the offer even if the rider dismisses it; navigation remains usable either way.
+        preferences.edit().putBoolean("battery_prompt_shown", true).apply()
+        return true
+    }
+
+    override fun openBatteryOptimizationSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        val requestExemption = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = Uri.parse("package:${activity.packageName}")
+        }
+        val settingsPage = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        runCatching { activity.startActivity(requestExemption) }
+            .onFailure { runCatching { activity.startActivity(settingsPage) } }
+    }
+
+    override fun openBatteryHelp() {
+        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://dontkillmyapp.com/"))) }
+    }
 
     private val attributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
