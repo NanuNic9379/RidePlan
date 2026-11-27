@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nav_break_reminder_title">Il est temps de faire une pause</string>
+    <string name="nav_break_reminder_text">Pensez à faire une pause.</string>
+    <string name="nav_break_reminder_dismiss">Fermer</string>
+    <string name="nav_break_reminder_no_place">Les données hors ligne ne répertorient aucune station plus loin.</string>
+    <string name="break_reminder_title">Rappel de pause</string>
+    <string name="break_reminder_off">Non</string>
+    <string name="break_reminder_90">1,5 h</string>
+    <string name="break_reminder_120">2 h</string>
+    <string name="break_reminder_180">3 h</string>
+    <string name="break_reminder_note">Compte le temps de conduite. Les arrêts de plus de 15 minutes le remettent à zéro.</string>
     <string name="import_button">Importer une balade</string>
     <string name="import_open_file">Ouvrir un fichier GPX ou KML</string>
     <string name="import_paste_link">Coller un lien Google Maps</string>

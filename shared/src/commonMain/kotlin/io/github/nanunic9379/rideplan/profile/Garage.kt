@@ -74,6 +74,8 @@ data class AppSettings(
     val lastBackupAt: Long? = null,
     /** Fixed speed cameras on the ride map and in navigation (#13), only where allowed (Italy). */
     val speedCameras: Boolean = true,
+    /** Riding time before a break reminder, in minutes; zero turns it off. */
+    val breakReminderMinutes: Int = 120,
 )
 
 @Serializable

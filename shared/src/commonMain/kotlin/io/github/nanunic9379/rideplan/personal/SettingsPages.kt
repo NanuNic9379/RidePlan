@@ -288,6 +288,18 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             unitChoices.indexOf(s.units),
         ) { i -> store.update { it.copy(settings = it.settings.copy(units = unitChoices[i])) } }
         Text(stringResource(Res.string.units_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionLabel(stringResource(Res.string.break_reminder_title))
+        val breakChoices = listOf(0, 90, 120, 180)
+        Segmented(
+            listOf(
+                stringResource(Res.string.break_reminder_off),
+                stringResource(Res.string.break_reminder_90),
+                stringResource(Res.string.break_reminder_120),
+                stringResource(Res.string.break_reminder_180),
+            ),
+            breakChoices.indexOf(s.breakReminderMinutes).takeIf { it >= 0 } ?: 2,
+        ) { i -> store.update { it.copy(settings = it.settings.copy(breakReminderMinutes = breakChoices[i])) } }
+        Text(stringResource(Res.string.break_reminder_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionLabel(stringResource(Res.string.theme_title))
         Segmented(
             listOf(stringResource(Res.string.theme_system), stringResource(Res.string.theme_light), stringResource(Res.string.theme_dark)),

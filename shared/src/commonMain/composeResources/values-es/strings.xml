@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nav_break_reminder_title">Hora de descansar</string>
+    <string name="nav_break_reminder_text">Considera hacer una pausa.</string>
+    <string name="nav_break_reminder_dismiss">Cerrar</string>
+    <string name="nav_break_reminder_no_place">Los datos sin conexión no indican gasolineras más adelante.</string>
+    <string name="break_reminder_title">Recordatorio de descanso</string>
+    <string name="break_reminder_off">No</string>
+    <string name="break_reminder_90">1,5 h</string>
+    <string name="break_reminder_120">2 h</string>
+    <string name="break_reminder_180">3 h</string>
+    <string name="break_reminder_note">Cuenta el tiempo en marcha. Las paradas de más de 15 minutos lo reinician.</string>
     <string name="import_button">Importar una ruta</string>
     <string name="import_open_file">Abrir archivo GPX o KML</string>
     <string name="import_paste_link">Pegar enlace de Google Maps</string>
