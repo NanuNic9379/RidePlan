@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nav_break_reminder_title">Zeit für eine Pause</string>
+    <string name="nav_break_reminder_text">Denk an eine kurze Pause.</string>
+    <string name="nav_break_reminder_dismiss">Schließen</string>
+    <string name="nav_break_reminder_no_place">In den Offline-Daten sind keine Tankstellen voraus verzeichnet.</string>
+    <string name="break_reminder_title">Pausenerinnerung</string>
+    <string name="break_reminder_off">Aus</string>
+    <string name="break_reminder_90">1,5 h</string>
+    <string name="break_reminder_120">2 h</string>
+    <string name="break_reminder_180">3 h</string>
+    <string name="break_reminder_note">Zählt die Fahrzeit. Pausen über 15 Minuten setzen den Zähler zurück.</string>
+    <string name="update_background_title">Im Hintergrund nach Updates suchen</string>
+    <string name="update_background_text">Optional: Ab Android 13 fragt die App nach der Berechtigung für Mitteilungen, falls sie noch nicht erteilt wurde. Prüft GitHub bei Verbindung etwa alle 12 Stunden und meldet nur neue Versionen. GitHub erhält deine IP-Adresse; RidePlan sendet niemals deinen Standort.</string>
     <string name="import_button">Tour importieren</string>
     <string name="import_open_file">GPX- oder KML-Datei öffnen</string>
     <string name="import_paste_link">Google-Maps-Link einfügen</string>

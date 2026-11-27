@@ -119,3 +119,7 @@ android {
         includeInBundle = false
     }
 }
+
+dependencies {
+    add("githubImplementation", libs.androidx.work.runtime)
+}

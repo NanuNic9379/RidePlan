@@ -1,0 +1,5 @@
+<resources>
+    <string name="update_notification_channel">Aggiornamenti</string>
+    <string name="update_notification_title">Aggiornamento RidePlan disponibile</string>
+    <string name="update_notification_text">Apri RidePlan per installare la versione %1$s.</string>
+</resources>

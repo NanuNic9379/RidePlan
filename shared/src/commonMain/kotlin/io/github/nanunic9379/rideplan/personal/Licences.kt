@@ -22,6 +22,7 @@ object Licences {
         Entry("Kotlin, kotlinx.serialization", "Apache-2.0", "https://github.com/JetBrains/kotlin", "org.jetbrains.kotlinx"),
         Entry("Compose Multiplatform", "Apache-2.0", "https://github.com/JetBrains/compose-multiplatform", "org.jetbrains.compose"),
         Entry("AndroidX Activity", "Apache-2.0", "https://developer.android.com/jetpack/androidx", "androidx.activity"),
+        Entry("AndroidX WorkManager", "Apache-2.0", "https://developer.android.com/jetpack/androidx", "androidx.work"),
         Entry("MapLibre Compose", "BSD-3-Clause", "https://github.com/maplibre/maplibre-compose", "org.maplibre.compose"),
         Entry("MapLibre Native", "BSD-2-Clause", "https://github.com/maplibre/maplibre-native"),
         Entry("Valhalla", "MIT", "https://github.com/valhalla/valhalla"),

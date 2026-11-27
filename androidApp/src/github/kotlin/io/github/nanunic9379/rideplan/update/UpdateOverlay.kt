@@ -1,11 +1,19 @@
 package io.github.nanunic9379.rideplan.update
 
+import android.content.Context
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.net.Uri
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,6 +42,42 @@ object UpdateStore {
     var lastAutoCheckMs: Long? = null
     /** The version whose banner the rider closed: not offered again automatically (#34). */
     var dismissed: String? = null
+
+    fun savePending(context: Context, release: ReleaseInfo) {
+        preferences(context).edit()
+            .putString("pending_tag", release.tag)
+            .putString("pending_apk", release.apkName)
+            .putString("pending_url", release.apkUrl)
+            .putString("pending_sha", release.sha256)
+            .putLong("pending_size", release.size)
+            .apply()
+    }
+
+    fun takePending(context: Context): ReleaseInfo? {
+        val prefs = preferences(context)
+        val tag = prefs.getString("pending_tag", null)
+        val apk = prefs.getString("pending_apk", null)
+        val url = prefs.getString("pending_url", null)
+        val sha = prefs.getString("pending_sha", null)
+        val size = prefs.getLong("pending_size", -1L)
+        prefs.edit().remove("pending_tag").remove("pending_apk").remove("pending_url").remove("pending_sha").remove("pending_size").apply()
+        if (tag == null || apk == null || url == null || sha == null || size < 0) return null
+        return ReleaseInfo(tag, apk, url, sha, size)
+    }
+
+    fun lastBackgroundNotification(context: Context): String? = preferences(context).getString("notified_tag", null)
+
+    fun markBackgroundNotification(context: Context, tag: String) {
+        preferences(context).edit().putString("notified_tag", tag).apply()
+    }
+
+    fun markDismissed(context: Context, version: String) {
+        preferences(context).edit().putString("dismissed_tag", version).apply()
+    }
+
+    fun wasDismissed(context: Context, version: String): Boolean = preferences(context).getString("dismissed_tag", null) == version
+
+    private fun preferences(context: Context) = context.getSharedPreferences("updates", Context.MODE_PRIVATE)
 }
 
 /**
@@ -71,7 +115,11 @@ fun updateActions(scope: CoroutineScope): UpdateActions {
  * [UpdateRules.AUTO_CHECK_INTERVAL_MS], and shows the banner.
  */
 @Composable
-fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
+fun BoxScope.UpdateOverlay(
+    checkAtStart: Boolean,
+    backgroundChecksEnabled: Boolean = false,
+    onBackgroundCheckPermissionDenied: () -> Unit = {},
+) {
     // Test builds have a different signature: the update would not install.
     if (BuildConfig.DEBUG) return
     val context = LocalContext.current
@@ -79,9 +127,37 @@ fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
     val release = UpdateStore.release
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val enabled by rememberUpdatedState(checkAtStart)
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) UpdateCheckWorker.schedule(context)
+        else {
+            UpdateCheckWorker.cancel(context)
+            onBackgroundCheckPermissionDenied()
+        }
+    }
+
+    LaunchedEffect(backgroundChecksEnabled) {
+        if (!backgroundChecksEnabled) {
+            UpdateCheckWorker.cancel(context)
+        } else if (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            UpdateCheckWorker.schedule(context)
+        } else {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
+            if (event != Lifecycle.Event.ON_START && event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+            val pending = UpdateStore.takePending(context)
+            if (pending != null) {
+                if (UpdateRules.isNewer(pending.tag, BuildConfig.VERSION_CODE) &&
+                    UpdateRules.mayOfferAutomatically(pending.versionName, UpdateStore.ui, UpdateStore.dismissed)
+                ) {
+                    UpdateStore.release = pending
+                    UpdateStore.ui = UpdateUi.Available(pending.versionName)
+                }
+                return@LifecycleEventObserver
+            }
             if (event != Lifecycle.Event.ON_START || !enabled) return@LifecycleEventObserver
             // A banner is already on screen: no polling, "Update" fetches the newest Release anyway.
             if (UpdateRules.pollingPaused(UpdateStore.ui)) return@LifecycleEventObserver
@@ -106,7 +182,10 @@ fun BoxScope.UpdateOverlay(checkAtStart: Boolean) {
         state = ui,
         modifier = Modifier.align(Alignment.TopCenter),
         onDismiss = {
-            (ui as? UpdateUi.Available)?.let { UpdateStore.dismissed = it.versionName }
+            (ui as? UpdateUi.Available)?.let {
+                UpdateStore.dismissed = it.versionName
+                UpdateStore.markDismissed(context, it.versionName)
+            }
             UpdateStore.ui = null
         },
         onOpenSettings = {

@@ -100,12 +100,19 @@ import io.github.nanunic9379.rideplan.resources.nav_battery_settings
 import io.github.nanunic9379.rideplan.resources.nav_battery_text
 import io.github.nanunic9379.rideplan.resources.nav_battery_title
 import io.github.nanunic9379.rideplan.resources.nav_waiting_gps
+import io.github.nanunic9379.rideplan.resources.nav_break_reminder_title
+import io.github.nanunic9379.rideplan.resources.nav_break_reminder_text
+import io.github.nanunic9379.rideplan.resources.nav_break_reminder_dismiss
+import io.github.nanunic9379.rideplan.resources.fuel_station
+import io.github.nanunic9379.rideplan.resources.nav_break_reminder_no_place
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.lineJson
 import io.github.nanunic9379.rideplan.ride.pointsJson
 import io.github.nanunic9379.rideplan.route.TurnSign
 import io.github.nanunic9379.rideplan.route.durationText
+import io.github.nanunic9379.rideplan.route.FuelAlong
+import io.github.nanunic9379.rideplan.route.FuelStation
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.maplibre.compose.camera.CameraAnimation
@@ -159,6 +166,8 @@ fun NavigationScreen(
     onMarkDone: (() -> Unit)? = null,
     /** Speed cameras (#13); null = none known. */
     roadNotes: (suspend () -> io.github.nanunic9379.rideplan.route.RoadNotes?)? = null,
+    breakReminderMinutes: Int = 120,
+    fuelStations: (suspend (List<LatLon>) -> List<FuelStation>?)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val units = LocalUnits.current
@@ -169,7 +178,18 @@ fun NavigationScreen(
             say = { speech(it, units) },
             noticeTexts = { noticeTexts() },
             distance = { Measures.shortDistance(it, units, comma) },
+            breakReminderMinutes = breakReminderMinutes,
         )
+    }
+    val navRide = session.ride
+    var stations by remember(navRide) { mutableStateOf<List<FuelStation>?>(null) }
+    LaunchedEffect(navRide, fuelStations) { stations = runCatching { fuelStations?.invoke(navRide.line) }.getOrNull() }
+    val fuelStops = remember(stations, navRide) {
+        stations?.let { FuelAlong.report(navRide.line, it, navRide.lengthKm).stations }
+    }
+    val nextFuel = fuelStops?.firstOrNull { it.km * 1000 > (session.update?.alongM ?: 0.0) + 100 }
+    LaunchedEffect(session.breakReminderDue) {
+        if (session.breakReminderDue) session.speakBreakReminder(getString(Res.string.nav_break_reminder_text))
     }
     DisposableEffect(session) {
         onAskExit(false)
@@ -224,6 +244,23 @@ fun NavigationScreen(
             val panel = if (maxWidth > maxHeight) Modifier.width(380.dp) else Modifier.fillMaxWidth()
             Column(Modifier.align(Alignment.TopStart).then(panel)) {
                 Banner(session, onExit)
+                if (session.breakReminderDue) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.padding(top = 6.dp),
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                            Text(stringResource(Res.string.nav_break_reminder_title), style = MaterialTheme.typography.titleMedium)
+                            val placeName = nextFuel?.station?.name ?: nextFuel?.station?.brand
+                            Text(placeName ?: if (nextFuel != null) stringResource(Res.string.fuel_station) else stringResource(Res.string.nav_break_reminder_no_place), style = MaterialTheme.typography.bodyMedium)
+                            TextButton(onClick = session::dismissBreakReminder, Modifier.align(Alignment.End).heightIn(min = ButtonHeight)) {
+                                Text(stringResource(Res.string.nav_break_reminder_dismiss))
+                            }
+                        }
+                    }
+                }
                 SpeedCameraBanner(session, cameras, platform)
             }
             Column(

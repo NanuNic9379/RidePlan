@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.Stop
+import io.github.nanunic9379.rideplan.ride.distanceKm
 import io.github.nanunic9379.rideplan.route.RouteOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -72,6 +73,7 @@ class NavigationSession(
     private val distance: (Double) -> String = { "${it.toInt()} m" },
     /** Monotonic milliseconds, for the idle pause. */
     private val clock: () -> Long = TimeSource.Monotonic.markNow().let { start -> { start.elapsedNow().inWholeMilliseconds } },
+    breakReminderMinutes: Int = 0,
 ) {
     var navigator by mutableStateOf(Navigator(NavRoute(original)))
         private set
@@ -102,6 +104,9 @@ class NavigationSession(
     private val idle = IdleWatch()
     private var texts: NoticeTexts? = null
     private var lastNotice: NavNotice? = null
+    private val breakReminder = BreakReminder(breakReminderMinutes.takeIf { it > 0 }?.times(60_000L) ?: Long.MAX_VALUE)
+    var breakReminderDue by mutableStateOf(false)
+        private set
 
     /** The road being followed: the ride's, or the one computed after leaving it. */
     val ride: Ride get() = navigator.route.ride
@@ -169,9 +174,24 @@ class NavigationSession(
         arrived = false
     }
 
+    fun dismissBreakReminder() {
+        breakReminder.dismiss()
+        breakReminderDue = false
+    }
+
+    fun speakBreakReminder(text: String) {
+        if (!muted) platform.speak(text)
+    }
+
     fun onFix(fix: Fix) {
         if (paused) return
+        val previousFix = lastFix
         lastFix = fix
+        val derivedSpeed = previousFix?.let {
+            val seconds = (fix.timeMs - it.timeMs) / 1000.0
+            if (seconds > 0) distanceKm(it.point, fix.point) * 1000 / seconds else 0.0
+        } ?: 0.0
+        breakReminderDue = breakReminder.update(clock(), maxOf(fix.speedMps ?: 0.0, derivedSpeed) >= 2.0)
         idle.onFix(fix, clock())
         val u = navigator.update(fix)
         update = u
