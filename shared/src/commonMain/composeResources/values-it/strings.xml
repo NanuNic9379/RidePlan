@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nav_break_reminder_title">È ora di fare una pausa</string>
+    <string name="nav_break_reminder_text">Valuta una sosta per riposarti.</string>
+    <string name="nav_break_reminder_dismiss">Chiudi</string>
+    <string name="nav_break_reminder_no_place">I dati offline non indicano distributori più avanti.</string>
+    <string name="break_reminder_title">Promemoria pausa</string>
+    <string name="break_reminder_off">No</string>
+    <string name="break_reminder_90">1,5 h</string>
+    <string name="break_reminder_120">2 h</string>
+    <string name="break_reminder_180">3 h</string>
+    <string name="break_reminder_note">Conta il tempo in movimento. Le soste oltre 15 minuti azzerano il conteggio.</string>
+    <string name="update_background_title">Controlla aggiornamenti in background</string>
+    <string name="update_background_text">Facoltativo: da Android 13, se non è già stato concesso, viene chiesto il permesso per le notifiche. Controlla GitHub circa ogni 12 ore quando c'è rete e avvisa solo se trova una nuova versione. GitHub riceve il tuo IP; RidePlan non invia mai la posizione.</string>
     <string name="import_button">Importa un giro</string>
     <string name="import_open_file">Apri file GPX o KML</string>
     <string name="import_paste_link">Incolla link di Google Maps</string>

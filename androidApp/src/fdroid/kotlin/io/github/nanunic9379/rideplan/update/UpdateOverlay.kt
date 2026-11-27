@@ -8,7 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 /** F-Droid version: F-Droid handles updates, the app checks nothing. */
 @Suppress("UnusedReceiverParameter", "UNUSED_PARAMETER")
 @Composable
-fun BoxScope.UpdateOverlay(checkAtStart: Boolean) = Unit
+fun BoxScope.UpdateOverlay(
+    checkAtStart: Boolean,
+    backgroundChecksEnabled: Boolean = false,
+    onBackgroundCheckPermissionDenied: () -> Unit = {},
+) = Unit
 
 /** No update card on Info & updates: the store shows new versions. */
 @Suppress("UNUSED_PARAMETER")

@@ -56,6 +56,12 @@ import io.github.nanunic9379.rideplan.resources.backup_save
 import io.github.nanunic9379.rideplan.resources.backup_saved
 import io.github.nanunic9379.rideplan.resources.backup_text
 import io.github.nanunic9379.rideplan.resources.backup_title
+import io.github.nanunic9379.rideplan.resources.break_reminder_title
+import io.github.nanunic9379.rideplan.resources.break_reminder_off
+import io.github.nanunic9379.rideplan.resources.break_reminder_90
+import io.github.nanunic9379.rideplan.resources.break_reminder_120
+import io.github.nanunic9379.rideplan.resources.break_reminder_180
+import io.github.nanunic9379.rideplan.resources.break_reminder_note
 import io.github.nanunic9379.rideplan.resources.danger_title
 import io.github.nanunic9379.rideplan.resources.export_all
 import io.github.nanunic9379.rideplan.resources.export_done
@@ -109,6 +115,8 @@ import io.github.nanunic9379.rideplan.resources.units_note
 import io.github.nanunic9379.rideplan.resources.units_title
 import io.github.nanunic9379.rideplan.resources.update_check_start
 import io.github.nanunic9379.rideplan.resources.update_check_text
+import io.github.nanunic9379.rideplan.resources.update_background_title
+import io.github.nanunic9379.rideplan.resources.update_background_text
 import io.github.nanunic9379.rideplan.resources.speed_cameras
 import io.github.nanunic9379.rideplan.resources.speed_cameras_text
 import io.github.nanunic9379.rideplan.resources.wifi_only
@@ -288,6 +296,18 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             unitChoices.indexOf(s.units),
         ) { i -> store.update { it.copy(settings = it.settings.copy(units = unitChoices[i])) } }
         Text(stringResource(Res.string.units_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionLabel(stringResource(Res.string.break_reminder_title))
+        val breakChoices = listOf(0, 90, 120, 180)
+        Segmented(
+            listOf(
+                stringResource(Res.string.break_reminder_off),
+                stringResource(Res.string.break_reminder_90),
+                stringResource(Res.string.break_reminder_120),
+                stringResource(Res.string.break_reminder_180),
+            ),
+            breakChoices.indexOf(s.breakReminderMinutes).takeIf { it >= 0 } ?: 2,
+        ) { i -> store.update { it.copy(settings = it.settings.copy(breakReminderMinutes = breakChoices[i])) } }
+        Text(stringResource(Res.string.break_reminder_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionLabel(stringResource(Res.string.theme_title))
         Segmented(
             listOf(stringResource(Res.string.theme_system), stringResource(Res.string.theme_light), stringResource(Res.string.theme_dark)),
@@ -316,6 +336,15 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
         }
         SectionLabel(stringResource(Res.string.settings_app))
         RowGroup {
+            if (platform?.backgroundUpdateChecksAvailable == true) {
+                SwitchRow(
+                    AppIcons.Refresh,
+                    stringResource(Res.string.update_background_title),
+                    stringResource(Res.string.update_background_text),
+                    s.backgroundUpdateChecks,
+                ) { enabled -> store.update { it.copy(settings = it.settings.copy(backgroundUpdateChecks = enabled)) } }
+                GroupDivider()
+            }
             NavRow(
                 AppIcons.Info,
                 stringResource(Res.string.info_title),

@@ -189,6 +189,8 @@ fun App(
                         exitAsked = rides.endNavigationAsked,
                         onAskExit = { rides.endNavigationAsked = it },
                         roadNotes = routeActions?.roadNotes,
+                        breakReminderMinutes = settings?.breakReminderMinutes ?: 120,
+                        fuelStations = routeActions?.fuelStations,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
                     store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap)

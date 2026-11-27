@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Base language. Every key here must exist in the other values-xx folders (checked by StringsTest). -->
 <resources>
+    <string name="nav_break_reminder_title">Time for a break</string>
+    <string name="nav_break_reminder_text">Consider taking a break.</string>
+    <string name="nav_break_reminder_dismiss">Dismiss</string>
+    <string name="nav_break_reminder_no_place">No fuel stop is listed ahead in the offline data.</string>
+    <string name="break_reminder_title">Break reminder</string>
+    <string name="break_reminder_off">Off</string>
+    <string name="break_reminder_90">1.5 h</string>
+    <string name="break_reminder_120">2 h</string>
+    <string name="break_reminder_180">3 h</string>
+    <string name="break_reminder_note">Counts riding time. Stops over 15 minutes reset it.</string>
+    <string name="update_background_title">Check for updates in the background</string>
+    <string name="update_background_text">Optional: on Android 13 and later, asks for notification permission if it has not already been granted. Checks GitHub about every 12 hours when online and notifies only when a new version is available. GitHub receives your IP address; RidePlan never sends your location.</string>
     <string name="import_button">Import a ride</string>
     <string name="import_open_file">Open GPX or KML file</string>
     <string name="import_paste_link">Paste Google Maps link</string>
