@@ -78,6 +78,8 @@ data class AppSettings(
     val breakReminderMinutes: Int = 120,
     /** Periodic GitHub update notifications; requires explicit opt-in and Android notification permission. */
     val backgroundUpdateChecks: Boolean = false,
+    /** Show locally saved photographer spots on the map (#254). */
+    val photoSpots: Boolean = false,
 )
 
 @Serializable

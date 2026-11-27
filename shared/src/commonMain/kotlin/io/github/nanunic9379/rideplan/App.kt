@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.HomeButton
 import io.github.nanunic9379.rideplan.profile.ProfileStore
+import io.github.nanunic9379.rideplan.profile.PhotoSpot
 import io.github.nanunic9379.rideplan.profile.SavedRow
 import io.github.nanunic9379.rideplan.profile.ThemeMode
 import io.github.nanunic9379.rideplan.profile.WelcomeScreen
@@ -89,7 +90,13 @@ import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.plan_title
 import io.github.nanunic9379.rideplan.resources.explore_locate
 import io.github.nanunic9379.rideplan.resources.explore_locate_failed
+import io.github.nanunic9379.rideplan.resources.photo_spots_tap_map
+import io.github.nanunic9379.rideplan.resources.photo_spots_no_details
+import io.github.nanunic9379.rideplan.resources.photo_spots_open_link
+import io.github.nanunic9379.rideplan.resources.stop_edit_done
 import io.github.nanunic9379.rideplan.ride.LatLon
+import io.github.nanunic9379.rideplan.ride.distanceKm
+import io.github.nanunic9379.rideplan.personal.NewPhotoSpotDialog
 import io.github.nanunic9379.rideplan.ride.pointsJson
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.CircularProgressIndicator
@@ -193,10 +200,10 @@ fun App(
                         fuelStations = routeActions?.fuelStations,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
-                    store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap)
+                    store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap, openPhotoUrl = platform?.openUrl)
                     !store.data.profile.welcomed -> Surface(Modifier.fillMaxSize()) { WelcomeScreen(store) }
                     rides.onMap -> Column(Modifier.fillMaxSize()) {
-                        Box(Modifier.weight(1f)) { MapScreen(rides, store, importActions, routeActions, mapViews, tabs = true) }
+                        Box(Modifier.weight(1f)) { MapScreen(rides, store, importActions, routeActions, mapViews, tabs = true, openPhotoUrl = platform?.openUrl) }
                         MainNavBar(rides)
                     }
                     else -> PersonalArea(store, rides, importActions, backupActions, platform, snackbar)
@@ -225,6 +232,7 @@ private fun MapScreen(
     /** Explore with the bottom bar under the map: it already keeps clear of the system bar. */
     tabs: Boolean,
     rideMap: io.github.nanunic9379.rideplan.route.RideMapActions? = null,
+    openPhotoUrl: ((String) -> Unit)? = null,
 ) {
     val ride = rides.ride
     val plan = rides.plan
@@ -243,6 +251,7 @@ private fun MapScreen(
         ),
     ) {
         if (ride == null && offroad) OffroadLayers(roadColors)
+        store?.takeIf { it.data.settings.photoSpots }?.data?.photoSpots?.filter { it.enabled }?.takeIf { it.isNotEmpty() }?.let { PhotoSpotLayers(it) }
         if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, routeActions?.roadNotes) } else me?.let { MyPositionLayer(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
@@ -257,6 +266,7 @@ private fun MapScreen(
     val editable = ride != null && routeActions != null &&
         (plan != null || (ride.stopsEditable && rides.route !is RouteState.Downloading))
     var selected by remember { mutableStateOf<Int?>(null) }
+    var selectedPhotoSpot by remember { mutableStateOf<PhotoSpot?>(null) }
     val selectedStop = selected?.takeIf { editable && ride != null && it in ride.stops.indices }
     fun edit(change: (Ride) -> Ride) {
         val current = rides.ride ?: return
@@ -275,13 +285,19 @@ private fun MapScreen(
     }
     val interactions = rememberStopInteractions(
         onAdd = when {
+            rides.choosingPhotoSpot -> null
             !editable -> null
             plan != null -> ({ point -> selected = null; replan { it.withTap(point) } })
             else -> ({ point -> selected = null; edit { it.withStopAdded(point) } })
         },
         onTapMap = { point ->
             when {
+                rides.choosingPhotoSpot && point != null -> { rides.photoSpotCoordinate = point; rides.choosingPhotoSpot = false; true }
                 selected != null -> { selected = null; true }
+                point != null && rides.plan == null && store?.data?.settings?.photoSpots == true -> {
+                    selectedPhotoSpot = store.data.photoSpots.filter { it.enabled }.firstOrNull { distanceKm(it.point, point) <= 0.05 }
+                    selectedPhotoSpot != null
+                }
                 rides.plan != null && point != null && routeActions != null -> { replan { it.withTap(point) }; true }
                 else -> false
             }
@@ -503,6 +519,12 @@ private fun MapScreen(
                 } else if (showFab && importActions != null) {
                     ImportFab(importActions, Modifier.align(Alignment.BottomEnd).padding(bottom = navBar).padding(16.dp))
                 }
+                if (rides.choosingPhotoSpot) {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 12.dp)) {
+                        Text(stringResource(Res.string.photo_spots_tap_map), Modifier.padding(horizontal = 16.dp, vertical = 12.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
                 if (ride == null) OffroadControls(offroad, { offroad = !offroad }, roadColors, { state.cameraPosition.zoom }, Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp))
                 if (ride == null && navigation != null) {
                     // Explore (#40): back to where you are, above the main action.
@@ -540,6 +562,26 @@ private fun MapScreen(
             }
         }
     }
+    rides.photoSpotCoordinate?.let { point ->
+        NewPhotoSpotDialog(point, onDismiss = { rides.photoSpotCoordinate = null }) { spot ->
+            store?.update { it.savePhotoSpot(spot) }
+            rides.photoSpotCoordinate = null
+        }
+    }
+    selectedPhotoSpot?.let { spot ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { selectedPhotoSpot = null },
+            title = { Text(spot.name) },
+            text = { Text(spot.details.ifBlank { stringResource(Res.string.photo_spots_no_details) }) },
+            confirmButton = {
+                if (spot.photoUrl != null) androidx.compose.material3.TextButton(onClick = {
+                    openPhotoUrl?.invoke(spot.photoUrl)
+                    selectedPhotoSpot = null
+                }) { Text(stringResource(Res.string.photo_spots_open_link)) }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { selectedPhotoSpot = null }) { Text(stringResource(Res.string.stop_edit_done)) } },
+        )
+    }
 }
 
 /** Room taken by the plan's top bar and mode chips (#33): the stop toolbar goes under them. */
@@ -569,6 +611,16 @@ private fun MyPositionLayer(me: LatLon) {
     CircleLayer(
         id = "explore-me", source = source, color = const(Color(0xFF1A73E8)), radius = const(9.dp),
         strokeColor = const(Color.White), strokeWidth = const(3.dp),
+    )
+}
+
+/** Saved photographer places are drawn only when the global setting and each point are enabled. */
+@Composable
+private fun PhotoSpotLayers(spots: List<PhotoSpot>) {
+    val source = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(spots.map { it.point })))
+    CircleLayer(
+        id = "photo-spots", source = source, color = const(Color(0xFFB84D91)), radius = const(8.dp),
+        strokeColor = const(Color.White), strokeWidth = const(2.5.dp),
     )
 }
 

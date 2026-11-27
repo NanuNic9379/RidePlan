@@ -28,6 +28,18 @@ data class PublishedRide(
     val address: NostrAddress get() = NostrAddress(RideEvent.KIND, pubkey, d, relays)
 }
 
+/** A photo spot's stable public Nostr address and the relays that accepted its latest version. */
+@Serializable
+data class PublishedPhotoSpot(
+    val savedId: String,
+    val pubkey: String,
+    val d: String,
+    val createdAt: Long,
+    val relays: List<String> = emptyList(),
+) {
+    val address: NostrAddress get() = NostrAddress(PhotoSpotEvent.KIND, pubkey, d, relays)
+}
+
 /**
  * A ride followed from Nostr (#11): where it lives, which ride in "Your rides" it is, and the
  * last version received ([lastEvent], the signed event), kept when relays do not answer.
@@ -57,12 +69,15 @@ data class SocialData(
     val relays: List<String> = Relays.DEFAULTS.map { it.url },
     val signer: SignerInfo? = null,
     val published: List<PublishedRide> = emptyList(),
+    val publishedPhotoSpots: List<PublishedPhotoSpot> = emptyList(),
     val followed: List<FollowedRide> = emptyList(),
 ) {
     fun publishedFor(savedId: String): PublishedRide? = published.firstOrNull { it.savedId == savedId }
+    fun publishedPhotoSpotFor(savedId: String): PublishedPhotoSpot? = publishedPhotoSpots.firstOrNull { it.savedId == savedId }
     fun followedFor(savedId: String): FollowedRide? = followed.firstOrNull { it.savedId == savedId }
 
     fun withPublished(p: PublishedRide) = copy(published = listOf(p) + published.filter { it.savedId != p.savedId })
+    fun withPublishedPhotoSpot(p: PublishedPhotoSpot) = copy(publishedPhotoSpots = listOf(p) + publishedPhotoSpots.filter { it.savedId != p.savedId })
     fun withFollowed(f: FollowedRide) = copy(followed = listOf(f) + followed.filter { it.savedId != f.savedId && it.address.coordinate != f.address.coordinate })
 
     /** Rides deleted from "Your rides" no longer need their Nostr state. */

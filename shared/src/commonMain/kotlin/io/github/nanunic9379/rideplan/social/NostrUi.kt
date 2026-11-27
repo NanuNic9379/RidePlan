@@ -64,6 +64,7 @@ import io.github.nanunic9379.rideplan.resources.nostr_followed_from
 import io.github.nanunic9379.rideplan.resources.nostr_get_signer
 import io.github.nanunic9379.rideplan.resources.nostr_intro
 import io.github.nanunic9379.rideplan.resources.nostr_no_answer
+import io.github.nanunic9379.rideplan.resources.photo_spots_nostr_disabled
 import io.github.nanunic9379.rideplan.resources.nostr_not_found
 import io.github.nanunic9379.rideplan.resources.nostr_bad_address
 import io.github.nanunic9379.rideplan.resources.nostr_open_ride
@@ -383,6 +384,7 @@ private fun PublishDialog(
 }
 
 private fun errorText(e: PublishError): StringResource = when (e) {
+    PublishError.DISABLED -> Res.string.photo_spots_nostr_disabled
     PublishError.NO_SIGNER -> Res.string.nostr_err_no_signer
     PublishError.CANCELLED -> Res.string.nostr_err_cancelled
     PublishError.BAD_SIGNATURE -> Res.string.nostr_err_bad_signature

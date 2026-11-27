@@ -161,6 +161,8 @@ data class ProfileData(
     val rides: List<SavedRide> = emptyList(),
     /** Places cut out of every shared ride (#6). */
     val privateZones: List<PrivateZone> = emptyList(),
+    /** Photographer places saved on this device (#254). */
+    val photoSpots: List<PhotoSpot> = emptyList(),
     /** The garage (#21). */
     val bikes: List<Bike> = emptyList(),
     val defaultBikeId: String? = null,
@@ -308,6 +310,13 @@ data class ProfileData(
 
     fun addZone(zone: PrivateZone): ProfileData = copy(privateZones = privateZones + zone)
 
+    fun savePhotoSpot(spot: PhotoSpot): ProfileData = copy(
+        photoSpots = if (photoSpots.any { it.id == spot.id }) photoSpots.map { if (it.id == spot.id) spot else it }
+        else photoSpots + spot,
+    )
+
+    fun deletePhotoSpot(id: String): ProfileData = copy(photoSpots = photoSpots.filterNot { it.id == id })
+
     fun deleteZone(id: String): ProfileData = copy(privateZones = privateZones.filter { it.id != id })
 
     /** Adds or replaces a bike. The first bike, or one marked [default], becomes the default. */
@@ -369,6 +378,7 @@ data class ProfileData(
             profile = p,
             rides = merged.values.sortedByDescending { it.savedAt },
             privateZones = (privateZones + other.privateZones).distinctBy { it.id },
+            photoSpots = (photoSpots + other.photoSpots).distinctBy { it.id },
             bikes = all,
             defaultBikeId = defaultBikeId?.takeIf { id -> all.any { it.id == id } }
                 ?: other.defaultBikeId?.takeIf { id -> newBikes.any { it.id == id } },
