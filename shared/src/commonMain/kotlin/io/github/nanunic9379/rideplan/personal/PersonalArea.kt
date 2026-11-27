@@ -37,6 +37,7 @@ fun PersonalArea(
                 is Dest.BikePage -> BikePage(store, rides, top.id)
                 Dest.Log -> LogPage(store, rides)
                 Dest.Zones -> ZonesPage(store, rides)
+                Dest.PhotoSpots -> PhotoSpotsPage(store, rides, platform?.openUrl, platform?.nostr, importActions?.shareText)
                 Dest.Privacy -> PrivacyPage(store, rides, backup, platform)
                 Dest.DeleteAll -> DeleteAllPage(store, rides, backup, platform)
                 Dest.Settings -> SettingsPage(store, rides, platform)

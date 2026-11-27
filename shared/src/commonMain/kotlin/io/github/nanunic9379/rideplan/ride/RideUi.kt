@@ -161,6 +161,7 @@ sealed interface Dest {
     data class BikePage(val id: String?) : Dest
     data object Log : Dest
     data object Zones : Dest
+    data object PhotoSpots : Dest
     data object Privacy : Dest
     data object DeleteAll : Dest
     data object Settings : Dest
@@ -208,6 +209,10 @@ class RideScreenState {
     var plan by mutableStateOf<PlanDraft?>(null)
     /** Leaving the plan was asked (back) while it has points: the map asks whether to discard them. */
     var planLeaving by mutableStateOf(false)
+    /** The map is waiting for one tap to choose a photographer spot. */
+    var choosingPhotoSpot by mutableStateOf(false)
+    /** A point selected on the map, ready for its details to be edited. */
+    var photoSpotCoordinate by mutableStateOf<LatLon?>(null)
 
     /** Search, chip, order and filters of the ride list (#21): they stay while you look at a ride. */
     var query by mutableStateOf(io.github.nanunic9379.rideplan.profile.RideQuery())
@@ -227,6 +232,8 @@ class RideScreenState {
     /** A tab of the bottom bar: it opens on its first page. */
     fun tab(to: Page) {
         stack = emptyList()
+        choosingPhotoSpot = false
+        photoSpotCoordinate = null
         page = to
     }
 
@@ -298,6 +305,8 @@ class RideScreenState {
         val fromPlan = plan != null
         plan = null
         planLeaving = false
+        choosingPhotoSpot = false
+        photoSpotCoordinate = null
         ride = null
         route = RouteState.Idle
         savedId = null

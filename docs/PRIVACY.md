@@ -17,6 +17,8 @@ as with any web page, the phone's IP address and the time of the request.
 | Update check (GitHub version only; foreground checks are automatic when enabled, background checks are optional and run about every 12 hours) | GitHub (`api.github.com`) | No data beyond the request for the latest version; GitHub sees the phone's IP address and request time |
 | You tap Publish on Nostr (off by default) | The Nostr relays in your list (by default `relay.damus.io`, `nos.lol`, `relay.primal.net`, `offchain.pub`) | The ride as shared (private zones and first and last km removed), its name, your summary, your Nostr public key: **public** |
 | You follow a ride on Nostr and open or check it | Your relays and the relays named in its address | The address of the ride (author key and ride id) |
+| You publish a photo spot on Nostr | The Nostr relays in your list | Its exact coordinates, only the name, description and photo link you selected, and your Nostr public key: **public** |
+| You import a photo spot from Nostr | Your relays and the relays named in its address | The spot address (author key and spot id) |
 
 The route is computed **on the phone**: stops are not sent to any server. The same holds during
 navigation: your position is used only on the phone.
@@ -74,6 +76,9 @@ deleted; the app says so before publishing. Your Nostr key stays in a separate s
 Amber): RidePlan never sees it and only stores your public key. Relays see your IP address, the time
 and what you publish or ask for. RidePlan runs no relay. Your Nostr settings (relays, followed rides)
 are stored in a separate file on the phone, not in the backup, and "Delete all data" removes them.
+Photo spots are published separately from rides. Their exact coordinates are always public; you
+choose whether to include the spot name, description and HTTPS photo link. RidePlan never uploads
+or hosts the linked photos. Sharing an `naddr` lets another rider import the spot into their own map.
 
 ## GDPR
 

@@ -239,6 +239,11 @@ Left out: `nostr.mom` (same operator as `nos.lol`, so no extra safety if one clo
   Nostr, Follow a ride. The ride is saved among the received rides; every time it is opened (or with
   **Look for a new version**) the app asks the relays for the address and applies a newer version
   with the existing #11 logic (`ProfileData.receive`, "updated from vN to vM" note).
+- **Photo spots** (#254): an explicit publish makes a separate addressable kind 30456 event. Exact
+  coordinates are always public; the photographer chooses whether the name, description and HTTPS
+  gallery link are included. No image is uploaded. Other riders import the shared `naddr`, which
+  verifies the event signature before adding the spot to their local map. Updating the same spot
+  replaces its address on relays.
 - **Only the author can publish a new version** (`RideUpdates`): an event is used only if its kind is
   30455, its author and `d` are those of the address, its id and signature are valid, and the ride
   inside has the same version id. Among valid ones the highest version number wins, then the newest.

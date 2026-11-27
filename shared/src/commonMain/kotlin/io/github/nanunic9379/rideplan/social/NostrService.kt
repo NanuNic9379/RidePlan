@@ -2,6 +2,7 @@ package io.github.nanunic9379.rideplan.social
 
 import androidx.compose.runtime.Stable
 import io.github.nanunic9379.rideplan.profile.ProfileStore
+import io.github.nanunic9379.rideplan.profile.PhotoSpot
 import io.github.nanunic9379.rideplan.ride.RideVersion
 import io.github.nanunic9379.rideplan.ride.SharePreview
 import io.github.nanunic9379.rideplan.route.RouteOptions
@@ -25,7 +26,7 @@ interface NostrSigner {
 }
 
 /** Why publishing stopped. */
-enum class PublishError { NO_SIGNER, CANCELLED, BAD_SIGNATURE, NOTHING_TO_SHARE, TOO_BIG, NO_RELAYS, NOBODY_ACCEPTED }
+enum class PublishError { DISABLED, NO_SIGNER, CANCELLED, BAD_SIGNATURE, NOTHING_TO_SHARE, TOO_BIG, NO_RELAYS, NOBODY_ACCEPTED }
 
 sealed interface PublishOutcome {
     data class Done(val accepted: Int, val total: Int, val naddr: String) : PublishOutcome
@@ -44,6 +45,15 @@ sealed interface FollowOutcome {
     data object NotFound : FollowOutcome
     /** The text is not the address of a RidePlan ride. */
     data object BadAddress : FollowOutcome
+}
+
+/** Result of importing a public photographer spot by its `naddr`. */
+sealed interface FollowPhotoSpotOutcome {
+    data class Imported(val spot: PhotoSpot) : FollowPhotoSpotOutcome
+    data object NoAnswer : FollowPhotoSpotOutcome
+    data object NotFound : FollowPhotoSpotOutcome
+    data object BadAddress : FollowPhotoSpotOutcome
+    data object Disabled : FollowPhotoSpotOutcome
 }
 
 /**
@@ -99,6 +109,47 @@ class NostrService(
         val published = PublishedRide(savedId, info.pubkey, version.rideId, createdAt, version.number, accepted)
         store.update { it.withPublished(published) }
         return PublishOutcome.Done(accepted.size, relays.size, Nip19.naddr(published.address.copy(relays = accepted.take(2))))
+    }
+
+    /** Publishes only the spot fields the photographer selected; its exact coordinates are public. */
+    suspend fun publishPhotoSpot(spot: PhotoSpot): PublishOutcome {
+        if (!data.enabled) return PublishOutcome.Failed(PublishError.DISABLED)
+        val info = data.signer ?: return PublishOutcome.Failed(PublishError.NO_SIGNER)
+        val s = signer ?: return PublishOutcome.Failed(PublishError.NO_SIGNER)
+        val relays = data.relays
+        if (relays.isEmpty()) return PublishOutcome.Failed(PublishError.NO_RELAYS)
+        val draft = runCatching { PhotoSpotEvent.draft(spot) }.getOrElse { return PublishOutcome.Failed(PublishError.NOTHING_TO_SHARE) }
+        val createdAt = profile.time() / 1000
+        val id = NostrEvent.idOf(draft, info.pubkey, createdAt)
+        val answer = s.sign(draft.toUnsignedJson(createdAt, info.pubkey), id, info)
+            ?: return PublishOutcome.Failed(PublishError.CANCELLED)
+        val event = Signing.signedEvent(answer, draft, info.pubkey, createdAt, verifier)
+            ?: return PublishOutcome.Failed(PublishError.BAD_SIGNATURE)
+        val results = pool.publish(event, relays)
+        val accepted = results.filterValues { it == PublishResult.ACCEPTED }.keys.toList()
+        if (accepted.isEmpty()) return PublishOutcome.Failed(PublishError.NOBODY_ACCEPTED)
+        val published = PublishedPhotoSpot(spot.id, info.pubkey, spot.id, createdAt, accepted)
+        store.update { it.withPublishedPhotoSpot(published) }
+        return PublishOutcome.Done(accepted.size, relays.size, Nip19.naddr(published.address.copy(relays = accepted.take(2))))
+    }
+
+    /** Fetches, verifies, and saves a public photographer spot shared by another rider. */
+    suspend fun followPhotoSpot(text: String): FollowPhotoSpotOutcome {
+        if (!data.enabled) return FollowPhotoSpotOutcome.Disabled
+        val address = Nip19.parseNaddr(text)?.takeIf { it.kind == PhotoSpotEvent.KIND && it.d.isNotBlank() }
+            ?: return FollowPhotoSpotOutcome.BadAddress
+        val relays = Relays.forReading(data.relays, address.relays)
+        if (relays.isEmpty()) return FollowPhotoSpotOutcome.NoAnswer
+        val fetched = pool.fetch(NostrFilter.of(address), relays)
+        if (fetched.answered == 0) return FollowPhotoSpotOutcome.NoAnswer
+        val spot = fetched.events.asSequence()
+            .filter { it.kind == address.kind && it.pubkey == address.pubkey && it.tag("d") == address.d && it.verify(verifier) }
+            .sortedByDescending { it.createdAt }
+            .mapNotNull(PhotoSpotEvent::parse)
+            .firstOrNull() ?: return FollowPhotoSpotOutcome.NotFound
+        val saved = spot.copy(sourceAddress = Nip19.naddr(address.copy(relays = relays.take(2))))
+        profile.update { it.savePhotoSpot(saved) }
+        return FollowPhotoSpotOutcome.Imported(saved)
     }
 
     /** Follows the ride at [text] (an `naddr`): fetches it and saves it in "Received". */

@@ -3,7 +3,8 @@ package io.github.nanunic9379.rideplan.ride
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -50,7 +53,10 @@ import org.maplibre.compose.interaction.MapInteractions
 import org.maplibre.compose.map.MapState
 import org.maplibre.compose.overlay.MapOverlayScope
 import org.maplibre.spatialk.geojson.Position
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToInt
+
+private const val STOP_DRAG_LONG_PRESS_MILLIS = 1_000L
 
 /**
  * Map gestures for editing the stops (#2): a long press adds a stop, a tap on the map
@@ -89,7 +95,8 @@ fun rememberStopInteractions(onAdd: ((LatLon) -> Unit)?, onTapMap: (LatLon?) -> 
 }
 
 /**
- * A 48 dp handle on every stop (usable with gloves): tap to select it, drag to move it.
+ * A 48 dp handle on every stop (usable with gloves): tap to select it; hold for a second and
+ * drag to move it. Moving before the hold completes is left to the map, so a pan cannot move a stop.
  * The stop itself is drawn by [RideLayers]; the handle shows a ring only while selected or dragged.
  */
 @Composable
@@ -115,20 +122,51 @@ fun MapOverlayScope.StopHandles(
                     .size(48.dp)
                     .semantics { contentDescription = label }
                     .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = { dragging = true; select(i) },
-                            onDragEnd = {
-                                val start = map.screenLocationFromPosition(position)
-                                val end = start?.let { DpOffset(it.x + drag.x.toDp(), it.y + drag.y.toDp()) }
-                                val target = end?.let(map::positionFromScreenLocation)?.let { mapLatLon(it.latitude, it.longitude) }
-                                dragging = false
-                                drag = Offset.Zero
-                                if (target != null) move(i, target)
-                            },
-                            onDragCancel = { dragging = false; drag = Offset.Zero },
-                        ) { change, amount ->
-                            change.consume()
-                            drag += amount
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            var cancelled = false
+                            val waitResult = withTimeoutOrNull(STOP_DRAG_LONG_PRESS_MILLIS) {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Main)
+                                    val change = event.changes.firstOrNull { it.id == down.id }
+                                    if (change == null || !change.pressed || change.isConsumed ||
+                                        (change.position - down.position).getDistance() > viewConfiguration.touchSlop
+                                    ) {
+                                        cancelled = true
+                                        break
+                                    }
+                                }
+                                false
+                            }
+                            if (!cancelled && waitResult == null &&
+                                currentEvent.changes.any { it.id == down.id && it.pressed }
+                            ) {
+                                dragging = true
+                                select(i)
+                                var completed = false
+                                try {
+                                    while (true) {
+                                        val event = awaitPointerEvent(PointerEventPass.Main)
+                                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                                        val amount = change.positionChange()
+                                        if (amount != Offset.Zero) {
+                                            change.consume()
+                                            drag += amount
+                                        }
+                                        if (!change.pressed) {
+                                            completed = true
+                                            break
+                                        }
+                                    }
+                                } finally {
+                                    val start = map.screenLocationFromPosition(position)
+                                    val end = start?.let { DpOffset(it.x + drag.x.toDp(), it.y + drag.y.toDp()) }
+                                    val target = end?.let(map::positionFromScreenLocation)?.let { mapLatLon(it.latitude, it.longitude) }
+                                    dragging = false
+                                    drag = Offset.Zero
+                                    if (completed && target != null) move(i, target)
+                                }
+                            }
                         }
                     }
                     .clickable(role = Role.Button) { select(i) },
