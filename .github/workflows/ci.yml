@@ -67,8 +67,13 @@ jobs:
           disable-animations: true
           script: |
             set -euo pipefail
-            apk="$(find android-apks -type f -name '*x86_64*.apk' -print -quit)"
-            test -n "$apk"
+            apk="$(find . -type f -name '*x86_64*.apk' -print -quit)"
+            if [ -z "$apk" ]; then
+              echo 'No x86_64 APK found in the downloaded CI artifact. Files:'
+              find . -type f -name '*.apk' -print
+              exit 1
+            fi
+            echo "Installing emulator APK: $apk"
             adb install "$apk"
             adb logcat -c
             adb shell monkey -p io.github.nanunic9379.rideplan -c android.intent.category.LAUNCHER 1
