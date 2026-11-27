@@ -139,6 +139,11 @@ import io.github.nanunic9379.rideplan.resources.update_checking
 import io.github.nanunic9379.rideplan.resources.update_err_network
 import io.github.nanunic9379.rideplan.resources.update_latest
 import io.github.nanunic9379.rideplan.resources.update_retry
+import io.github.nanunic9379.rideplan.resources.photo_spots_title
+import io.github.nanunic9379.rideplan.resources.photo_spots_map_toggle
+import io.github.nanunic9379.rideplan.resources.photo_spots_map_help
+import io.github.nanunic9379.rideplan.resources.photo_spots_manage
+import io.github.nanunic9379.rideplan.resources.photo_spots_count
 
 /** Data & privacy (#21): what leaves the phone, the backup, export, and deleting everything. */
 @Composable

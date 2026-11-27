@@ -64,6 +64,7 @@ import io.github.nanunic9379.rideplan.resources.nostr_followed_from
 import io.github.nanunic9379.rideplan.resources.nostr_get_signer
 import io.github.nanunic9379.rideplan.resources.nostr_intro
 import io.github.nanunic9379.rideplan.resources.nostr_no_answer
+import io.github.nanunic9379.rideplan.resources.photo_spots_nostr_disabled
 import io.github.nanunic9379.rideplan.resources.nostr_not_found
 import io.github.nanunic9379.rideplan.resources.nostr_bad_address
 import io.github.nanunic9379.rideplan.resources.nostr_open_ride

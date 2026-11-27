@@ -90,6 +90,10 @@ import io.github.nanunic9379.rideplan.resources.Res
 import io.github.nanunic9379.rideplan.resources.plan_title
 import io.github.nanunic9379.rideplan.resources.explore_locate
 import io.github.nanunic9379.rideplan.resources.explore_locate_failed
+import io.github.nanunic9379.rideplan.resources.photo_spots_tap_map
+import io.github.nanunic9379.rideplan.resources.photo_spots_no_details
+import io.github.nanunic9379.rideplan.resources.photo_spots_open_link
+import io.github.nanunic9379.rideplan.resources.stop_edit_done
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.distanceKm
 import io.github.nanunic9379.rideplan.personal.NewPhotoSpotDialog
