@@ -383,6 +383,7 @@ private fun PublishDialog(
 }
 
 private fun errorText(e: PublishError): StringResource = when (e) {
+    PublishError.DISABLED -> Res.string.photo_spots_nostr_disabled
     PublishError.NO_SIGNER -> Res.string.nostr_err_no_signer
     PublishError.CANCELLED -> Res.string.nostr_err_cancelled
     PublishError.BAD_SIGNATURE -> Res.string.nostr_err_bad_signature

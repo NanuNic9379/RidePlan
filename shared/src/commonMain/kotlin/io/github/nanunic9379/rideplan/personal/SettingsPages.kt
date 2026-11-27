@@ -314,6 +314,14 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
                 store.update { it.copy(settings = it.settings.copy(speedCameras = v)) }
             }
         }
+        SectionLabel(stringResource(Res.string.photo_spots_title))
+        RowGroup {
+            SwitchRow(null, stringResource(Res.string.photo_spots_map_toggle), stringResource(Res.string.photo_spots_map_help), s.photoSpots) { enabled ->
+                store.update { it.copy(settings = it.settings.copy(photoSpots = enabled)) }
+            }
+            GroupDivider()
+            NavRow(AppIcons.Map, stringResource(Res.string.photo_spots_manage), stringResource(Res.string.photo_spots_count, store.data.photoSpots.size), onClick = { rides.open(Dest.PhotoSpots) })
+        }
         SectionLabel(stringResource(Res.string.settings_app))
         RowGroup {
             NavRow(
