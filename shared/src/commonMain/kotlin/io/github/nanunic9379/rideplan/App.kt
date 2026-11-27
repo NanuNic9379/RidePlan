@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.HomeButton
@@ -96,6 +97,7 @@ import io.github.nanunic9379.rideplan.resources.explore_locate_failed
 import io.github.nanunic9379.rideplan.resources.photo_spots_tap_map
 import io.github.nanunic9379.rideplan.resources.photo_spots_no_details
 import io.github.nanunic9379.rideplan.resources.photo_spots_open_link
+import io.github.nanunic9379.rideplan.resources.photo_spot_marker
 import io.github.nanunic9379.rideplan.resources.stop_edit_done
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.distanceKm
@@ -109,7 +111,10 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 import org.maplibre.compose.map.MapState
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.expressions.value.SymbolAnchor
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import io.github.nanunic9379.rideplan.ride.PlanDraft
@@ -125,6 +130,7 @@ import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.painterResource
 import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.camera.CameraUpdate
 import org.maplibre.compose.camera.CameraPosition
@@ -258,8 +264,8 @@ private fun MapScreen(
         ),
     ) {
         if (ride == null && offroad) OffroadLayers(roadColors)
-        store?.takeIf { it.data.settings.photoSpots }?.data?.photoSpots?.filter { it.enabled }?.takeIf { it.isNotEmpty() }?.let { PhotoSpotLayers(it) }
         if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, roadNotes) } else me?.let { MyPositionLayer(it) }
+        store?.takeIf { it.data.settings.photoSpots }?.data?.photoSpots?.filter { it.enabled }?.takeIf { it.isNotEmpty() }?.let { PhotoSpotLayers(it) }
     }
     // The area on screen is remembered each time the map stops moving (not the world overview).
     LaunchedEffect(state, mapViews) {
@@ -638,9 +644,13 @@ private fun MyPositionLayer(me: LatLon) {
 @Composable
 private fun PhotoSpotLayers(spots: List<PhotoSpot>) {
     val source = rememberGeoJsonSource(GeoJsonData.JsonString(pointsJson(spots.map { it.point })))
-    CircleLayer(
-        id = "photo-spots", source = source, color = const(Color(0xFFB84D91)), radius = const(8.dp),
-        strokeColor = const(Color.White), strokeWidth = const(2.5.dp),
+    SymbolLayer(
+        id = "photo-spots",
+        source = source,
+        iconImage = image(painterResource(Res.drawable.photo_spot_marker), size = DpSize(48.dp, 56.dp)),
+        iconAnchor = const(SymbolAnchor.Bottom),
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
     )
 }
 
