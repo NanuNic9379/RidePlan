@@ -186,6 +186,10 @@
     <string name="zones_name_default">Zuhause</string>
     <string name="zones_save">Speichern</string>
     <string name="nav_start">Navigieren</string>
+    <string name="nav_battery_title">Navigation im Hintergrund fortsetzen</string>
+    <string name="nav_battery_text">Manche Smartphones beenden Apps, um Akku zu sparen. Erlaube RidePlan die uneingeschränkte Akkunutzung, damit die GPS-Navigation bei ausgeschaltetem Bildschirm weiterläuft. Du kannst auch ohne Änderung fortfahren.</string>
+    <string name="nav_battery_settings">Akku-Einstellungen öffnen</string>
+    <string name="nav_battery_help">Tipps für dein Smartphone</string>
     <string name="nav_exit">Beenden</string>
     <string name="nav_mute">Stumm</string>
     <string name="nav_overview">Route</string>

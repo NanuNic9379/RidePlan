@@ -21,6 +21,15 @@ import kotlin.time.TimeSource
  * screen off or another app open too (#65), never after Exit.
  */
 interface NavigationPlatform {
+    /** Whether this is the first navigation on a phone that restricts background battery use. */
+    fun shouldExplainBatteryOptimization(): Boolean = false
+
+    /** Opens the phone's battery settings for RidePlan when navigation may be stopped in background. */
+    fun openBatteryOptimizationSettings() {}
+
+    /** Opens vendor-specific steps for allowing background navigation. */
+    fun openBatteryHelp() {}
+
     /** Asks for the foreground location permission if needed; true when granted. */
     suspend fun requestLocation(): Boolean
 
@@ -71,6 +80,8 @@ class NavigationSession(
     var muted by mutableStateOf(false)
     var permission by mutableStateOf<Boolean?>(null)
         private set
+    var batteryPrompt by mutableStateOf(false)
+        private set
     var rerouting by mutableStateOf(false)
         private set
     /** The last re-route attempt failed: ride back to the road. */
@@ -101,19 +112,34 @@ class NavigationSession(
             val granted = platform.requestLocation()
             permission = granted
             if (!granted) return@launch
-            paused = false
-            platform.keepScreenOn(true)
-            platform.startLocation(::onFix)
-            idle.start(clock())
-            if (texts == null) texts = noticeTexts()
-            inBackground = update?.finished != true
-            publishNotice()
-            idleJob?.cancel()
-            idleJob = scope.launch {
-                while (isActive) {
-                    delay(IDLE_CHECK_MS)
-                    checkIdle()
-                }
+            if (platform.shouldExplainBatteryOptimization()) {
+                batteryPrompt = true
+            } else startGuidance()
+        }
+    }
+
+    /** The prompt is informational; navigation still works if the rider skips system settings. */
+    fun continueAfterBatteryPrompt(openSettings: Boolean) {
+        batteryPrompt = false
+        if (openSettings) platform.openBatteryOptimizationSettings()
+        scope.launch { startGuidance() }
+    }
+
+    fun openBatteryHelp() = platform.openBatteryHelp()
+
+    private suspend fun startGuidance() {
+        paused = false
+        platform.keepScreenOn(true)
+        platform.startLocation(::onFix)
+        idle.start(clock())
+        if (texts == null) texts = noticeTexts()
+        inBackground = update?.finished != true
+        publishNotice()
+        idleJob?.cancel()
+        idleJob = scope.launch {
+            while (isActive) {
+                delay(IDLE_CHECK_MS)
+                checkIdle()
             }
         }
     }
