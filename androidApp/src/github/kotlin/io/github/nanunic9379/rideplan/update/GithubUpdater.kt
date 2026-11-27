@@ -30,14 +30,19 @@ data class ReleaseInfo(
  * what every web request carries (IP address, "RidePlan-Android" as the client).
  */
 object GithubUpdater {
-    private const val LATEST = "https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/latest"
+    // Static release asset avoids the anonymous REST API's shared 60-request/hour IP limit.
+    private const val LATEST = "https://github.com/${BuildConfig.UPDATE_REPO}/releases/latest/download/rideplan-update.json"
     private const val TIMEOUT_MS = 15_000
 
     /** Latest Release if it is newer, otherwise null. Call off the main thread. */
     fun latestNewer(): ReleaseInfo? {
-        val conn = open(LATEST).apply { setRequestProperty("Accept", "application/vnd.github+json") }
+        val conn = open(LATEST).apply {
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Cache-Control", "no-cache")
+            setRequestProperty("Pragma", "no-cache")
+        }
         try {
-            if (conn.responseCode != HttpURLConnection.HTTP_OK) return null
+            if (conn.responseCode != HttpURLConnection.HTTP_OK) throw IOException("GitHub update manifest HTTP ${conn.responseCode}")
             val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
             val tag = json.getString("tag_name")
             if (!UpdateRules.isNewer(tag, BuildConfig.VERSION_CODE)) return null
