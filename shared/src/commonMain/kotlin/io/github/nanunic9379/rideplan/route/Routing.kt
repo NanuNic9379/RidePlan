@@ -18,6 +18,17 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 
+/** Valhalla tile data is compatible with the engine only within the same major/minor release. */
+object ValhallaDataVersion {
+    private val version = Regex("""^(\d+)\.(\d+)(?:\.\d+)?$""")
+
+    fun compatible(data: String, engine: String): Boolean {
+        val dataParts = version.matchEntire(data)?.groupValues ?: return false
+        val engineParts = version.matchEntire(engine)?.groupValues ?: return false
+        return dataParts[1] == engineParts[1] && dataParts[2] == engineParts[2]
+    }
+}
+
 /**
  * A region of road data (Release "routing-data", #3).
  * [bbox]: lon min, lat min, lon max, lat max. [file]: Valhalla tar compressed with gzip.

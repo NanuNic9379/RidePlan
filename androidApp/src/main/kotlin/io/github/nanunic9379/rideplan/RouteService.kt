@@ -28,6 +28,7 @@ import io.github.nanunic9379.rideplan.route.RoutingPack
 import io.github.nanunic9379.rideplan.route.RoutingCells
 import io.github.nanunic9379.rideplan.route.RoutingData
 import io.github.nanunic9379.rideplan.route.RoutingRegion
+import io.github.nanunic9379.rideplan.route.ValhallaDataVersion
 import io.github.nanunic9379.rideplan.route.ValhallaRoadAttributes
 import io.github.nanunic9379.rideplan.route.RoadAttributes
 import io.github.nanunic9379.rideplan.route.ValhallaRoute
@@ -106,9 +107,13 @@ class RouteService(context: Context) {
     private var engineData: String? = null
 
     /** The areas with cells on the phone. */
-    fun localAreas(): List<LocalArea> = areaIds().mapNotNull { id ->
+    fun localAreas(compatibleOnly: Boolean = false): List<LocalArea> = areaIds().mapNotNull { id ->
         val f = files(id)
-        f.cells()?.let { LocalArea(id, it, f.installedPacks()) }
+        f.cells()?.let { cells ->
+            LocalArea(id, cells, f.installedPacks()).takeIf {
+                !compatibleOnly || ValhallaDataVersion.compatible(cells.valhalla, BuildConfig.VALHALLA_VERSION)
+            }
+        }
     }
 
     /** The areas as last read from the index; only Italy before the first reading. */
@@ -134,11 +139,12 @@ class RouteService(context: Context) {
      */
     fun localData(points: List<LatLon>, strict: Boolean = true): RoutingData? {
         val areas = areas()
-        val local = localAreas()
+        val local = localAreas(compatibleOnly = true)
         RoutingAreas.local(areas, local, points, strict = true)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
         CrossArea.local(areas, local, points)?.let { return it }
         if (!strict) RoutingAreas.local(areas, local, points, strict = false)?.let { a -> a.cells?.let { return RoutingData.Cells(it, a.id) } }
-        return RoutingRegion.bestFor(installed(), points)?.let { RoutingData.Region(it) }
+        return RoutingRegion.bestFor(installed().filter { ValhallaDataVersion.compatible(it.valhalla, BuildConfig.VALHALLA_VERSION) }, points)
+            ?.let { RoutingData.Region(it) }
     }
 
     /**
@@ -159,7 +165,9 @@ class RouteService(context: Context) {
                 } catch (e: IllegalArgumentException) {
                     continue // a format this version cannot read: as if the area were not there
                 }
-                found += PublishedArea(area, cells)
+                if (ValhallaDataVersion.compatible(cells.valhalla, BuildConfig.VALHALLA_VERSION)) {
+                    found += PublishedArea(area, cells)
+                }
             }
         } catch (e: IOException) {
             if (localData(points, strict = false) != null) return emptyList()
@@ -169,8 +177,16 @@ class RouteService(context: Context) {
     }
 
     /** What to download for the ride among the published areas, one or several (#14); null if they do not cover it. */
-    fun plan(published: List<PublishedArea>, points: List<LatLon>): DataDownload? =
-        RoutingAreas.download(published, localAreas(), points)
+    fun plan(published: List<PublishedArea>, points: List<LatLon>): DataDownload? {
+        val local = localAreas().map { area ->
+            val cells = area.cells
+            if (cells != null && !ValhallaDataVersion.compatible(cells.valhalla, BuildConfig.VALHALLA_VERSION)) {
+                // Force replacement even when the stale manifest has the same build id.
+                area.copy(cells = cells.copy(build = "incompatible-${cells.build}"))
+            } else area
+        }
+        return RoutingAreas.download(published, local, points)
+    }
 
     /** The cells of every area a ride crosses, one area after the other; progress counts over all of them. */
     fun download(plan: AreasDownload, isActive: () -> Boolean, progress: (Long) -> Unit) {
@@ -358,12 +374,15 @@ class RouteService(context: Context) {
     /** Whole regions already downloaded and verified (before #45). */
     fun installed(): List<RoutingRegion> =
         dir.listFiles { f -> f.name.endsWith(".json") }.orEmpty().mapNotNull { f ->
-            runCatching { RoutingRegion.fromJson(f.readText()) }.getOrNull()?.takeIf { tar(it).isFile }
+            runCatching { RoutingRegion.fromJson(f.readText()) }.getOrNull()?.takeIf {
+                tar(it).isFile && ValhallaDataVersion.compatible(it.valhalla, BuildConfig.VALHALLA_VERSION)
+            }
         }
 
     /** The list of published regions; empty if none is published yet. */
     fun published(): List<RoutingRegion> = try {
         RoutingRegion.parseManifest(get(BuildConfig.ROUTING_DATA_URL + "regions.json").use { it.readBytes().decodeToString() })
+            .filter { ValhallaDataVersion.compatible(it.valhalla, BuildConfig.VALHALLA_VERSION) }
     } catch (e: NotFound) {
         emptyList()
     } catch (e: IOException) {
@@ -462,6 +481,9 @@ class RouteService(context: Context) {
     }
 
     private fun engineFor(data: RoutingData): Valhalla {
+        require(ValhallaDataVersion.compatible(data.valhalla, BuildConfig.VALHALLA_VERSION)) {
+            "incompatible Valhalla data version ${data.valhalla}"
+        }
         engine?.let { if (engineData == data.dataId) return it }
         closeEngine()
         val base = when (data) {
