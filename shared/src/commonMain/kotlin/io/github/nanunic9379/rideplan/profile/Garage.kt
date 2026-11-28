@@ -17,6 +17,75 @@ enum class Engine {
     ELECTRIC,
 }
 
+/** Final drive, used to keep irrelevant service reminders out of a bike's maintenance list. */
+@Serializable
+enum class FinalDrive { CHAIN, SHAFT, BELT, ELECTRIC, UNKNOWN }
+
+/** Cooling system; electric bikes have no engine coolant service. */
+@Serializable
+enum class Cooling { AIR, LIQUID, ELECTRIC, UNKNOWN }
+
+@Serializable
+enum class MaintenanceTask {
+    CHAIN_LUBE, CHAIN_TENSION, SHAFT_OIL, BELT_CHECK, ENGINE_OIL, TIRES, BRAKE_PADS,
+    BRAKE_FLUID, COOLANT, GENERAL_SERVICE
+}
+
+@Serializable
+data class MaintenanceRule(
+    val task: MaintenanceTask,
+    val everyKm: Int? = null,
+    val everyMonths: Int? = null,
+    val lastKm: Int? = null,
+    val lastAt: Long? = null,
+)
+
+@Serializable
+data class MaintenanceRecord(
+    val id: String,
+    val task: MaintenanceTask,
+    val odometerKm: Int,
+    val completedAt: Long,
+    val note: String = "",
+)
+
+fun MaintenanceTask.appliesTo(drive: FinalDrive, cooling: Cooling): Boolean = when (this) {
+    MaintenanceTask.CHAIN_LUBE, MaintenanceTask.CHAIN_TENSION -> drive == FinalDrive.CHAIN
+    MaintenanceTask.SHAFT_OIL -> drive == FinalDrive.SHAFT
+    MaintenanceTask.BELT_CHECK -> drive == FinalDrive.BELT
+    MaintenanceTask.COOLANT -> cooling == Cooling.LIQUID
+    MaintenanceTask.ENGINE_OIL -> cooling != Cooling.ELECTRIC
+    MaintenanceTask.TIRES, MaintenanceTask.BRAKE_PADS, MaintenanceTask.BRAKE_FLUID,
+    MaintenanceTask.GENERAL_SERVICE -> true
+}
+
+fun defaultMaintenanceRules(drive: FinalDrive, cooling: Cooling): List<MaintenanceRule> =
+    MaintenanceTask.entries.filter { it.appliesTo(drive, cooling) }.map { task ->
+        when (task) {
+            MaintenanceTask.CHAIN_LUBE -> MaintenanceRule(task, everyKm = 800)
+            MaintenanceTask.CHAIN_TENSION -> MaintenanceRule(task, everyKm = 5000)
+            MaintenanceTask.SHAFT_OIL -> MaintenanceRule(task, everyKm = 20000)
+            MaintenanceTask.BELT_CHECK -> MaintenanceRule(task, everyKm = 10000)
+            MaintenanceTask.ENGINE_OIL -> MaintenanceRule(task, everyKm = 6000, everyMonths = 12)
+            MaintenanceTask.TIRES -> MaintenanceRule(task, everyKm = 10000)
+            MaintenanceTask.BRAKE_PADS -> MaintenanceRule(task, everyKm = 10000)
+            MaintenanceTask.BRAKE_FLUID -> MaintenanceRule(task, everyMonths = 24)
+            MaintenanceTask.COOLANT -> MaintenanceRule(task, everyMonths = 24)
+            MaintenanceTask.GENERAL_SERVICE -> MaintenanceRule(task, everyKm = 10000, everyMonths = 12)
+        }
+    }
+
+/** A missing baseline is due immediately so the first service date can be recorded. */
+fun MaintenanceRule.isDue(odometerKm: Int, now: Long): Boolean {
+    if (everyKm == null && everyMonths == null) return false
+    val dueByKm = everyKm?.let { interval -> (lastKm?.toLong() ?: 0L) + interval <= odometerKm.toLong() } ?: false
+    val dueByTime = everyMonths?.let { months ->
+        val baseline = lastAt ?: return@let false
+        (now - baseline) >= (months * 30.4375 * 86_400_000.0).toLong()
+    } ?: false
+    return dueByKm || dueByTime || (lastKm == null && lastAt == null)
+}
+
 /**
  * A bike in the garage (#21).
  * [tankLitres] × [kmPerLitre] = range on a full tank; for an electric bike [electricRangeKm].
@@ -30,6 +99,11 @@ data class Bike(
     val tankLitres: Double? = null,
     val kmPerLitre: Double? = null,
     val electricRangeKm: Double? = null,
+    val finalDrive: FinalDrive = if (engine == Engine.ELECTRIC) FinalDrive.ELECTRIC else FinalDrive.UNKNOWN,
+    val cooling: Cooling = if (engine == Engine.ELECTRIC) Cooling.ELECTRIC else Cooling.UNKNOWN,
+    val odometerKm: Int = 0,
+    val maintenance: List<MaintenanceRule> = emptyList(),
+    val maintenanceLog: List<MaintenanceRecord> = emptyList(),
 ) {
     /** Kilometres on a full tank (or charge); null when it is not known. */
     val rangeKm: Int?
