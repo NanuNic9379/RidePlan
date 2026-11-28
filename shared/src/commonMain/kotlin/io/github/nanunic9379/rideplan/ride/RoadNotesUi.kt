@@ -23,6 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +58,7 @@ import io.github.nanunic9379.rideplan.resources.closure_unnamed
 import io.github.nanunic9379.rideplan.resources.closure_where
 import io.github.nanunic9379.rideplan.resources.menu_done
 import io.github.nanunic9379.rideplan.resources.speed_camera_marker_title
+import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.resources.speed_camera_marker_details
 import io.github.nanunic9379.rideplan.resources.speed_camera_limit
 import io.github.nanunic9379.rideplan.resources.speed_camera_direction
@@ -73,7 +77,6 @@ import io.github.nanunic9379.rideplan.route.RouteState
 import io.github.nanunic9379.rideplan.route.SpeedCamera
 import io.github.nanunic9379.rideplan.route.routable
 import io.github.nanunic9379.rideplan.route.unrouted
-import io.github.nanunic9379.rideplan.ui.AppIcons
 import io.github.nanunic9379.rideplan.ui.Touch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -81,8 +84,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.layers.SymbolLayer
+import org.maplibre.compose.expressions.value.SymbolAnchor
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import kotlin.time.Clock
@@ -270,9 +275,13 @@ internal fun RoadNotesLayers(ride: Ride, notes: NotesOnRide?) {
     val closedSource = rememberGeoJsonSource(GeoJsonData.JsonString(closed))
     val camSource = rememberGeoJsonSource(GeoJsonData.JsonString(cams))
     LineLayer(id = "ride-closed", source = closedSource, color = const(scheme.error), width = const(5.dp))
-    CircleLayer(
-        id = "ride-cameras", source = camSource, color = const(scheme.error), radius = const(5.dp),
-        strokeColor = const(scheme.surface), strokeWidth = const(2.dp),
+    SymbolLayer(
+        id = "ride-cameras",
+        source = camSource,
+        iconImage = image(rememberVectorPainter(AppIcons.SpeedCameraMarker), size = DpSize(36.dp, 44.dp)),
+        iconAnchor = const(SymbolAnchor.Bottom),
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
     )
 }
 

@@ -13,6 +13,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +32,9 @@ import io.github.nanunic9379.rideplan.route.RoadNotes
 import io.github.nanunic9379.rideplan.ui.AppIcons
 import org.jetbrains.compose.resources.stringResource
 import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.layers.SymbolLayer
+import org.maplibre.compose.expressions.value.SymbolAnchor
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 
@@ -48,10 +52,13 @@ internal fun rememberNavCameras(session: NavigationSession, load: (suspend () ->
 internal fun SpeedCameraLayer(cameras: List<CameraOnRide>) {
     val json = remember(cameras) { pointsJson(cameras.map { it.camera.point }) }
     val source = rememberGeoJsonSource(GeoJsonData.JsonString(json))
-    val scheme = MaterialTheme.colorScheme
-    CircleLayer(
-        id = "nav-cameras", source = source, color = const(scheme.error), radius = const(7.dp),
-        strokeColor = const(scheme.surface), strokeWidth = const(3.dp),
+    SymbolLayer(
+        id = "nav-cameras",
+        source = source,
+        iconImage = image(rememberVectorPainter(AppIcons.SpeedCameraMarker), size = DpSize(40.dp, 48.dp)),
+        iconAnchor = const(SymbolAnchor.Bottom),
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
     )
 }
 

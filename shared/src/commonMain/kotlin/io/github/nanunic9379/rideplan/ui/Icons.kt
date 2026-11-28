@@ -244,8 +244,33 @@ object AppIcons {
         )
         .build()
 
+    val FuelMarker = poiMarker(
+        name = "FuelMarker",
+        pin = Color(0xFFE18A25),
+        glyph = "M15,16 H28 V34 H15 Z M17,18 V23 H26 V18 Z M18,26 H25 V32 H18 Z M28,19 H31 V16 H34 V22 L32,24 V31 H30 V23 L28,21 Z",
+    )
+    val ViewpointMarker = poiMarker(
+        name = "ViewpointMarker",
+        pin = Color(0xFF31866C),
+        glyph = "M11,33 L20,19 L25,26 L30,20 L38,33 Z M17,31 L21,24 L26,31 Z M27,31 L30,25 L35,31 Z M31,15 C31,13.3 32.3,12 34,12 C35.7,12 37,13.3 37,15 C37,16.7 35.7,18 34,18 C32.3,18 31,16.7 31,15 Z",
+    )
+    val SpeedCameraMarker = poiMarker(
+        name = "SpeedCameraMarker",
+        pin = Color(0xFFD34E52),
+        glyph = "M15,20 H18 L20,17 H28 L30,20 H32 C33.1,20 34,20.9 34,22 V29 C34,30.1 33.1,31 32,31 H16 C14.9,31 14,30.1 14,29 V22 C14,20.9 14.9,20 16,20 Z M25,25.5 C25,27.7 23.2,29.5 21,29.5 C18.8,29.5 17,27.7 17,25.5 C17,23.3 18.8,21.5 21,21.5 C23.2,21.5 25,23.3 25,25.5 Z M31,14 C34.3,14 37,16.7 37,20 H35 C35,17.8 33.2,16 31,16 Z M31,17 C32.7,17 34,18.3 34,20 H32 C32,19.4 31.6,19 31,19 Z",
+    )
+
     private fun icon(name: String, path: String): ImageVector =
         ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
             .addPath(pathData = addPathNodes(path), fill = SolidColor(Color.Black))
+            .build()
+
+    private fun poiMarker(name: String, pin: Color, glyph: String): ImageVector =
+        ImageVector.Builder(name = name, defaultWidth = 40.dp, defaultHeight = 48.dp, viewportWidth = 48f, viewportHeight = 56f)
+            .addPath(
+                pathData = addPathNodes("M24,2 C12.4,2 3,11.4 3,23 C3,36.2 24,55 24,55 C24,55 45,36.2 45,23 C45,11.4 35.6,2 24,2 Z"),
+                fill = SolidColor(pin),
+            )
+            .addPath(pathData = addPathNodes(glyph), fill = SolidColor(Color.White))
             .build()
 }
