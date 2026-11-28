@@ -3,6 +3,7 @@ package io.github.nanunic9379.rideplan.route
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.Stop
+import io.github.nanunic9379.rideplan.ride.distanceKm
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -303,6 +304,88 @@ object ValhallaRoute {
             maneuvers = maneuvers,
         )
     }
+}
+
+/** Split an overlong Valhalla request at a hidden pass-through point. */
+object LongRoute {
+    data class Split(val left: List<Stop>, val right: List<Stop>, val junction: LatLon)
+
+    /** Retry a request after splitting only when the engine identifies its path-distance limit. */
+    fun compute(
+        stops: List<Stop>,
+        isDistanceLimit: (Exception) -> Boolean,
+        startHeading: Double? = null,
+        depth: Int = 0,
+        route: (List<Stop>, Double?) -> ValhallaRoute.Result,
+    ): ValhallaRoute.Result = try {
+        route(stops, startHeading)
+    } catch (error: Exception) {
+        if (!isDistanceLimit(error) || depth >= MAX_SPLITS) throw error
+        val split = split(stops) ?: throw error
+        val left = compute(split.left, isDistanceLimit, startHeading, depth + 1, route)
+        val right = compute(split.right, isDistanceLimit, null, depth + 1, route)
+        CrossArea.join(
+            listOf(left, right),
+            listOf(
+                AreaLeg("long-route", 0, 1, after = split.junction),
+                AreaLeg("long-route", 0, 1, before = split.junction),
+            ),
+        )
+    }
+
+    /** Splitting is retried only after Valhalla reports its 500 km path limit. */
+    fun split(stops: List<Stop>): Split? {
+        if (stops.size < 2) return null
+        val lengths = stops.zipWithNext { a, b -> distanceKm(a.point, b.point) }
+        val total = lengths.sum()
+        if (!total.isFinite() || total < 1.0) return null
+
+        // Put the seam near the middle of the approximate ride, so a long route converges in a
+        // few retries. Great-circle lengths are only estimates; the engine error drives retries.
+        val target = total / 2.0
+        var traversed = 0.0
+        var index = -1
+        var fraction = 0.5
+        lengths.forEachIndexed { i, length ->
+            if (index >= 0) return@forEachIndexed
+            if (length > 0.1 && target <= traversed + length) {
+                index = i
+                fraction = ((target - traversed) / length).coerceIn(0.1, 0.9)
+            } else traversed += length
+        }
+        if (index < 0) {
+            index = lengths.indices.maxByOrNull { lengths[it] } ?: return null
+            if (lengths[index] < 1.0) return null
+        }
+        val junction = greatCirclePoint(stops[index].point, stops[index + 1].point, fraction)
+        val hidden = Stop(null, junction, Stop.Kind.VIA)
+        return Split(
+            left = stops.take(index + 1) + hidden,
+            right = listOf(hidden) + stops.drop(index + 1),
+            junction = junction,
+        )
+    }
+
+    private fun greatCirclePoint(from: LatLon, to: LatLon, fraction: Double): LatLon {
+        val radians = kotlin.math.PI / 180.0
+        val degrees = 180.0 / kotlin.math.PI
+        val lat1 = from.lat * radians
+        val lon1 = from.lon * radians
+        val lat2 = to.lat * radians
+        val lon2 = to.lon * radians
+        val cosDistance = (kotlin.math.sin(lat1) * kotlin.math.sin(lat2) +
+            kotlin.math.cos(lat1) * kotlin.math.cos(lat2) * kotlin.math.cos(lon2 - lon1)).coerceIn(-1.0, 1.0)
+        val distance = kotlin.math.acos(cosDistance)
+        if (distance < 1e-9) return from
+        val a = kotlin.math.sin((1.0 - fraction) * distance) / kotlin.math.sin(distance)
+        val b = kotlin.math.sin(fraction * distance) / kotlin.math.sin(distance)
+        val x = a * kotlin.math.cos(lat1) * kotlin.math.cos(lon1) + b * kotlin.math.cos(lat2) * kotlin.math.cos(lon2)
+        val y = a * kotlin.math.cos(lat1) * kotlin.math.sin(lon1) + b * kotlin.math.cos(lat2) * kotlin.math.sin(lon2)
+        val z = a * kotlin.math.sin(lat1) + b * kotlin.math.sin(lat2)
+        return LatLon(kotlin.math.atan2(z, kotlin.math.hypot(x, y)) * degrees, kotlin.math.atan2(y, x) * degrees)
+    }
+
+    private const val MAX_SPLITS = 20
 }
 
 /** Google polyline with precision 5 or 6 (Valhalla uses 6). */
