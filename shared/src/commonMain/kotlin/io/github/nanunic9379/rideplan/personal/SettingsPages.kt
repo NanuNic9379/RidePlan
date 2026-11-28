@@ -137,6 +137,12 @@ import io.github.nanunic9379.rideplan.resources.wipe_rides
 import io.github.nanunic9379.rideplan.resources.wipe_title
 import io.github.nanunic9379.rideplan.resources.wipe_understood
 import io.github.nanunic9379.rideplan.resources.wipe_zones
+import io.github.nanunic9379.rideplan.resources.now_playing_title
+import io.github.nanunic9379.rideplan.resources.now_playing_text
+import io.github.nanunic9379.rideplan.resources.now_playing_access_hint
+import io.github.nanunic9379.rideplan.resources.now_playing_privacy_title
+import io.github.nanunic9379.rideplan.resources.now_playing_privacy_text
+import io.github.nanunic9379.rideplan.resources.now_playing_privacy_continue
 import io.github.nanunic9379.rideplan.resources.zones_delete
 import io.github.nanunic9379.rideplan.resources.update_available_text
 import io.github.nanunic9379.rideplan.resources.update_available_title
@@ -287,6 +293,7 @@ private fun languageName(tag: String?): String? = Languages.firstOrNull { tag !=
 @Composable
 fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: PlatformActions?) {
     val s = store.data.settings
+    var showMediaDisclosure by remember { mutableStateOf(false) }
     SubPage(stringResource(Res.string.settings_title), onBack = { rides.back() }) {
         platform?.nostr?.let { io.github.nanunic9379.rideplan.social.NostrSettingsRow(it, rides) }
         platform?.language?.let { lang ->
@@ -355,6 +362,21 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             SwitchRow(AppIcons.Warning, stringResource(Res.string.speed_cameras), stringResource(Res.string.speed_cameras_text), s.speedCameras) { v ->
                 store.update { it.copy(settings = it.settings.copy(speedCameras = v)) }
             }
+            platform?.mediaAccess?.let { media ->
+                GroupDivider()
+                SwitchRow(AppIcons.Notes, stringResource(Res.string.now_playing_title), stringResource(Res.string.now_playing_text), s.nowPlayingBubble) { enabled ->
+                    if (enabled) showMediaDisclosure = true
+                    else store.update { it.copy(settings = it.settings.copy(nowPlayingBubble = false)) }
+                }
+                if (s.nowPlayingBubble && !media.granted.value) {
+                    Text(
+                        stringResource(Res.string.now_playing_access_hint),
+                        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
         SectionLabel(stringResource(Res.string.photo_spots_title))
         RowGroup {
@@ -382,6 +404,30 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
                 onClick = { rides.open(Dest.Info) },
             )
         }
+    }
+    if (showMediaDisclosure) {
+        val media = platform?.mediaAccess
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showMediaDisclosure = false },
+            title = { Text(stringResource(Res.string.now_playing_privacy_title)) },
+            text = { Text(stringResource(Res.string.now_playing_privacy_text)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showMediaDisclosure = false
+                        store.update { it.copy(settings = it.settings.copy(nowPlayingBubble = true)) }
+                        if (media?.granted?.value != true) media?.openSettings?.invoke()
+                    },
+                    modifier = Modifier.heightIn(min = Touch.Min),
+                    shape = Radius.Control,
+                ) { Text(stringResource(Res.string.now_playing_privacy_continue)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMediaDisclosure = false }, modifier = Modifier.heightIn(min = Touch.Min)) {
+                    Text(stringResource(Res.string.route_cancel))
+                }
+            },
+        )
     }
 }
 

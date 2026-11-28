@@ -763,6 +763,16 @@
     <string name="closure_date_change">Change date</string>
     <string name="speed_cameras">Speed cameras</string>
     <string name="speed_cameras_text">Fixed cameras from OpenStreetMap, on the ride map and while navigating. Only in Italy: in other countries these warnings may be illegal.</string>
+    <string name="now_playing_title">Now playing during navigation</string>
+    <string name="now_playing_text">Show the current track and media controls on the map. Requires optional notification access.</string>
+    <string name="now_playing_access_hint">Allow RidePlan notification access in Android settings to use this feature.</string>
+    <string name="now_playing_privacy_title">Allow current media access?</string>
+    <string name="now_playing_privacy_text">Android requires notification access. RidePlan reads only the current media title, artist and playback controls. It does not read other notification content or store media information. Nothing is read unless you enable this option.</string>
+    <string name="now_playing_privacy_continue">Continue</string>
+    <string name="now_playing_controls_play">Play</string>
+    <string name="now_playing_controls_pause">Pause</string>
+    <string name="now_playing_controls_next">Next track</string>
+    <string name="now_playing_controls_hide">Hide media controls</string>
     <string name="nav_camera">Speed camera in %1$s</string>
     <string name="nav_say_camera">Speed camera ahead</string>
     <string name="nav_say_camera_limit">Speed camera ahead, limit %1$d</string>

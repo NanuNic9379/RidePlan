@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import io.github.nanunic9379.rideplan.nav.Fix
 import io.github.nanunic9379.rideplan.nav.NavNotice
 import io.github.nanunic9379.rideplan.nav.NavigationPlatform
+import io.github.nanunic9379.rideplan.nav.NowPlayingInfo
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.Stop
@@ -47,6 +48,10 @@ class AndroidNavigation(
     /** The Stop action of the notification, or the app swiped away (#65). */
     private val onStopRequested: () -> Unit = {},
 ) : NavigationPlatform {
+    override val nowPlaying get() = MediaSessionBridge.current
+    override fun observeNowPlaying(enabled: Boolean) = MediaSessionBridge.navigationActive(enabled)
+    override fun toggleNowPlaying() = RidePlanMediaSessionListener.togglePlayback()
+    override fun skipNowPlaying() = RidePlanMediaSessionListener.skipNext()
     private var pending: CompletableDeferred<Boolean>? = null
     private val permissionRequest = activity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         pending?.complete(granted())

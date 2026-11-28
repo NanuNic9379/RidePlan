@@ -763,6 +763,16 @@
     <string name="closure_date_change">Changer la date</string>
     <string name="speed_cameras">Radars</string>
     <string name="speed_cameras_text">Radars fixes d'OpenStreetMap, sur la carte de la balade et pendant la navigation. Seulement en Italie : dans d'autres pays ces alertes peuvent être interdites.</string>
+    <string name="now_playing_title">Lecture pendant la navigation</string>
+    <string name="now_playing_text">Afficher le titre en cours et les commandes multimédias sur la carte. Accès facultatif aux notifications requis.</string>
+    <string name="now_playing_access_hint">Autorisez l'accès de RidePlan aux notifications dans les paramètres Android pour utiliser cette fonction.</string>
+    <string name="now_playing_privacy_title">Autoriser l'accès au média en cours ?</string>
+    <string name="now_playing_privacy_text">Android exige l'accès aux notifications. RidePlan lit uniquement le titre, l'artiste et les commandes du média en cours. Il ne lit pas les autres notifications et ne stocke aucune information multimédia. Rien n'est lu sans activer cette option.</string>
+    <string name="now_playing_privacy_continue">Continuer</string>
+    <string name="now_playing_controls_play">Lire</string>
+    <string name="now_playing_controls_pause">Pause</string>
+    <string name="now_playing_controls_next">Titre suivant</string>
+    <string name="now_playing_controls_hide">Masquer les commandes multimédias</string>
     <string name="nav_camera">Radar dans %1$s</string>
     <string name="nav_say_camera">Radar devant</string>
     <string name="nav_say_camera_limit">Radar devant, limite %1$d</string>
