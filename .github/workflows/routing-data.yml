@@ -33,10 +33,6 @@ concurrency:
   group: routing-data
   cancel-in-progress: true
 
-env:
-  # Same engine version as inside the app (valhalla-mobile 0.6.6 = Valhalla 3.9.2).
-  VALHALLA_VERSION: 3.9.2
-
 jobs:
   cells:
     name: Valhalla data in grid cells
@@ -44,6 +40,8 @@ jobs:
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
+      - name: Set Valhalla version from app catalog
+        run: python3 data/valhalla_version.py --github-env >> "$GITHUB_ENV"
       - name: Tools
         run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
       # The whole of Italy does not fit comfortably in the GitHub runner's memory: the filter

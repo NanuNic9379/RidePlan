@@ -52,6 +52,7 @@ android {
         versionName = "0.1.$appVersionCode"
         // Road data for route calculation (#3), "routing-data" Release from routing-data.yml
         buildConfigField("String", "ROUTING_DATA_URL", "\"https://github.com/NanuNic9379/RidePlan/releases/download/routing-data/\"")
+        buildConfigField("String", "VALHALLA_VERSION", "\"${libs.versions.valhalla.engine.get()}\"")
         // Areas of road data (#14): index in "routing-index", each area in its own Release.
         buildConfigField("String", "ROUTING_RELEASES_URL", "\"https://github.com/NanuNic9379/RidePlan/releases/download/\"")
     }

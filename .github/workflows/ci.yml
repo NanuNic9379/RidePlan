@@ -28,6 +28,8 @@ jobs:
       # Routing data scripts (#60, #61, #62): a few seconds, standard library only.
       - name: Data scripts
         run: python3 -m unittest discover -s data
+      - name: Valhalla engine and data versions
+        run: python3 data/valhalla_version.py --check
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

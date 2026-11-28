@@ -41,10 +41,6 @@ concurrency:
   group: routing-areas
   cancel-in-progress: false
 
-env:
-  # Same engine version as inside the app (valhalla-mobile 0.6.6 = Valhalla 3.9.2).
-  VALHALLA_VERSION: 3.9.2
-
 jobs:
   plan:
     name: Areas to build
@@ -87,6 +83,8 @@ jobs:
         area: ${{ fromJSON(needs.plan.outputs.areas) }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set Valhalla version from app catalog
+        run: python3 data/valhalla_version.py --github-env >> "$GITHUB_ENV"
       - name: Tools
         run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
       # Same as Italy: the filter and the tile build need more than the runner's 16 GB.
