@@ -49,6 +49,12 @@ import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.Bike
 import io.github.nanunic9379.rideplan.profile.BikeType
 import io.github.nanunic9379.rideplan.profile.Engine
+import io.github.nanunic9379.rideplan.profile.Cooling
+import io.github.nanunic9379.rideplan.profile.FinalDrive
+import io.github.nanunic9379.rideplan.profile.MaintenanceTask
+import io.github.nanunic9379.rideplan.profile.defaultMaintenanceRules
+import io.github.nanunic9379.rideplan.profile.appliesTo
+import io.github.nanunic9379.rideplan.profile.isDue
 import io.github.nanunic9379.rideplan.profile.Period
 import io.github.nanunic9379.rideplan.profile.PrivateZonesSection
 import io.github.nanunic9379.rideplan.profile.ProfileData
@@ -98,6 +104,32 @@ import io.github.nanunic9379.rideplan.resources.bike_use
 import io.github.nanunic9379.rideplan.resources.engine_big
 import io.github.nanunic9379.rideplan.resources.engine_electric
 import io.github.nanunic9379.rideplan.resources.engine_small
+import io.github.nanunic9379.rideplan.resources.maintenance_title
+import io.github.nanunic9379.rideplan.resources.maintenance_odometer
+import io.github.nanunic9379.rideplan.resources.maintenance_drive
+import io.github.nanunic9379.rideplan.resources.maintenance_cooling
+import io.github.nanunic9379.rideplan.resources.maintenance_km_interval
+import io.github.nanunic9379.rideplan.resources.maintenance_month_interval
+import io.github.nanunic9379.rideplan.resources.maintenance_due
+import io.github.nanunic9379.rideplan.resources.maintenance_due_count
+import io.github.nanunic9379.rideplan.resources.maintenance_done
+import io.github.nanunic9379.rideplan.resources.maintenance_log
+import io.github.nanunic9379.rideplan.resources.maintenance_chain_lube
+import io.github.nanunic9379.rideplan.resources.maintenance_chain_tension
+import io.github.nanunic9379.rideplan.resources.maintenance_shaft_oil
+import io.github.nanunic9379.rideplan.resources.maintenance_belt_check
+import io.github.nanunic9379.rideplan.resources.maintenance_engine_oil
+import io.github.nanunic9379.rideplan.resources.maintenance_tires
+import io.github.nanunic9379.rideplan.resources.maintenance_brake_pads
+import io.github.nanunic9379.rideplan.resources.maintenance_brake_fluid
+import io.github.nanunic9379.rideplan.resources.maintenance_coolant
+import io.github.nanunic9379.rideplan.resources.maintenance_general
+import io.github.nanunic9379.rideplan.resources.maintenance_chain
+import io.github.nanunic9379.rideplan.resources.maintenance_shaft
+import io.github.nanunic9379.rideplan.resources.maintenance_belt
+import io.github.nanunic9379.rideplan.resources.maintenance_unknown
+import io.github.nanunic9379.rideplan.resources.maintenance_air
+import io.github.nanunic9379.rideplan.resources.maintenance_liquid
 import io.github.nanunic9379.rideplan.resources.garage_add
 import io.github.nanunic9379.rideplan.resources.garage_empty
 import io.github.nanunic9379.rideplan.resources.garage_empty_title
@@ -307,7 +339,7 @@ fun GaragePage(store: ProfileStore, rides: RideScreenState) {
     val data = store.data
     SubPage(stringResource(Res.string.garage_title), onBack = { rides.back() }) {
         if (data.bikes.isEmpty()) EmptyState(stringResource(Res.string.garage_empty_title), stringResource(Res.string.garage_empty))
-        data.bikes.forEach { b -> BikeCard(b, isDefault = b.id == data.defaultBike?.id) { rides.open(Dest.BikePage(b.id)) } }
+        data.bikes.forEach { b -> BikeCard(b, isDefault = b.id == data.defaultBike?.id, now = store.time()) { rides.open(Dest.BikePage(b.id)) } }
         Button(
             onClick = { rides.open(Dest.BikePage(null)) },
             modifier = Modifier.fillMaxWidth().heightIn(min = Touch.Glove),
@@ -322,7 +354,7 @@ fun GaragePage(store: ProfileStore, rides: RideScreenState) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BikeCard(bike: Bike, isDefault: Boolean, onClick: () -> Unit) {
+private fun BikeCard(bike: Bike, isDefault: Boolean, now: Long, onClick: () -> Unit) {
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
@@ -339,6 +371,9 @@ private fun BikeCard(bike: Bike, isDefault: Boolean, onClick: () -> Unit) {
                 if (isDefault) Text(stringResource(Res.string.bike_default_tag), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 else Icon(AppIcons.Chevron, contentDescription = null)
             }
+            val rules = bike.maintenance.ifEmpty { defaultMaintenanceRules(bike.finalDrive, bike.cooling) }
+            val dueCount = rules.count { it.isDue(bike.odometerKm, now) }
+            if (dueCount > 0) Text(stringResource(Res.string.maintenance_due_count, dueCount), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 bike.rangeKm?.let { r ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -367,10 +402,19 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
     var name by remember(id) { mutableStateOf(old?.name.orEmpty()) }
     var type by remember(id) { mutableStateOf(old?.type ?: BikeType.NAKED) }
     var engine by remember(id) { mutableStateOf(old?.engine ?: Engine.OVER_150) }
-    // Shown and typed in the units of the settings (#15), stored in litres and km. An unchanged
-    // field keeps the stored value, so opening and saving never drifts through the conversion.
     val fuel = LocalFuelUnits.current
     val units = LocalUnits.current
+    var finalDrive by remember(id) { mutableStateOf(old?.finalDrive ?: FinalDrive.UNKNOWN) }
+    var cooling by remember(id) { mutableStateOf(old?.cooling ?: Cooling.UNKNOWN) }
+    var odometer by remember(id) { mutableStateOf(old?.odometerKm?.takeIf { it > 0 }?.let { units.of(it.toDouble()).roundToInt().toString() }.orEmpty()) }
+    val initialRules = remember(id) {
+        val defaults = defaultMaintenanceRules(old?.finalDrive ?: FinalDrive.UNKNOWN, old?.cooling ?: Cooling.UNKNOWN)
+        val saved = old?.maintenance.orEmpty().associateBy { it.task }
+        defaults.map { saved[it.task] ?: it }
+    }
+    var maintenanceRules by remember(id) { mutableStateOf(initialRules) }
+    // Shown and typed in the units of the settings (#15), stored in litres and km. An unchanged
+    // field keeps the stored value, so opening and saving never drifts through the conversion.
     val tank0 = remember(id) { old?.tankLitres?.let { decimalText(fuel.tankFromLitres(it)) }.orEmpty() }
     val use0 = remember(id) { old?.kmPerLitre?.let { decimalText(fuel.economyFromKmPerLitre(it)) }.orEmpty() }
     val electric0 = remember(id) { old?.electricRangeKm?.let { decimalText(units.of(it)) }.orEmpty() }
@@ -384,6 +428,11 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
         name = name.trim(),
         type = type,
         engine = engine,
+        finalDrive = finalDrive,
+        cooling = cooling,
+        odometerKm = odometer.toIntOrNull()?.takeIf { it > 0 }?.let { units.toKm(it.toDouble()).roundToInt() } ?: 0,
+        maintenance = maintenanceRules.filter { it.task.appliesTo(finalDrive, cooling) },
+        maintenanceLog = old?.maintenanceLog.orEmpty(),
         tankLitres = if (tank == tank0) old?.tankLitres else parseDecimal(tank)?.let(fuel::tankToLitres),
         kmPerLitre = if (use == use0) old?.kmPerLitre else parseDecimal(use)?.let(fuel::economyToKmPerLitre),
         electricRangeKm = if (electric == electric0) old?.electricRangeKm else parseDecimal(electric)?.let(units::toKm),
@@ -409,7 +458,16 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
             }
         }
         SectionLabel(stringResource(Res.string.bike_engine))
-        Segmented(Engine.entries.map { engineText(it) }, Engine.entries.indexOf(engine)) { engine = Engine.entries[it] }
+        Segmented(Engine.entries.map { engineText(it) }, Engine.entries.indexOf(engine)) { index ->
+            engine = Engine.entries[index]
+            if (engine == Engine.ELECTRIC) {
+                finalDrive = FinalDrive.ELECTRIC
+                cooling = Cooling.ELECTRIC
+            } else if (finalDrive == FinalDrive.ELECTRIC) {
+                finalDrive = FinalDrive.UNKNOWN
+                cooling = Cooling.UNKNOWN
+            }
+        }
         if (engine == Engine.UP_TO_150) {
             NoteCard(
                 AppIcons.Block,
@@ -418,6 +476,72 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
                 MaterialTheme.colorScheme.onTertiaryContainer,
                 title = stringResource(Res.string.bike_no_motorways),
             )
+        }
+        SectionLabel(stringResource(Res.string.maintenance_title))
+        SectionLabel(stringResource(Res.string.maintenance_drive))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            (if (engine == Engine.ELECTRIC) listOf(FinalDrive.ELECTRIC) else listOf(FinalDrive.CHAIN, FinalDrive.SHAFT, FinalDrive.BELT, FinalDrive.UNKNOWN)).forEach { drive ->
+                val label = stringResource(when (drive) { FinalDrive.CHAIN -> Res.string.maintenance_chain; FinalDrive.SHAFT -> Res.string.maintenance_shaft; FinalDrive.BELT -> Res.string.maintenance_belt; else -> Res.string.maintenance_unknown })
+                FilterChip(finalDrive == drive, { finalDrive = drive; maintenanceRules = defaultMaintenanceRules(drive, cooling).map { n -> maintenanceRules.firstOrNull { it.task == n.task } ?: n } }, label = { Text(label) }, modifier = Modifier.heightIn(min = Touch.Min))
+            }
+        }
+        SectionLabel(stringResource(Res.string.maintenance_cooling))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            (if (engine == Engine.ELECTRIC) listOf(Cooling.ELECTRIC) else listOf(Cooling.AIR, Cooling.LIQUID, Cooling.UNKNOWN)).forEach { system ->
+                val label = stringResource(when (system) { Cooling.AIR -> Res.string.maintenance_air; Cooling.LIQUID -> Res.string.maintenance_liquid; else -> Res.string.maintenance_unknown })
+                FilterChip(cooling == system, { cooling = system; maintenanceRules = defaultMaintenanceRules(finalDrive, system).map { n -> maintenanceRules.firstOrNull { it.task == n.task } ?: n } }, label = { Text(label) }, modifier = Modifier.heightIn(min = Touch.Min))
+            }
+        }
+        OutlinedTextField(
+            value = odometer,
+            onValueChange = { odometer = it.filter(Char::isDigit).take(8) },
+            label = { Text(stringResource(Res.string.maintenance_odometer)) },
+            suffix = { Text(units.symbol) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        val now = store.time()
+        val applicableRules = maintenanceRules.filter { it.task.appliesTo(finalDrive, cooling) }
+        applicableRules.forEach { rule ->
+            val due = rule.isDue(draft.odometerKm, now)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.weight(1f)) {
+                    Text(maintenanceTaskName(rule.task), style = MaterialTheme.typography.titleSmall)
+                    if (due) Text(stringResource(Res.string.maintenance_due), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
+                }
+                OutlinedTextField(
+                    value = rule.everyKm?.let { units.of(it.toDouble()).roundToInt().toString() }.orEmpty(),
+                    onValueChange = { input -> maintenanceRules = maintenanceRules.map { if (it.task == rule.task) it.copy(everyKm = input.toIntOrNull()?.takeIf { n -> n > 0 }?.let { units.toKm(it.toDouble()).roundToInt() }) else it } },
+                    label = { Text(stringResource(Res.string.maintenance_km_interval)) }, suffix = { Text(units.symbol) }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.weight(1f),
+                )
+                OutlinedButton(onClick = {
+                    if (draft.odometerKm > 0 && old != null) store.update { data ->
+                        val saved = data.saveBike(draft.copy(id = old.id), isDefault)
+                        saved.copy(bikes = saved.bikes.map { b -> if (b.id != old.id) b else b.copy(
+                            odometerKm = draft.odometerKm,
+                            maintenance = b.maintenance.map { r -> if (r.task == rule.task) r.copy(lastKm = draft.odometerKm, lastAt = now) else r },
+                            maintenanceLog = b.maintenanceLog + io.github.nanunic9379.rideplan.profile.MaintenanceRecord(ProfileData.newId(), rule.task, draft.odometerKm, now),
+                        ) })
+                    }
+                    maintenanceRules = maintenanceRules.map { if (it.task == rule.task) it.copy(lastKm = draft.odometerKm, lastAt = now) else it }
+                }, enabled = old != null && draft.odometerKm > 0, modifier = Modifier.heightIn(min = Touch.Min)) { Text(stringResource(Res.string.maintenance_done)) }
+            }
+            if (rule.everyMonths != null || rule.task in setOf(MaintenanceTask.ENGINE_OIL, MaintenanceTask.BRAKE_FLUID, MaintenanceTask.COOLANT, MaintenanceTask.GENERAL_SERVICE)) {
+                OutlinedTextField(
+                    value = rule.everyMonths?.toString().orEmpty(),
+                    onValueChange = { input -> maintenanceRules = maintenanceRules.map { if (it.task == rule.task) it.copy(everyMonths = input.toIntOrNull()?.takeIf { n -> n > 0 }) else it } },
+                    label = { Text(stringResource(Res.string.maintenance_month_interval)) }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        if (!old?.maintenanceLog.isNullOrEmpty()) {
+            SectionLabel(stringResource(Res.string.maintenance_log))
+            old?.maintenanceLog?.takeLast(5)?.reversed()?.forEach { entry ->
+                Text("${maintenanceTaskName(entry.task)} · ${units.of(entry.odometerKm.toDouble()).roundToInt()} ${units.symbol}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         SectionLabel(stringResource(Res.string.bike_range))
         if (engine == Engine.ELECTRIC) {
@@ -508,4 +632,18 @@ fun BikePage(store: ProfileStore, rides: RideScreenState, id: String?) {
 
 /** 7.5 → "7.5", 35.0 → "35": what was typed, read back. */
 internal fun decimalText(v: Double): String = if (v == v.roundToInt().toDouble()) "${v.roundToInt()}" else "${(v * 100).roundToInt() / 100.0}"
+
+@Composable
+private fun maintenanceTaskName(task: MaintenanceTask): String = stringResource(when (task) {
+    MaintenanceTask.CHAIN_LUBE -> Res.string.maintenance_chain_lube
+    MaintenanceTask.CHAIN_TENSION -> Res.string.maintenance_chain_tension
+    MaintenanceTask.SHAFT_OIL -> Res.string.maintenance_shaft_oil
+    MaintenanceTask.BELT_CHECK -> Res.string.maintenance_belt_check
+    MaintenanceTask.ENGINE_OIL -> Res.string.maintenance_engine_oil
+    MaintenanceTask.TIRES -> Res.string.maintenance_tires
+    MaintenanceTask.BRAKE_PADS -> Res.string.maintenance_brake_pads
+    MaintenanceTask.BRAKE_FLUID -> Res.string.maintenance_brake_fluid
+    MaintenanceTask.COOLANT -> Res.string.maintenance_coolant
+    MaintenanceTask.GENERAL_SERVICE -> Res.string.maintenance_general
+})
 

@@ -321,10 +321,12 @@ data class ProfileData(
 
     /** Adds or replaces a bike. The first bike, or one marked [default], becomes the default. */
     fun saveBike(bike: Bike, default: Boolean): ProfileData {
-        val list = if (bikes.any { it.id == bike.id }) bikes.map { if (it.id == bike.id) bike else it } else bikes + bike
+        val defaults = defaultMaintenanceRules(bike.finalDrive, bike.cooling)
+        val configured = bike.copy(maintenance = defaults.map { base -> bike.maintenance.firstOrNull { it.task == base.task } ?: base })
+        val list = if (bikes.any { it.id == bike.id }) bikes.map { if (it.id == bike.id) configured else it } else bikes + configured
         val defaultId = when {
-            default || list.size == 1 -> bike.id
-            defaultBikeId == bike.id -> list.firstOrNull { it.id != bike.id }?.id ?: bike.id
+            default || list.size == 1 -> configured.id
+            defaultBikeId == configured.id -> list.firstOrNull { it.id != configured.id }?.id ?: configured.id
             else -> defaultBikeId?.takeIf { id -> list.any { it.id == id } } ?: list.first().id
         }
         return copy(bikes = list, defaultBikeId = defaultId).withBikeInProfile()
