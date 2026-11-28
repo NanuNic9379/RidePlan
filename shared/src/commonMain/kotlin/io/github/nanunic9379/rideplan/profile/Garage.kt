@@ -76,6 +76,8 @@ data class AppSettings(
     val speedCameras: Boolean = true,
     /** Riding time before a break reminder, in minutes; zero turns it off. */
     val breakReminderMinutes: Int = 120,
+    /** Warnings before tight hairpins during navigation. */
+    val hairpinWarnings: HairpinWarningMode = HairpinWarningMode.SOUND,
     /** Periodic GitHub update notifications; requires explicit opt-in and Android notification permission. */
     val backgroundUpdateChecks: Boolean = false,
     /** Show locally saved photographer spots on the map (#254). */
@@ -87,6 +89,9 @@ enum class Units { KM, MILES }
 
 @Serializable
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+@Serializable
+enum class HairpinWarningMode { OFF, SOUND, VOICE }
 
 /** Distance in the chosen unit. */
 fun Units.of(km: Double): Double = if (this == Units.MILES) km * KM_TO_MILES else km

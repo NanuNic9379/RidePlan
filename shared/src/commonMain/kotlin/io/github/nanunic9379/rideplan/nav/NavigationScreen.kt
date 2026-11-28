@@ -93,6 +93,7 @@ import io.github.nanunic9379.rideplan.resources.nav_speed_over
 import io.github.nanunic9379.rideplan.personal.LocalUnits
 import io.github.nanunic9379.rideplan.personal.decimalComma
 import io.github.nanunic9379.rideplan.profile.Measures
+import io.github.nanunic9379.rideplan.profile.HairpinWarningMode
 import io.github.nanunic9379.rideplan.profile.Units
 import io.github.nanunic9379.rideplan.profile.of
 import io.github.nanunic9379.rideplan.resources.nav_battery_help
@@ -105,6 +106,8 @@ import io.github.nanunic9379.rideplan.resources.nav_break_reminder_text
 import io.github.nanunic9379.rideplan.resources.nav_break_reminder_dismiss
 import io.github.nanunic9379.rideplan.resources.fuel_station
 import io.github.nanunic9379.rideplan.resources.nav_break_reminder_no_place
+import io.github.nanunic9379.rideplan.resources.nav_hairpin_ahead
+import io.github.nanunic9379.rideplan.resources.nav_hairpins_series
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.ride.Ride
 import io.github.nanunic9379.rideplan.ride.lineJson
@@ -167,6 +170,7 @@ fun NavigationScreen(
     /** Speed cameras (#13); null = none known. */
     roadNotes: (suspend () -> io.github.nanunic9379.rideplan.route.RoadNotes?)? = null,
     breakReminderMinutes: Int = 120,
+    hairpinWarnings: HairpinWarningMode = HairpinWarningMode.SOUND,
     fuelStations: (suspend (List<LatLon>) -> List<FuelStation>?)? = null,
 ) {
     val scope = rememberCoroutineScope()
@@ -181,7 +185,10 @@ fun NavigationScreen(
             breakReminderMinutes = breakReminderMinutes,
         )
     }
+    val update = session.update
     val navRide = session.ride
+    val hairpinEvents = remember(navRide) { Hairpins.warnings(navRide.line) }
+    val announcedHairpins = remember(navRide, hairpinWarnings) { mutableSetOf<Int>() }
     var stations by remember(navRide) { mutableStateOf<List<FuelStation>?>(null) }
     LaunchedEffect(navRide, fuelStations) { stations = runCatching { fuelStations?.invoke(navRide.line) }.getOrNull() }
     val fuelStops = remember(stations, navRide) {
@@ -191,12 +198,27 @@ fun NavigationScreen(
     LaunchedEffect(session.breakReminderDue) {
         if (session.breakReminderDue) session.speakBreakReminder(getString(Res.string.nav_break_reminder_text))
     }
+    LaunchedEffect(update?.alongM, update?.speedMps, update?.offRoute, session.muted, hairpinEvents, hairpinWarnings) {
+        val u = update ?: return@LaunchedEffect
+        if (u.offRoute || session.rerouting || session.muted || hairpinWarnings == HairpinWarningMode.OFF) return@LaunchedEffect
+        val distanceM = Hairpins.warningDistanceM(u.speedMps)
+        val index = hairpinEvents.indexOfFirst { it.fromM - u.alongM in -20.0..distanceM }
+        if (index < 0 || !announcedHairpins.add(index)) return@LaunchedEffect
+        if (hairpinWarnings == HairpinWarningMode.SOUND) {
+            platform.warningSound()
+        } else {
+            val event = hairpinEvents[index]
+            val text = if (event.isSeries) {
+                getString(Res.string.nav_hairpins_series, kotlin.math.ceil((event.toM - event.fromM) / 1000.0).toInt().coerceAtLeast(1))
+            } else getString(Res.string.nav_hairpin_ahead)
+            platform.speak(text)
+        }
+    }
     DisposableEffect(session) {
         onAskExit(false)
         session.start()
         onDispose { session.stop() }
     }
-    val update = session.update
     val line = session.ride.line
     val cameras = rememberNavCameras(session, roadNotes)
     val state = rememberMapState(

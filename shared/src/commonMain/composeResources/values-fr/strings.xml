@@ -839,4 +839,11 @@
     <string name="photo_spots_publish_failed">Impossible de publier le lieu. Vérifiez votre signataire Nostr et les relais.</string>
     <string name="photo_spots_nostr_disabled">Activez le partage public dans les paramètres pour importer ce lieu.</string>
     <string name="photo_spots_publish_help">Choisissez les détails ; la position exacte sera publique.</string>
+    <string name="hairpin_warnings_title">Alerte virages en épingle</string>
+    <string name="hairpin_warnings_note">Alerte avant les virages serrés de moins de 25 m de rayon. Les virages proches sont regroupés.</string>
+    <string name="hairpin_warnings_off">Désactivée</string>
+    <string name="hairpin_warnings_sound">Son</string>
+    <string name="hairpin_warnings_voice">Voix</string>
+    <string name="nav_hairpin_ahead">Virage très serré à venir</string>
+    <string name="nav_hairpins_series">Plusieurs virages serrés sur les prochains %1$s km</string>
 </resources>

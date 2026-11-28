@@ -205,6 +205,7 @@ fun App(
                         onAskExit = { rides.endNavigationAsked = it },
                         roadNotes = routeActions?.roadNotes,
                         breakReminderMinutes = settings?.breakReminderMinutes ?: 120,
+                        hairpinWarnings = settings?.hairpinWarnings ?: io.github.nanunic9379.rideplan.profile.HairpinWarningMode.SOUND,
                         fuelStations = routeActions?.fuelStations,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )

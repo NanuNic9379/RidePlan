@@ -11,6 +11,7 @@ import android.location.LocationManager
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -59,6 +60,7 @@ class AndroidNavigation(
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var queued: String? = null
+    private var tone: ToneGenerator? = null
 
     override fun shouldExplainBatteryOptimization(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || power?.isIgnoringBatteryOptimizations(activity.packageName) == true) return false
@@ -135,12 +137,20 @@ class AndroidNavigation(
     override fun stopLocation() {
         listener?.let { locations?.removeUpdates(it) }
         listener = null
+        tone?.release()
+        tone = null
     }
 
     override fun speak(text: String) {
         if (stoppedOutside) return
         if (tts == null) tts = createVoice()
         if (ttsReady) say(text) else queued = text
+    }
+
+    override fun warningSound() {
+        if (stoppedOutside) return
+        if (tone == null) tone = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
+        tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 250)
     }
 
     /** The voice engine starts asynchronously: the first text waits for it. */
