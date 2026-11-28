@@ -146,6 +146,8 @@ object PrivateZones {
 data class SharePreview(
     val original: Ride,
     val ride: Ride,
+    /** Planned stops discarded specifically by the private-zone cut, before end trimming. */
+    val plannedStopsHiddenByZones: Int = 0,
 ) {
     /** Nothing is left to share: the whole ride is inside private zones. */
     val empty: Boolean get() = ride.line.size < 2
@@ -168,9 +170,12 @@ data class SharePreview(
          */
         fun of(ride: Ride, zones: List<PrivateZone>, trimEnds: Boolean, hideZones: Boolean = true): SharePreview {
             // Zones first: the trimmed km are then counted from the edge of the zone.
+            val hiddenPlans = if (hideZones) ride.stops.count { stop ->
+                stop.plan != null && zones.any { it.contains(stop.point) }
+            } else 0
             var out = if (hideZones) PrivateZones.apply(ride, zones) else ride
             if (trimEnds && out.line.size >= 2) out = PrivateEnds.trim(out)
-            return SharePreview(ride, out)
+            return SharePreview(ride, out, hiddenPlans)
         }
     }
 }

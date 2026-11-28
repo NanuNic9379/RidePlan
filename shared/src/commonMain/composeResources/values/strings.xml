@@ -181,6 +181,7 @@
     <string name="share_preview_summary">What leaves the phone: %1$s, %2$d stops</string>
     <string name="share_preview_moved">Start moved by %1$s, finish by %2$s</string>
     <string name="share_preview_hidden">%1$d stops hidden</string>
+    <string name="share_preview_plan_hidden">A stop plan is hidden by the private-zone cut.</string>
     <string name="share_preview_empty">The whole ride is inside your private zones: there is nothing to share.</string>
     <string name="zones_title">Private zones</string>
     <string name="zones_text">Places like home or the garage. They are cut out of every ride you share (GPX file, QR and link): stops and track inside them never leave the phone.</string>
