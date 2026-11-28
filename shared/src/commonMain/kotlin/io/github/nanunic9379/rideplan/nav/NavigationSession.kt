@@ -42,6 +42,9 @@ interface NavigationPlatform {
     /** Says [text] with the phone's voice (also over a Bluetooth intercom). */
     fun speak(text: String)
 
+    /** A short nonverbal navigation cue. */
+    fun warningSound() {}
+
     fun stopSpeaking()
 
     fun keepScreenOn(on: Boolean)

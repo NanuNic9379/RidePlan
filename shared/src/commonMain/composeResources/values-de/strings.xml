@@ -838,4 +838,11 @@
     <string name="photo_spots_publish_failed">Der Ort konnte nicht veröffentlicht werden. Prüfe deinen Nostr-Signer und die Relay-Einstellungen.</string>
     <string name="photo_spots_nostr_disabled">Aktiviere die öffentliche Freigabe in den Einstellungen, um diesen Ort zu importieren.</string>
     <string name="photo_spots_publish_help">Wähle die Details; der genaue Standort wird öffentlich.</string>
+    <string name="hairpin_warnings_title">Warnungen vor engen Kehren</string>
+    <string name="hairpin_warnings_note">Warnt vor engen Kurven mit einem Radius unter 25 m. Nahe Kehren werden zusammengefasst.</string>
+    <string name="hairpin_warnings_off">Aus</string>
+    <string name="hairpin_warnings_sound">Ton</string>
+    <string name="hairpin_warnings_voice">Sprache</string>
+    <string name="nav_hairpin_ahead">Enge Kehre voraus</string>
+    <string name="nav_hairpins_series">Mehrere enge Kehren auf den nächsten %1$s km</string>
 </resources>

@@ -839,4 +839,11 @@
     <string name="photo_spots_publish_failed">Could not publish the photo spot. Check your Nostr signer and relay settings.</string>
     <string name="photo_spots_nostr_disabled">Turn on public sharing in Settings to import this spot.</string>
     <string name="photo_spots_publish_help">Choose which details to publish; exact location is public.</string>
+    <string name="hairpin_warnings_title">Tight hairpin warnings</string>
+    <string name="hairpin_warnings_note">Warns before sharp bends with a radius under 25 m. Nearby bends are grouped.</string>
+    <string name="hairpin_warnings_off">Off</string>
+    <string name="hairpin_warnings_sound">Sound</string>
+    <string name="hairpin_warnings_voice">Voice</string>
+    <string name="nav_hairpin_ahead">Tight hairpin ahead</string>
+    <string name="nav_hairpins_series">Several tight hairpins over the next %1$s km</string>
 </resources>

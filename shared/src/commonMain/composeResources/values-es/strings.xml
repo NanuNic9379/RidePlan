@@ -839,4 +839,11 @@
     <string name="photo_spots_publish_failed">No se pudo publicar el lugar. Comprueba el firmante Nostr y los relays.</string>
     <string name="photo_spots_nostr_disabled">Activa la publicación en los ajustes para importar este lugar.</string>
     <string name="photo_spots_publish_help">Elige los detalles; la ubicación exacta será pública.</string>
+    <string name="hairpin_warnings_title">Avisos de curvas cerradas</string>
+    <string name="hairpin_warnings_note">Avisa antes de curvas con un radio inferior a 25 m. Agrupa las curvas cercanas.</string>
+    <string name="hairpin_warnings_off">Desactivados</string>
+    <string name="hairpin_warnings_sound">Sonido</string>
+    <string name="hairpin_warnings_voice">Voz</string>
+    <string name="nav_hairpin_ahead">Curva muy cerrada adelante</string>
+    <string name="nav_hairpins_series">Varias curvas cerradas en los próximos %1$s km</string>
 </resources>

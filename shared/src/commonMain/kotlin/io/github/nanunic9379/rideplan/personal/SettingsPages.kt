@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import io.github.nanunic9379.rideplan.profile.BackupActions
 import io.github.nanunic9379.rideplan.profile.BackupNotice
 import io.github.nanunic9379.rideplan.profile.ProfileStore
+import io.github.nanunic9379.rideplan.profile.HairpinWarningMode
 import io.github.nanunic9379.rideplan.profile.ThemeMode
 import io.github.nanunic9379.rideplan.profile.TonalAction
 import io.github.nanunic9379.rideplan.profile.Units
@@ -62,6 +63,11 @@ import io.github.nanunic9379.rideplan.resources.break_reminder_90
 import io.github.nanunic9379.rideplan.resources.break_reminder_120
 import io.github.nanunic9379.rideplan.resources.break_reminder_180
 import io.github.nanunic9379.rideplan.resources.break_reminder_note
+import io.github.nanunic9379.rideplan.resources.hairpin_warnings_title
+import io.github.nanunic9379.rideplan.resources.hairpin_warnings_note
+import io.github.nanunic9379.rideplan.resources.hairpin_warnings_off
+import io.github.nanunic9379.rideplan.resources.hairpin_warnings_sound
+import io.github.nanunic9379.rideplan.resources.hairpin_warnings_voice
 import io.github.nanunic9379.rideplan.resources.danger_title
 import io.github.nanunic9379.rideplan.resources.export_all
 import io.github.nanunic9379.rideplan.resources.export_done
@@ -313,6 +319,17 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
             breakChoices.indexOf(s.breakReminderMinutes).takeIf { it >= 0 } ?: 2,
         ) { i -> store.update { it.copy(settings = it.settings.copy(breakReminderMinutes = breakChoices[i])) } }
         Text(stringResource(Res.string.break_reminder_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SectionLabel(stringResource(Res.string.hairpin_warnings_title))
+        val hairpinChoices = HairpinWarningMode.entries
+        Segmented(
+            listOf(
+                stringResource(Res.string.hairpin_warnings_off),
+                stringResource(Res.string.hairpin_warnings_sound),
+                stringResource(Res.string.hairpin_warnings_voice),
+            ),
+            hairpinChoices.indexOf(s.hairpinWarnings).coerceAtLeast(0),
+        ) { i -> store.update { it.copy(settings = it.settings.copy(hairpinWarnings = hairpinChoices[i])) } }
+        Text(stringResource(Res.string.hairpin_warnings_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionLabel(stringResource(Res.string.theme_title))
         Segmented(
             listOf(stringResource(Res.string.theme_system), stringResource(Res.string.theme_light), stringResource(Res.string.theme_dark)),

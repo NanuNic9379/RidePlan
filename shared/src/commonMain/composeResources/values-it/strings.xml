@@ -838,4 +838,11 @@
     <string name="photo_spots_publish_failed">Impossibile pubblicare il luogo. Controlla il signer Nostr e i relay.</string>
     <string name="photo_spots_nostr_disabled">Attiva la condivisione pubblica nelle impostazioni per importare questo luogo.</string>
     <string name="photo_spots_publish_help">Scegli i dettagli da pubblicare; la posizione esatta sarà pubblica.</string>
+    <string name="hairpin_warnings_title">Avvisi tornanti stretti</string>
+    <string name="hairpin_warnings_note">Avvisa prima delle curve strette con raggio sotto i 25 m. I tornanti vicini vengono raggruppati.</string>
+    <string name="hairpin_warnings_off">Disattivati</string>
+    <string name="hairpin_warnings_sound">Suono</string>
+    <string name="hairpin_warnings_voice">Voce</string>
+    <string name="nav_hairpin_ahead">Tornante stretto in arrivo</string>
+    <string name="nav_hairpins_series">Diversi tornanti stretti nei prossimi %1$s km</string>
 </resources>
