@@ -1,6 +1,7 @@
 package io.github.nanunic9379.rideplan.personal
 
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -33,10 +34,15 @@ class PlatformActions(
     val rideMap: io.github.nanunic9379.rideplan.route.RideMapActions? = null,
     /** Public sharing on Nostr (#3, #11); null = not offered. */
     val nostr: io.github.nanunic9379.rideplan.social.NostrService? = null,
+    /** Android notification-listener access used only by the opt-in now-playing bubble. */
+    val mediaAccess: MediaAccessActions? = null,
 ) {
     /** Outcome of the last export, to show on the Data & privacy page. */
     var exportNotice by mutableStateOf<Boolean?>(null)
 }
+
+@Stable
+class MediaAccessActions(val granted: State<Boolean>, val openSettings: () -> Unit)
 
 class LanguageActions(
     /** BCP 47 tag of the chosen language, null = follow the phone. */

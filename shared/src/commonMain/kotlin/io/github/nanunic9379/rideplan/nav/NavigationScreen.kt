@@ -19,6 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +34,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +57,11 @@ import io.github.nanunic9379.rideplan.ui.Figure
 import io.github.nanunic9379.rideplan.ui.Motion
 import io.github.nanunic9379.rideplan.ui.Radius
 import io.github.nanunic9379.rideplan.ui.TabularFigures
+import io.github.nanunic9379.rideplan.ui.AppIcons
+import io.github.nanunic9379.rideplan.resources.now_playing_controls_hide
+import io.github.nanunic9379.rideplan.resources.now_playing_controls_play
+import io.github.nanunic9379.rideplan.resources.now_playing_controls_pause
+import io.github.nanunic9379.rideplan.resources.now_playing_controls_next
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraFit
 import org.maplibre.compose.camera.CameraMoveReason
@@ -152,6 +166,65 @@ private object NavColors {
 /** Big touch targets: usable with gloves. */
 private val ButtonHeight = 56.dp
 
+@Composable
+private fun NowPlayingBubble(
+    info: NowPlayingInfo,
+    onToggle: () -> Unit,
+    onNext: () -> Unit,
+    onHide: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val playLabel = stringResource(Res.string.now_playing_controls_play)
+    val pauseLabel = stringResource(Res.string.now_playing_controls_pause)
+    val nextLabel = stringResource(Res.string.now_playing_controls_next)
+    Surface(
+        modifier = modifier.widthIn(max = 340.dp),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 4.dp,
+    ) {
+        Row(
+            Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                listOfNotNull(info.title, info.artist?.takeIf { it.isNotBlank() }).joinToString(" · "),
+                Modifier.widthIn(max = 140.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Button(
+                onClick = onToggle,
+                enabled = info.canToggle,
+                modifier = Modifier.size(ButtonHeight),
+                shape = CircleShape,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+            ) {
+                Text(
+                    if (info.isPlaying) "Ⅱ" else "▶",
+                    Modifier.semantics { contentDescription = if (info.isPlaying) pauseLabel else playLabel },
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+            Button(
+                onClick = onNext,
+                enabled = info.canSkipNext,
+                modifier = Modifier.size(ButtonHeight),
+                shape = CircleShape,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+            ) {
+                Text("⏭", Modifier.semantics { contentDescription = nextLabel }, style = MaterialTheme.typography.titleLarge)
+            }
+            IconButton(onClick = onHide, modifier = Modifier.size(48.dp)) {
+                Icon(AppIcons.Close, contentDescription = stringResource(Res.string.now_playing_controls_hide))
+            }
+        }
+    }
+}
+
 /**
  * Turn-by-turn navigation of [ride] (#5): the map follows you and turns with the road, the
  * banner shows the next maneuver, the voice announces it. Location is used only while
@@ -172,7 +245,13 @@ fun NavigationScreen(
     breakReminderMinutes: Int = 120,
     hairpinWarnings: HairpinWarningMode = HairpinWarningMode.SOUND,
     fuelStations: (suspend (List<LatLon>) -> List<FuelStation>?)? = null,
+    nowPlayingEnabled: Boolean = false,
 ) {
+    DisposableEffect(platform, nowPlayingEnabled) {
+        platform.observeNowPlaying(nowPlayingEnabled)
+        onDispose { platform.observeNowPlaying(false) }
+    }
+    val nowPlaying = platform.nowPlaying?.value
     val scope = rememberCoroutineScope()
     val units = LocalUnits.current
     val comma = decimalComma()
@@ -259,6 +338,9 @@ fun NavigationScreen(
         )
     }
 
+    var hideNowPlaying by remember(ride) { mutableStateOf(false) }
+    val density = LocalDensity.current
+    var mediaOffset by remember(ride, density) { mutableStateOf(Offset(0f, with(density) { 168.dp.toPx() })) }
     Box(Modifier.fillMaxSize()) {
         MaplibreMap(modifier = Modifier.fillMaxSize(), state = state)
         BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().padding(8.dp)) {
@@ -284,6 +366,27 @@ fun NavigationScreen(
                     }
                 }
                 SpeedCameraBanner(session, cameras, platform)
+            }
+            if (nowPlayingEnabled && !hideNowPlaying && nowPlaying != null) {
+                NowPlayingBubble(
+                    info = nowPlaying,
+                    onToggle = platform::toggleNowPlaying,
+                    onNext = platform::skipNowPlaying,
+                    onHide = { hideNowPlaying = true },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                        .offset { IntOffset(mediaOffset.x.toInt(), mediaOffset.y.toInt()) }
+                        .pointerInput(maxWidth, maxHeight) {
+                            detectDragGestures { change, drag ->
+                                change.consume()
+                                val minX = -(maxWidth.toPx() - 64f).coerceAtLeast(0f)
+                                val maxY = (maxHeight.toPx() - 156.dp.toPx()).coerceAtLeast(0f)
+                                mediaOffset = Offset(
+                                    (mediaOffset.x + drag.x).coerceIn(minX, 0f),
+                                    (mediaOffset.y + drag.y).coerceIn(0f, maxY),
+                                )
+                            }
+                        },
+                )
             }
             Column(
                 Modifier.align(Alignment.BottomStart).then(panel),

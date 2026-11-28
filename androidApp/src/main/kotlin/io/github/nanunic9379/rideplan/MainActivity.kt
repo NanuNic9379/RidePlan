@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.LocaleList
+import android.provider.Settings
 import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -32,6 +33,7 @@ import io.github.nanunic9379.rideplan.profile.forBike
 import io.github.nanunic9379.rideplan.personal.LanguageActions
 import io.github.nanunic9379.rideplan.personal.MapDataActions
 import io.github.nanunic9379.rideplan.personal.PlatformActions
+import io.github.nanunic9379.rideplan.personal.MediaAccessActions
 import io.github.nanunic9379.rideplan.ride.GpxExport
 import io.github.nanunic9379.rideplan.ride.ImportActions
 import io.github.nanunic9379.rideplan.ride.Page
@@ -205,6 +207,10 @@ class MainActivity : ComponentActivity() {
             region = android.content.res.Resources.getSystem().configuration.locales[0].country.ifEmpty { null },
             rideMap = session.rideMaps.actions.also { session.rideMaps.mustAskForMobile = ::mustAskForMobile },
             nostr = nostr,
+            mediaAccess = MediaAccessActions(
+                granted = MediaSessionBridge.accessGranted,
+                openSettings = { runCatching { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) } },
+            ),
         )
         onBackPressedDispatcher.addCallback(this, backToHome)
         setContent {
@@ -252,6 +258,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handle(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        MediaSessionBridge.refreshAccess(this)
     }
 
     /** "Share" from Google Maps (text with the link) or opening a GPX/KML/KMZ file. */

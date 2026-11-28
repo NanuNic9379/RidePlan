@@ -156,6 +156,8 @@ data class AppSettings(
     val backgroundUpdateChecks: Boolean = false,
     /** Show locally saved photographer spots on the map (#254). */
     val photoSpots: Boolean = false,
+    /** Show the current Android media session while navigating. Media text is never saved. */
+    val nowPlayingBubble: Boolean = false,
 )
 
 @Serializable

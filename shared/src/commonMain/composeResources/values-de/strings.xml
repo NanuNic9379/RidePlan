@@ -762,6 +762,16 @@
     <string name="closure_date_change">Datum ändern</string>
     <string name="speed_cameras">Blitzer</string>
     <string name="speed_cameras_text">Feste Blitzer aus OpenStreetMap, auf der Tourkarte und bei der Navigation. Nur in Italien: in anderen Ländern können diese Warnungen verboten sein.</string>
+    <string name="now_playing_title">Wiedergabe während der Navigation</string>
+    <string name="now_playing_text">Aktuellen Titel und Mediensteuerung auf der Karte anzeigen. Benötigt optionalen Benachrichtigungszugriff.</string>
+    <string name="now_playing_access_hint">Erlaube RidePlan den Benachrichtigungszugriff in den Android-Einstellungen, um diese Funktion zu nutzen.</string>
+    <string name="now_playing_privacy_title">Zugriff auf aktuelle Medien erlauben?</string>
+    <string name="now_playing_privacy_text">Android benötigt Benachrichtigungszugriff. RidePlan liest nur Titel, Interpret und Wiedergabesteuerung des aktuellen Mediums. Andere Benachrichtigungsinhalte werden nicht gelesen und Mediendaten nicht gespeichert. Ohne Aktivierung werden keine Daten gelesen.</string>
+    <string name="now_playing_privacy_continue">Weiter</string>
+    <string name="now_playing_controls_play">Wiedergabe</string>
+    <string name="now_playing_controls_pause">Pause</string>
+    <string name="now_playing_controls_next">Nächster Titel</string>
+    <string name="now_playing_controls_hide">Mediensteuerung ausblenden</string>
     <string name="nav_camera">Blitzer in %1$s</string>
     <string name="nav_say_camera">Blitzer voraus</string>
     <string name="nav_say_camera_limit">Blitzer voraus, Limit %1$d</string>

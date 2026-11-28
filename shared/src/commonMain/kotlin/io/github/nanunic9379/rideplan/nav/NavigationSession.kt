@@ -1,6 +1,7 @@
 package io.github.nanunic9379.rideplan.nav
 
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -22,6 +23,12 @@ import kotlin.time.TimeSource
  * screen off or another app open too (#65), never after Exit.
  */
 interface NavigationPlatform {
+    /** Current generic Android media session; null when disabled or no session is active. */
+    val nowPlaying: State<NowPlayingInfo?>? get() = null
+    /** Starts/stops observing media sessions; implementations must honor the opt-in setting. */
+    fun observeNowPlaying(enabled: Boolean) {}
+    fun toggleNowPlaying() {}
+    fun skipNowPlaying() {}
     /** Whether this is the first navigation on a phone that restricts background battery use. */
     fun shouldExplainBatteryOptimization(): Boolean = false
 
@@ -61,6 +68,15 @@ interface NavigationPlatform {
      */
     suspend fun reroute(ride: Ride, from: LatLon, heading: Double?, stops: List<Stop>, options: RouteOptions): Ride?
 }
+
+/** Small, transient subset of a media session shown on the navigation map. */
+data class NowPlayingInfo(
+    val title: String,
+    val artist: String?,
+    val isPlaying: Boolean,
+    val canToggle: Boolean = true,
+    val canSkipNext: Boolean = true,
+)
 
 /** State of one navigation, from "Navigate" to "Exit". The screen reads it. */
 @Stable

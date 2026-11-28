@@ -207,6 +207,7 @@ fun App(
                         breakReminderMinutes = settings?.breakReminderMinutes ?: 120,
                         hairpinWarnings = settings?.hairpinWarnings ?: io.github.nanunic9379.rideplan.profile.HairpinWarningMode.SOUND,
                         fuelStations = routeActions?.fuelStations,
+                        nowPlayingEnabled = settings?.nowPlayingBubble == true,
                         onMarkDone = if (store != null) rides.savedId?.let { id -> { store.update { it.markRidden(id, store.time()) } } } else null,
                     )
                     store == null || rides.ride != null -> MapScreen(rides, store, importActions, routeActions, mapViews, navigation, tabs = false, rideMap = platform?.rideMap, openPhotoUrl = platform?.openUrl)

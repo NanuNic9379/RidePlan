@@ -762,6 +762,16 @@
     <string name="closure_date_change">Cambia data</string>
     <string name="speed_cameras">Autovelox</string>
     <string name="speed_cameras_text">Autovelox fissi da OpenStreetMap, sulla mappa del giro e durante la navigazione. Solo in Italia: in altri paesi questi avvisi possono essere vietati.</string>
+    <string name="now_playing_title">In riproduzione durante la navigazione</string>
+    <string name="now_playing_text">Mostra il brano e i controlli multimediali sulla mappa. Richiede l'accesso facoltativo alle notifiche.</string>
+    <string name="now_playing_access_hint">Consenti a RidePlan l'accesso alle notifiche nelle impostazioni Android per usare questa funzione.</string>
+    <string name="now_playing_privacy_title">Consentire l'accesso ai media correnti?</string>
+    <string name="now_playing_privacy_text">Android richiede l'accesso alle notifiche. RidePlan legge solo titolo, artista e controlli del media corrente. Non legge altri contenuti delle notifiche e non salva informazioni multimediali. I dati non vengono letti finché non attivi questa opzione.</string>
+    <string name="now_playing_privacy_continue">Continua</string>
+    <string name="now_playing_controls_play">Riproduci</string>
+    <string name="now_playing_controls_pause">Pausa</string>
+    <string name="now_playing_controls_next">Brano successivo</string>
+    <string name="now_playing_controls_hide">Nascondi controlli multimediali</string>
     <string name="nav_camera">Autovelox tra %1$s</string>
     <string name="nav_say_camera">Autovelox più avanti</string>
     <string name="nav_say_camera_limit">Autovelox più avanti, limite %1$d</string>
