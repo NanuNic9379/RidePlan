@@ -8,18 +8,21 @@ import com.valhalla.valhalla.config.ValhallaConfigManager
 import com.valhalla.valhalla.files.ValhallaFile
 import io.github.nanunic9379.rideplan.personal.MapDataItem
 import io.github.nanunic9379.rideplan.ride.Ride
+import io.github.nanunic9379.rideplan.ride.Stop
 import io.github.nanunic9379.rideplan.route.RouteError
 import io.github.nanunic9379.rideplan.route.RouteException
 import io.github.nanunic9379.rideplan.route.RouteOptions
 import io.github.nanunic9379.rideplan.route.AreasDownload
 import io.github.nanunic9379.rideplan.route.CellsDownload
 import io.github.nanunic9379.rideplan.route.CrossArea
+import io.github.nanunic9379.rideplan.route.AreaLeg
 import io.github.nanunic9379.rideplan.route.DataDownload
 import io.github.nanunic9379.rideplan.route.FuelData
 import io.github.nanunic9379.rideplan.route.FuelFile
 import io.github.nanunic9379.rideplan.route.FuelStation
 import io.github.nanunic9379.rideplan.ride.LatLon
 import io.github.nanunic9379.rideplan.route.LocalArea
+import io.github.nanunic9379.rideplan.route.LongRoute
 import io.github.nanunic9379.rideplan.route.PublishedArea
 import io.github.nanunic9379.rideplan.route.RoadNotes
 import io.github.nanunic9379.rideplan.route.RoutingArea
@@ -447,19 +450,33 @@ class RouteService(context: Context) {
             return CrossArea.join(parts, data.parts.map { it.leg })
         }
         val valhalla = engineFor(data)
-        val response = try {
-            val language = if (instructions) ValhallaRoute.language(app.resources.configuration.locales[0].toLanguageTag()) else null
-            valhalla.routeRaw(ValhallaRoute.request(ride.stops, options, language, startHeading, ride.avoid.map { it.area }))
-        } catch (e: ValhallaException) {
-            // 44x: no route; 17x: stop far from any road or in an unconnected area.
-            val msg = e.message.orEmpty()
-            if (Regex("""code=(44\d|17\d)""").containsMatchIn(msg)) throw RouteException(RouteError.NO_ROUTE, msg)
-            throw RouteException(RouteError.ENGINE, msg.take(120))
-        }
+        val language = if (instructions) ValhallaRoute.language(app.resources.configuration.locales[0].toLanguageTag()) else null
         val result = try {
-            ValhallaRoute.parse(response)
-        } catch (e: Exception) {
-            throw RouteException(RouteError.ENGINE, e.javaClass.simpleName)
+            LongRoute.compute(
+                stops = ride.stops,
+                isDistanceLimit = { error ->
+                    error is ValhallaException && Regex("""code=154\b""").containsMatchIn(error.message.orEmpty())
+                },
+                startHeading = startHeading,
+            ) { stops, heading ->
+                val response = try {
+                    valhalla.routeRaw(ValhallaRoute.request(stops, options, language, heading, ride.avoid.map { it.area }))
+                } catch (e: ValhallaException) {
+                    // 44x: no route; 17x: stop far from any road or in an unconnected area.
+                    val message = e.message.orEmpty()
+                    if (Regex("""code=(44\d|17\d)""").containsMatchIn(message)) {
+                        throw RouteException(RouteError.NO_ROUTE, message)
+                    }
+                    throw e
+                }
+                try {
+                    ValhallaRoute.parse(response)
+                } catch (e: Exception) {
+                    throw RouteException(RouteError.ENGINE, e.javaClass.simpleName)
+                }
+            }
+        } catch (e: ValhallaException) {
+            throw RouteException(RouteError.ENGINE, e.message.orEmpty().take(120))
         }
         // Speed limits (#31): only for the route that is ridden, once per computation. Any
         // failure only leaves the limits out: the route itself is fine.
