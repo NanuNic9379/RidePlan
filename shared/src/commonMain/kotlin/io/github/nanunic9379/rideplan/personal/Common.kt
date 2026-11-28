@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -231,7 +232,7 @@ fun RowIcon(icon: ImageVector, alpha: Float = 1f) {
 
 /** A row with a switch: the whole row toggles it. */
 @Composable
-fun SwitchRow(icon: ImageVector?, title: String, subtitle: String?, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+fun SwitchRow(icon: ImageVector?, title: String, subtitle: String?, checked: Boolean, enabled: Boolean = true, preserveIconColors: Boolean = false, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -242,7 +243,11 @@ fun SwitchRow(icon: ImageVector?, title: String, subtitle: String?, checked: Boo
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val alpha = if (enabled) 1f else 0.5f
-        if (icon != null) RowIcon(icon, alpha)
+        if (icon != null) {
+            if (preserveIconColors) {
+                Icon(icon, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(24.dp).alpha(alpha))
+            } else RowIcon(icon, alpha)
+        }
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha))

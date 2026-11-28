@@ -87,7 +87,7 @@ fun PhotoSpotsPage(store: ProfileStore, rides: RideScreenState, openUrl: ((Strin
         }
         store.data.photoSpots.forEach { spot ->
             RowGroup {
-                SwitchRow(AppIcons.Map, spot.name, spot.details.ifBlank { spot.photoUrl.orEmpty() }, spot.enabled) { enabled ->
+                SwitchRow(AppIcons.PhotoSpotMarker, spot.name, spot.details.ifBlank { spot.photoUrl.orEmpty() }, spot.enabled, preserveIconColors = true) { enabled ->
                     store.update { it.savePhotoSpot(spot.copy(enabled = enabled)) }
                 }
                 GroupDivider()

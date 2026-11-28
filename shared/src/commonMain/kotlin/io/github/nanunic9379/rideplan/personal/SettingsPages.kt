@@ -359,7 +359,7 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
                 store.update { it.copy(settings = it.settings.copy(wifiOnly = v)) }
             }
             GroupDivider()
-            SwitchRow(AppIcons.Warning, stringResource(Res.string.speed_cameras), stringResource(Res.string.speed_cameras_text), s.speedCameras) { v ->
+            SwitchRow(AppIcons.SpeedCameraMarker, stringResource(Res.string.speed_cameras), stringResource(Res.string.speed_cameras_text), s.speedCameras, preserveIconColors = true) { v ->
                 store.update { it.copy(settings = it.settings.copy(speedCameras = v)) }
             }
             platform?.mediaAccess?.let { media ->
@@ -380,7 +380,7 @@ fun SettingsPage(store: ProfileStore, rides: RideScreenState, platform: Platform
         }
         SectionLabel(stringResource(Res.string.photo_spots_title))
         RowGroup {
-            SwitchRow(null, stringResource(Res.string.photo_spots_map_toggle), stringResource(Res.string.photo_spots_map_help), s.photoSpots) { enabled ->
+            SwitchRow(AppIcons.PhotoSpotMarker, stringResource(Res.string.photo_spots_map_toggle), stringResource(Res.string.photo_spots_map_help), s.photoSpots, preserveIconColors = true) { enabled ->
                 store.update { it.copy(settings = it.settings.copy(photoSpots = enabled)) }
             }
             GroupDivider()

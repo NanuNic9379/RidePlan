@@ -264,6 +264,7 @@ private fun MapScreen(
             zoom = start.zoom,
         ),
     ) {
+        MapPoiMarkerLayers()
         if (ride == null && offroad) OffroadLayers(roadColors)
         if (ride != null) { RideLayers(ride); RoadNotesLayers(ride, roadNotes) } else me?.let { MyPositionLayer(it) }
         store?.takeIf { it.data.settings.photoSpots }?.data?.photoSpots?.filter { it.enabled }?.takeIf { it.isNotEmpty() }?.let { PhotoSpotLayers(it) }
