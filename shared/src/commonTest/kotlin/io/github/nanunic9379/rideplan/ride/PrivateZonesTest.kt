@@ -121,6 +121,38 @@ class PrivateZonesTest {
     }
 
     @Test
+    fun previewWarnsWhenPrivateZoneCutHidesAPlannedStop() {
+        val meeting = StopPlan(StopPlan.Purpose.MEETING, time = 8 * 60 + 30)
+        val ride = Ride(
+            "r",
+            line,
+            listOf(Stop("Home", home, plan = meeting), Stop("Bar", line[40]), Stop("Garage", garage)),
+            Ride.Source.GPX,
+        )
+
+        val preview = SharePreview.of(ride, listOf(homeZone), trimEnds = false)
+
+        assertEquals(1, preview.plannedStopsHiddenByZones)
+        assertNull(preview.ride.stops.first().plan)
+        assertEquals(0, SharePreview.of(ride, listOf(homeZone), trimEnds = false, hideZones = false).plannedStopsHiddenByZones)
+    }
+
+    @Test
+    fun previewDoesNotWarnForPlansOutsideThePrivateZone() {
+        val ride = Ride(
+            "r",
+            line,
+            listOf(Stop("Home", home), Stop("Bar", line[40], plan = StopPlan(StopPlan.Purpose.COFFEE)), Stop("Garage", garage)),
+            Ride.Source.GPX,
+        )
+
+        val preview = SharePreview.of(ride, listOf(homeZone), trimEnds = false)
+
+        assertEquals(0, preview.plannedStopsHiddenByZones)
+        assertNotNull(preview.ride.stops.first { it.name == "Bar" }.plan)
+    }
+
+    @Test
     fun zonesAndTrimmedEnds() {
         val ride = Ride("r", line, listOf(Stop("Home", home), Stop("Garage", garage)), Ride.Source.GPX)
         val p = SharePreview.of(ride, listOf(homeZone), trimEnds = true)

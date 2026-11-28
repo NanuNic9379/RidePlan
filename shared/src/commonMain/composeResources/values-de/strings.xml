@@ -180,6 +180,7 @@
     <string name="share_preview_summary">Was das Handy verlässt: %1$s, %2$d Stopps</string>
     <string name="share_preview_moved">Start um %1$s verschoben, Ziel um %2$s</string>
     <string name="share_preview_hidden">%1$d Stopps ausgeblendet</string>
+    <string name="share_preview_plan_hidden">Der Zuschnitt der Privatzonen blendet den Plan eines Stopps aus.</string>
     <string name="share_preview_empty">Die ganze Tour liegt in deinen Privatzonen: Es gibt nichts zu teilen.</string>
     <string name="zones_title">Privatzonen</string>
     <string name="zones_text">Orte wie dein Zuhause oder die Garage. Sie werden aus jeder geteilten Tour herausgeschnitten (GPX-Datei, QR und Link): Stopps und Strecke darin verlassen nie das Handy.</string>

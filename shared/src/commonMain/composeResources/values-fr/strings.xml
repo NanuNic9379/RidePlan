@@ -181,6 +181,7 @@
     <string name="share_preview_summary">Ce qui quitte le téléphone : %1$s, %2$d étapes</string>
     <string name="share_preview_moved">Départ déplacé de %1$s, arrivée de %2$s</string>
     <string name="share_preview_hidden">%1$d étapes masquées</string>
+    <string name="share_preview_plan_hidden">La coupe des zones privées masque le plan d’une étape.</string>
     <string name="share_preview_empty">Toute la balade est dans tes zones privées : il n'y a rien à partager.</string>
     <string name="zones_title">Zones privées</string>
     <string name="zones_text">Des lieux comme ton domicile ou le garage. Ils sont retirés de chaque balade que tu partages (fichier GPX, QR et lien) : les étapes et la trace à l'intérieur ne quittent jamais le téléphone.</string>

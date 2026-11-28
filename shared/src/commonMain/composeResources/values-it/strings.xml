@@ -180,6 +180,7 @@
     <string name="share_preview_summary">Cosa esce dal telefono: %1$s, %2$d tappe</string>
     <string name="share_preview_moved">Partenza spostata di %1$s, arrivo di %2$s</string>
     <string name="share_preview_hidden">%1$d tappe nascoste</string>
+    <string name="share_preview_plan_hidden">Il taglio delle zone private nasconde il piano di una tappa.</string>
     <string name="share_preview_empty">Tutto il giro è dentro le tue zone private: non c'è niente da condividere.</string>
     <string name="zones_title">Zone private</string>
     <string name="zones_text">Posti come casa o il garage. Vengono tagliati da ogni giro che condividi (file GPX, QR e link): tappe e traccia al loro interno non escono mai dal telefono.</string>
